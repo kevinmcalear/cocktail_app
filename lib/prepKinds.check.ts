@@ -87,8 +87,8 @@ assert.equal(partsText(2, 1), '2 parts');
 // Super juice per gram of peel.
 assert.deepEqual(prepAmounts(startPrep('super', 'Lime super juice')).map((a) => a.amount), [60, 39.6, 19.8, 1000.2]);
 
-// Every kind starts with at least one line, and blank keeps no method.
-for (const k of PREP_KINDS) assert.ok(startPrep(k.id, 'Test').lines.length >= 1, k.id);
+// Every kind but Something else starts with at least one line (it has none until the maker adds them), and blank keeps no method.
+for (const k of PREP_KINDS) assert.ok(k.id === 'other' ? startPrep(k.id, 'Test').lines.length === 0 : startPrep(k.id, 'Test').lines.length >= 1, k.id);
 assert.deepEqual(startPrep('other', 'Smoked salt').steps, []);
 assert.equal(leadText(null), null);
 assert.equal(leadText(15), 'Takes 15 min');
@@ -110,7 +110,7 @@ assert.equal(prepFromTechnique({ id: 'smoke' }, 'Smoked salt', { steps: [{ body:
 // Technique words come out of a name: what follows them is one thing, the base.
 assert.deepEqual(flavourWords('coconut fat washed white rum'), ['Coconut', 'White rum']);
 assert.deepEqual(flavourWords('Chamomile infused gin'), ['Chamomile', 'Gin']);
-assert.deepEqual(startPrep('other', 'coconut fat washed white rum').lines.map((l) => l.name), ['Coconut', 'White rum']);
+assert.deepEqual(startPrep('other', 'coconut fat washed white rum').lines, [], 'Something else guesses no lines from a name');
 assert.equal(guessKind('Gentian tincture'), null, 'a tincture is its own technique, not an infusion');
 assert.equal(guessKind('House bitters'), null);
 // An infusion keeps the safer 2 weeks cold, and takes its spirit from the name.

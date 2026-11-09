@@ -430,7 +430,9 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
     case 'batch':
       // A batch is the drink's pours: its name ("Penicillin batch") says which drink, not what goes in.
       return draft([slotLine('Main ingredient', 'main ingredient', 1, 'ml', 1)], 750, [], null, fridge, null, []);
+    // Something else says nothing about how it's made, so none of its name's words become lines: the maker adds the real ones.
     case 'other':
+      return { ...draft([slotLine('Main ingredient', 'main ingredient', 1, 'g')], 100, [], null, fridge, null, []), lines: [], baseKey: '' };
     case 'wash':
     case 'clarified':
     case 'distillate':
