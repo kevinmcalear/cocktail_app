@@ -30,6 +30,7 @@ import { installWebAlert } from '@/lib/dialogs';
 import { afterFirstData } from '@/lib/idleQueue';
 import { prefetchRoutes } from '@/lib/prefetchRoutes';
 import { BringIn, RootExtras, SideNav } from '@/components/nav/RootLazy';
+import { SEE_THROUGH_ROUTES } from '@/components/nav/seeThrough';
 
 import { initMonitoring } from '@/lib/monitoring';
 import { persistOptions, queryClient, resumeSavedWrites } from '@/lib/react-query';
@@ -140,11 +141,9 @@ function RootLayoutNav() {
             <Stack.Screen name="week/index" options={{ headerShown: false }} />
             <Stack.Screen name="week/review" options={{ headerShown: false }} />
             <Stack.Screen name="add-cocktail" options={{ presentation: "modal", headerShown: false }} />
-            <Stack.Screen name="add-ingredient" options={{ presentation: "modal", headerShown: false }} />
             <Stack.Screen name="make-recipe" options={{ presentation: "modal", headerShown: false }} />
-            {/* The web keeps the page underneath showing: a wide window's centred dialog sits over it (Add-beer, Web). */}
-            <Stack.Screen name="add-beer" options={{ presentation: Platform.OS === "web" ? "transparentModal" : "modal", headerShown: false }} />
-            <Stack.Screen name="add-wine" options={{ presentation: Platform.OS === "web" ? "transparentModal" : "modal", headerShown: false }} />
+            {/* The create wizards: the web keeps the page underneath showing, and a wide window's centred dialog sits over it (components/nav/seeThrough.ts). */}
+            {SEE_THROUGH_ROUTES.map((name) => <Stack.Screen key={name} name={name} options={{ presentation: Platform.OS === "web" ? "transparentModal" : "modal", headerShown: false }} />)}
             <Stack.Screen
               name="cocktail/[id]/edit"
               options={{ presentation: "modal", headerShown: false }}

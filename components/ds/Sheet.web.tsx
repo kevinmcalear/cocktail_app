@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
@@ -26,7 +26,7 @@ export { useSheetClose } from './sheetClose';
  * load Reanimated or Gesture Handler. A finger drags it down to close it
  * (webSheetDrag), as on native.
  */
-export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, dirty, fullAtPhoneWidth }: SheetProps) {
+export function Sheet({ visible, onClose, accessibilityLabel, children, style, ground, header, onShow, onDismiss, kind, dirty, askClose, fullAtPhoneWidth }: SheetProps) {
   const ds = useDs();
   const full = useWindowDimensions().width < PHONE_WIDTH && !!fullAtPhoneWidth;
   const reduceMotion = useReducedMotion();
@@ -56,10 +56,10 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
     }, leaveMs);
   };
   const guard = useDiscardGuard(dirty);
-  const close = () => guard(() => dismiss());
-  // Unsaved changes: a drag that would close it settles back and asks instead.
+  const close = askClose ?? (() => guard(() => dismiss()));
+  // Unsaved changes, or its content closes it: a drag that would close it settles back and asks instead.
   const held = () => {
-    if (!dirty) return false;
+    if (!dirty && !askClose) return false;
     close();
     return true;
   };
@@ -105,7 +105,8 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
     <Modal visible={visible || !gone} transparent animationType="none" onRequestClose={close} onShow={onShow} onDismiss={onDismiss}>
       <CloseContext value={close}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, fade, opacity]}>
-          <Pressable accessibilityLabel="Close" style={StyleSheet.absoluteFill} onPress={close} />
+          {/* A plain view, not a button: the Modal's focus trap focuses the first (or, going back, last) thing that takes focus, even out of the tab order. */}
+          <View aria-hidden style={StyleSheet.absoluteFill} onClick={close} />
         </View>
         <View style={[styles.place, sheetFrame.scrim, full ? styles.bare : null]}>
           <View

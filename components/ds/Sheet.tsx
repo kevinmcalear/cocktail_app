@@ -43,12 +43,10 @@ export interface SheetProps {
   onShow?: () => void;
   /** iOS: once the sheet is fully gone (to open another modal after it). */
   onDismiss?: () => void;
-  /**
-   * Unsaved changes in it: closing it any way but the caller's own Done (a
-   * swipe or drag down, the backdrop, back, Escape, its X or Cancel) asks
-   * "Discard changes?" first, and it stays open unless they say Discard.
-   */
+  /** Unsaved changes in it: closing it any way but the caller's own Done (a swipe or drag down, the backdrop, back, Escape, its X or Cancel) asks "Discard changes?" first, and it stays open unless they say Discard. */
   dirty?: boolean;
+  /** The web only (Sheet.web.tsx): its content decides how it closes (an add wizard's Leave it for now), in place of `dirty`. */
+  askClose?: () => void;
   /**
    * small (the default): our sheet, for pickers, menus and short forms.
    * flow: a whole flow (Add, Rank it, Theme). The system's own sheet on

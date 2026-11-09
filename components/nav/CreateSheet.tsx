@@ -92,7 +92,7 @@ export function CreateSheet({ visible, onClose, onBack }: { visible: boolean; on
     router.push('/add-cocktail');
   };
   return (
-    <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle} plain back={onBack ?? onClose}>
+    <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle} plain centred back={onBack ?? onClose}>
       <View>
         {made.map((c) => (
           <Row key={c.label} label={c.label} hint={venueId ? c.hint : c.homeHint} icon={c.symbol ? <IconSymbol name={c.symbol} size={20} color={ds.c.ink} /> : <CustomIcon name={c.icon} size={22} color={ds.c.ink} />} onPress={() => go(hrefOf(c))} />
