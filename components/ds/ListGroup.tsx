@@ -69,11 +69,7 @@ export function ListRow({ title, detail, value, warn, icon, lead, end, onPress, 
           </Caption>
         ) : null}
       </View>
-      {value ? (
-        <Body numberOfLines={1} style={styles.value} color={warn ? ds.accentText : ds.c.muted}>
-          {value}
-        </Body>
-      ) : null}
+      {value ? <Body color={warn ? ds.accentText : ds.c.muted}>{value}</Body> : null}
       {end}
       {onPress && !end ? <IconSymbol name="chevron.right" size={16} color={ds.c.faint} /> : null}
     </>
@@ -150,8 +146,6 @@ const styles = StyleSheet.create({
   group: { borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md, minHeight: 56, paddingVertical: space.sm + 2, paddingHorizontal: space.lg, borderTopWidth: StyleSheet.hairlineWidth },
   words: { flex: 1, minWidth: 0 },
-  // A long value (a method's first steps) ends in an ellipsis rather than squeezing the row's title to a letter.
-  value: { flexShrink: 1, maxWidth: '62%' },
   note: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.md + 2, paddingHorizontal: space.lg, borderRadius: space.lg + 2 },
   chip: { flexDirection: 'row', alignSelf: 'flex-start', alignItems: 'center', gap: space.xs + 2, paddingVertical: space.sm, paddingHorizontal: space.md + 2, borderRadius: radius.pill },
   outlines: { gap: space.lg + 6 },

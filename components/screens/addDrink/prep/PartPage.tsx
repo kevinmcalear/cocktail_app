@@ -53,7 +53,8 @@ export interface PartPageProps {
 }
 
 const STORE_WORD: Record<string, string> = { Fridge: 'cold', Freezer: 'frozen' };
-const short = (s: string) => (s.length > 34 ? `${s.slice(0, 33).trimEnd()}…` : s);
+// Short enough that a phone's row keeps its title (Method, Keeps) whole beside it.
+const short = (s: string) => (s.length > 24 ? `${s.slice(0, 23).trimEnd()}…` : s);
 
 /**
  * A part made inside a house-made, one flat page (boards Add-parts, 2 and 3;
@@ -69,32 +70,35 @@ export function PartPage(p: PartPageProps) {
   const gutter = useGutter();
   const [name, setName] = useState(p.name);
   const [renaming, setRenaming] = useState(false);
-  const [open, setOpen] = useState<'kind' | 'method' | 'makes' | null>(null);
+  const [open, setOpen] = useState<'kind' | 'method' | 'makes' | 'keeps' | null>(null);
   const { draft, changed, setDraft, view, pickKind, pickTechnique, phrase, version, named, slotsOpen } = usePrepDraft({ name: p.name, nameNow: name, initial: p.initial, bar: p.bar, measured: true });
   const shown = name.trim() || p.name;
   const inside = useInside(draft, setDraft, shown);
   const trail = trailInto(p.above, p.onClose, shown);
   const last = p.level >= MOST_LEVELS;
 
-  // What's written goes on its line as it's written, so leaving the whole house-made keeps it.
-  useEffect(() => {
-    if (changed() || name !== p.name) p.onKeep(withFacts(draft), shown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- kept when what it keeps changes
-  }, [draft, name]);
   // Android's back: the level showing goes back, one at a time.
   const nested = !!inside.props;
+  const onClose = p.onClose;
   useEffect(() => {
     if (p.inPlace || nested) return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => (p.onClose(), true));
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => (onClose(), true));
     return () => sub.remove();
-  }, [p, nested]);
+  }, [onClose, p.inPlace, nested]);
 
   // Board Add-parts, 6: a part named like one you have: Use yours first, or make a new one.
   const same = useSameNamePrep({ barId: p.bar?.id ?? null, name: shown });
   const taken = same.data;
+  // What's written goes on its line as it's written, so leaving the whole house-made keeps it. Not while its name is
+  // taken (or still being checked): Back then leaves the line as it was, and the save can't fail on it later.
+  const free = !taken && !same.checking;
+  useEffect(() => {
+    if (free && (changed() || name !== p.name)) p.onKeep(withFacts(draft), shown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- kept when what it keeps changes
+  }, [draft, name, free]);
   const words = taken ? takenPartWords(taken, p.bar?.name ?? null) : null;
   // A line that isn't one of yours yet and sounds made (Add-parts, 2: "To make").
-  const toMake = last ? undefined : draft.lines.find((l) => !l.id && !l.prep && !l.slot && l.name.trim() && looksMadeInHouse(l.name));
+  const toMake = last ? undefined : draft.lines.find((l) => !l.id && !l.prep && !l.slot && !l.bottle && l.name.trim() && looksMadeInHouse(l.name));
   const done = () => p.onDone(withFacts(draft), shown);
   const canDone = named && !slotsOpen && !!shown.trim() && !taken;
 
@@ -123,7 +127,7 @@ export function PartPage(p: PartPageProps) {
   const kindName = PREP_KINDS.find((k) => k.id === draft.kind)?.name ?? 'Something else';
   const method = draft.steps.length ? short(draft.steps.map((s) => s.body.trim().replace(/\.$/, '')).join(', ')) : null;
   const makes = prepYield(draft);
-  const keeps = [keepsText(draft), STORE_WORD[draft.storage] ?? (draft.storage.toLowerCase() || null)].filter(Boolean).join(', ') || null;
+  const keeps = short([keepsText(draft), STORE_WORD[draft.storage] ?? (draft.storage.toLowerCase() || null)].filter(Boolean).join(', ')) || null;
   const toggle = (o: typeof open) => setOpen(open === o ? null : o);
 
   const body = (
@@ -156,10 +160,10 @@ export function PartPage(p: PartPageProps) {
         <ListRow first title="What it is" value={kindName} expanded={open === 'kind'} onPress={() => toggle('kind')} />
         <ListRow title="Method" value={method ?? 'Add'} warn={!method} expanded={open === 'method'} onPress={() => toggle('method')} />
         <ListRow title="Makes" value={makes ? `About ${formatQuantity({ kind: 'ml', value: makes, unit: 'ml' })}` : 'Add'} warn={!makes} expanded={open === 'makes'} onPress={() => toggle('makes')} />
-        <ListRow title="Keeps" value={keeps ?? 'Add'} warn={!keeps} expanded={open === 'method'} onPress={() => toggle('method')} />
+        <ListRow title="Keeps" value={keeps ?? 'Add'} warn={!keeps} expanded={open === 'keeps'} onPress={() => toggle('keeps')} />
       </ListGroup>
       {open === 'kind' ? <PrepKindStep name={shown} draft={draft} combined={false} onKind={pickKind} onTechnique={pickTechnique} bar={p.bar} /> : null}
-      {open === 'method' ? <PrepMethodStep key={`method-${version}`} draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} /> : null}
+      {open === 'method' || open === 'keeps' ? <PrepMethodStep key={`method-${version}`} draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} /> : null}
       {open === 'makes' ? <ListNote icon="info.circle" text={makes ? 'A guess from the weights. Log your first batch and it uses the real number.' : 'Give the lines amounts and it says about how much it makes.'} /> : null}
     </View>
   );

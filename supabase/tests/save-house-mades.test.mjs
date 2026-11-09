@@ -122,6 +122,17 @@ describe('save_house_mades', () => {
     assert.deepEqual(left.rows, []);
   });
 
+  test('a part can only point further down the list, so no recipe uses itself', async () => {
+    const loop = [
+      { name: named('Loop A'), lines: [{ part: 1, amount: 10, unit: 'ml' }] },
+      { name: named('Loop B'), lines: [{ part: 0, amount: 10, unit: 'ml' }] },
+    ];
+    const { error } = await users.manager.client.rpc('save_house_mades', { p_bar: ids.bar, p_preps: loop });
+    assert.ok(error, 'expected the save to be refused');
+    assert.match(error.message, /points at nothing/);
+    assert.deepEqual(await rowsNamed(['Loop A', 'Loop B']), []);
+  });
+
   test('a shared ingredient’s name at a venue makes the venue’s own version, linked to it', async () => {
     const { data, error } = await users.manager.client.rpc('save_house_mades', { p_bar: ids.bar, p_preps: [{ name: named('Shared cordial'), lines: [{ id: ids.water, amount: 100, unit: 'ml' }], card: CARD, steps: [] }] });
     assert.ifError(error);

@@ -101,8 +101,10 @@ BEGIN
         v_at := 0;
         FOR v_line IN SELECT * FROM jsonb_array_elements(COALESCE(v_prep -> 'lines', '[]'::jsonb)) LOOP
             IF v_line ? 'part' THEN
+                -- A part comes after what uses it in the list, so a recipe can never use itself, even through another part.
+                IF (v_line ->> 'part')::integer + 1 <= v_index THEN RAISE EXCEPTION 'A part points at nothing.'; END IF;
                 v_line_id := v_ids[(v_line ->> 'part')::integer + 1];
-                IF v_line_id IS NULL OR v_line_id = v_id THEN RAISE EXCEPTION 'A part points at nothing.'; END IF;
+                IF v_line_id IS NULL THEN RAISE EXCEPTION 'A part points at nothing.'; END IF;
             ELSIF v_line ->> 'id' ~* v_uuid THEN
                 v_line_id := (v_line ->> 'id')::uuid;
             ELSE
