@@ -146,6 +146,15 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                       }
                     : undefined
                 }
+                parts={parts}
+                onBottle={
+                  parts
+                    ? (name) => {
+                        change(l.key, { id: null, name, bottle: true, slot: undefined, prep: undefined });
+                        setSwapKey(null);
+                      }
+                    : undefined
+                }
               />
             </View>
           ) : (
@@ -160,8 +169,8 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                     style={styles.swapName}
                   >
                     <Body numberOfLines={3} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
-                    {l.prep ? <Caption tone="accent">{l.prep.at ? `Recipe to finish · ${toFinishSummary(l.prep)}` : `${parts ? (openKey === l.key ? 'Open' : hasPart(l.prep) ? 'Has a part' : 'New') : 'House-made'} · ${prepSummary(l.prep)}`}</Caption> : null}
-                    {parts && !l.prep && !l.id && !l.slot && looksMadeInHouse(l.name) ? <Caption tone="accent">To make</Caption> : null}
+                    {openKey === l.key ? <Caption tone="accent">Open</Caption> : l.prep ? <Caption tone="accent">{l.prep.at ? `Recipe to finish · ${toFinishSummary(l.prep)}` : `${parts ? (hasPart(l.prep) ? 'Has a part' : 'New') : 'House-made'} · ${prepSummary(l.prep)}`}</Caption> : null}
+                    {parts && openKey !== l.key && !l.prep && !l.id && !l.slot && looksMadeInHouse(l.name) ? <Caption tone="accent">To make</Caption> : null}
                     {isBase ? <Caption tone="accent">{view === 'amounts' ? 'The base' : 'The base, everything follows it'}</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'amounts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
                   </PressableScale>
                   {l.slot ? null : noteKey === l.key ? (

@@ -121,8 +121,13 @@ function MakeRecipe() {
       notice={offline ? <Caption color={readableAccent(STATUS.warning, ds.c.ground)}>{count > 1 ? `You’re offline. All ${count} are kept on this phone and save together when you’re back.` : 'You’re offline. It’s kept on this phone and saves when you’re back.'}</Caption> : undefined}
       onName={setTypedName}
       onKeep={(prep, name, step) => {
-        // The slot goes in the address once something is kept: a reload on the web picks this one up.
-        if (!wrote.current && slotParam !== slot) router.setParams({ slot });
+        // The slot goes in the address once something is kept: a reload on the web picks this one up. Not through the
+        // router: a new param there remounts the steps, so a part opened as the first thing written (Add-parts) closed again.
+        if (!wrote.current && slotParam !== slot && Platform.OS === 'web') {
+          const url = new URL(window.location.href);
+          url.searchParams.set('slot', slot);
+          window.history.replaceState(window.history.state, '', url);
+        }
         wrote.current = true;
         patch(slot, { name, prep });
         setStep(slot, step);
