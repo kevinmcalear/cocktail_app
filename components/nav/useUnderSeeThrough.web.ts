@@ -10,14 +10,7 @@ type Nav = { index?: number; routes: { name: string; state?: unknown }[] };
 
 /** A create wizard (seeThrough.ts) is the route in focus, at any width: what's under it is out of reach (JsTabs). */
 export function useSeeThroughOpen(): boolean {
-  // The root's state nests each navigator's in the route showing it: walk down the routes in focus.
-  let state: Nav | undefined = useRootNavigationState();
-  while (state) {
-    const route = state.routes[state.index ?? state.routes.length - 1];
-    if (isSeeThrough(route?.name)) return true;
-    state = route?.state as Nav | undefined;
-  }
-  return false;
+  return seeThroughIn(useRootNavigationState());
 }
 
 /**
@@ -28,5 +21,17 @@ export function useSeeThroughOpen(): boolean {
  */
 export function useUnderSeeThrough(): boolean {
   const desktop = useWindowDimensions().width >= layout.breakpoints.desktop;
-  return useSeeThroughOpen() && desktop;
+  const state = useRootNavigationState();
+  return desktop && seeThroughIn(state);
+}
+
+// The root's state nests each navigator's in the route showing it: walk down the routes in focus.
+function seeThroughIn(root: Nav | undefined): boolean {
+  let state = root;
+  while (state) {
+    const route = state.routes[state.index ?? state.routes.length - 1];
+    if (isSeeThrough(route?.name)) return true;
+    state = route?.state as Nav | undefined;
+  }
+  return false;
 }

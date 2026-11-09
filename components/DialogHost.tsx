@@ -73,7 +73,7 @@ function DialogCard({ dialog }: { dialog: Dialog }) {
     <Appear kind="fade" duration={200} style={[styles.overlay, { backgroundColor: ds.c.scrim }]}>
       {/* A plain view, not a button: the Modal's focus trap focuses the first thing that takes focus, so it lands
           on the card and Enter is its main action (the window's Enter, above), never this window-sized backdrop. */}
-      <View aria-hidden style={StyleSheet.absoluteFill} onStartShouldSetResponder={() => true} onResponderRelease={dismiss} />
+      <View aria-hidden style={StyleSheet.absoluteFill} onClick={dismiss} />
       <View
         tabIndex={-1}
         role="alertdialog"
@@ -95,9 +95,10 @@ function DialogCard({ dialog }: { dialog: Dialog }) {
 
 /**
  * Keeps the next `key` keyup from the page. Given up on a window blur or the
- * next key pressed (not a held key's repeat), so a keyup lost to another
- * window never swallows a later one.
+ * next key pressed (not a held key's repeat or a modifier), so a keyup lost to
+ * another window never swallows a later one.
  */
+const MODIFIERS = new Set(['Shift', 'Control', 'Alt', 'Meta']);
 function swallowKeyup(key: string) {
   const swallow = (up: KeyboardEvent) => {
     if (up.key !== key) return;
@@ -105,7 +106,7 @@ function swallowKeyup(key: string) {
     stop();
   };
   const next = (down: KeyboardEvent) => {
-    if (!down.repeat) stop();
+    if (!down.repeat && !MODIFIERS.has(down.key)) stop();
   };
   const stop = () => {
     window.removeEventListener('keyup', swallow, true);

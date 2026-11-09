@@ -19,8 +19,9 @@ export function useStartTabUnder(home: string | null) {
     if (!home || focused) return;
     const tabs = navigation.getParent();
     const state = tabs?.getState();
-    // Only while this tab is the one the tabs show: a tab left behind stays where it was left.
-    if (!tabs || !state || state.routes[state.index]?.state?.key !== navigation.getState()?.key) return;
+    // Only under a page over the tabs (a drink pushed on this tab stays), and only while this tab is the one
+    // the tabs show: a tab left behind stays where it was left.
+    if (!tabs || !state || tabs.isFocused() || state.routes[state.index]?.state?.key !== navigation.getState()?.key) return;
     const start = TABS.find((t) => t.path === home);
     if (start) tabs.dispatch(TabActions.jumpTo(start.route));
   }, [home, focused, navigation]);

@@ -101,6 +101,11 @@ it('opens a cold link to a drink on Tonight', async () => {
   expect(r.getSegments()).toEqual(['(tabs)', '(1-tonight)', 'cocktail', '[id]']);
 });
 
+it('with Tonight switched off, a cold link to a drink stays on the drink', async () => {
+  const r = await open('/cocktail/1', '/drinks');
+  expect(r.getSegments()).toEqual(['(tabs)', '(1-tonight)', 'cocktail', '[id]']);
+});
+
 // Search (Android and phone web) is a page on the tab it was opened from, so what
 // it opens stays on that tab, and Back steps back through the search.
 it('pushes search and its results on the tab it was opened from', async () => {

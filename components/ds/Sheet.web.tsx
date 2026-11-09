@@ -106,7 +106,7 @@ export function Sheet({ visible, onClose, accessibilityLabel, children, style, g
       <CloseContext value={close}>
         <View style={[StyleSheet.absoluteFill, { backgroundColor: ds.c.scrim }, fade, opacity]}>
           {/* A plain view, not a button: the Modal's focus trap focuses the first (or, going back, last) thing that takes focus, even out of the tab order. */}
-          <View aria-hidden style={StyleSheet.absoluteFill} onStartShouldSetResponder={() => true} onResponderRelease={close} />
+          <View aria-hidden style={StyleSheet.absoluteFill} onClick={close} />
         </View>
         <View style={[styles.place, sheetFrame.scrim, full ? styles.bare : null]}>
           <View
