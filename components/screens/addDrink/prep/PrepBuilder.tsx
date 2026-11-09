@@ -149,7 +149,8 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   }, [draft, name, step]);
   const back = () => (at > 0 ? go(STEPS[at - 1]) : ask());
   const next = () => (step === 'method' ? onDone(withFacts(draft), shown) : go(STEPS[at + 1]));
-  const ready = named && (step === 'kind' || !slotsOpen) && !(page && (taken || (step === 'kind' && checking)));
+  // The kind step goes on with no lines yet (Something else starts with none); the later steps need one named.
+  const ready = (step === 'kind' || (named && !slotsOpen)) && !(page && (taken || (step === 'kind' && checking)));
   const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], leave, shown);
   // A line of this recipe being made in-house too, one level down (make-anything-steps-2, step 8).
   const inside = useInside(draft, setDraft, name.trim() || started);
