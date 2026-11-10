@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { saveErrorWords } from './dbError';
+import { saveErrorWords } from './saveErrorWords';
 
 // The raw error goes to the console (Sentry in the app): kept out of this script's output.
 console.error = () => {};

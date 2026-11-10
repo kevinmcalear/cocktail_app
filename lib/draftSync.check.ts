@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 
 import { beerWineBar, beerWinePlace, EMPTY_BEER_WINE, isBeerWineSlot, type BeerWineDraft, type BeerWineStep } from './beerWineDraft';
 import { EMPTY_DRAFT } from './drinkWizard';
-import { EMPTY_HOUSE_MADE, houseMadeBar, houseMadePlace, houseMadesAt, houseMadeSlot, isHouseMadeSlot, sameHouseMade } from './houseMadeDraft';
+import { EMPTY_HOUSE_MADE, houseMadeBar, houseMadePlace, houseMadesAt, houseMadeSlot, isHouseMadeSlot } from './houseMadeDraft';
+import { sameHouseMade } from './houseMadeSame';
 import { startPrep } from './prepKinds';
 import { BEER_WINE_DRAFTS, DRINK_DRAFTS, HOUSE_MADE_DRAFTS, forAccount, mergeDrafts, type KeptDraft } from './draftSync';
 
