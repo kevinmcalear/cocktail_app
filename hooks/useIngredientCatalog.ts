@@ -78,6 +78,9 @@ export function useIngredientCatalog(enabled = true) {
     enabled,
     // Saved in a file (lib/queryCachePersist.ts), so a picker searches at once and reads them again behind it.
     meta: { persist: true },
+    // Read again each time, not a day like the catalog tier its key sits under: the saved copy can be older than a
+    // bottle just saved (the save's refresh is cancelled when its screen closes), and a reload must not trust it.
+    staleTime: 0,
     queryFn: async ({ signal }) =>
       (
         await allRowsById<CatalogRow>((after, size) => {
