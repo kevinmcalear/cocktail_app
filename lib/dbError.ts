@@ -31,6 +31,8 @@ export function saveErrorWords(error: unknown): string {
   if (code === '23505') return 'One like it is already saved.';
   if (code === '42501') return 'You can’t add that here. Someone who runs the venue can.';
   // Thrown by the app itself, in words for people (a plain Error, no database code); a TypeError and the like is a bug.
+  // ponytail: trusts every plain Error, so a hook that wraps a raw message (new Error(error.message)) would show it.
+  // No save path does today. Upgrade: an app-words error class thrown by the save hooks, and pass only that.
   if (!code && error instanceof Error && error.name === 'Error' && message) return message;
   reportError(error, { where: 'save' });
   // 23514 a check (the cold shrub's rest timer), 22xxx a value the column won't hold.
