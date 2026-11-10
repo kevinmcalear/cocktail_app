@@ -16,6 +16,8 @@ import { supabase } from '@/lib/supabase';
 const SHARED_KEY = ['ingredient-catalog', 'shared'] as const;
 /** Under the ingredient list's key, so a save that adds a venue's bottle or your own (refreshIngredients) reads these again. */
 const OWN_KEY = [...DROPDOWNS_QUERY_KEY, 'ingredients', 'own'] as const;
+/** When this launch (or web page load) began: a saved copy of OWN_KEY from before it is read again. */
+const LAUNCHED = Date.now();
 
 type Shared = { savedAt: number; rows: CatalogRow[] };
 
@@ -78,14 +80,16 @@ export function useIngredientCatalog(enabled = true) {
     enabled,
     // Saved in a file (lib/queryCachePersist.ts), so a picker searches at once and reads them again behind it.
     meta: { persist: true },
-    // Read again each time, not a day like the catalog tier its key sits under: the saved copy can be older than a
-    // bottle just saved (the save's refresh is cancelled when its screen closes), and a reload must not trust it.
-    staleTime: 0,
-    queryFn: async ({ signal }) =>
+    // A copy saved by an earlier launch (or reload) is read again behind it, once: it can predate a bottle saved
+    // here or by a teammate. Read this launch, it's fresh for a day, and a save (refreshIngredients) reads it again.
+    staleTime: (q: Query<CatalogRow[]>) => (q.state.dataUpdatedAt < LAUNCHED ? 0 : CATALOG_FRESH_MS),
+    // No abort signal: a read a save started finishes and is saved even when its screen closes first (TanStack
+    // cancels and reverts a read that took the signal once nothing watches it, which kept the copy from before).
+    queryFn: async () =>
       (
         await allRowsById<CatalogRow>((after, size) => {
           const page = supabase.from('app_item_presentation').select(CATALOG_COLUMNS).eq('item_type', 'ingredient').or('bar_id.not.is.null,created_by.not.is.null,origin_bar_profile_id.not.is.null');
-          return (after ? page.gt('id', after) : page).order('id').limit(size).abortSignal(signal);
+          return (after ? page.gt('id', after) : page).order('id').limit(size);
         })
       ).sort(byName),
   });

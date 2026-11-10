@@ -5,11 +5,13 @@ import type { ReactNode } from 'react';
 import { useIngredientCatalog } from '@/hooks/useIngredientCatalog';
 import type { FileStore } from '@/lib/fileStore';
 import { createFilePersister, FILE_KEYS, PERSISTED_KEYS } from '@/lib/queryCachePersist';
-import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
+import { BASE, DROPDOWNS_QUERY_KEY, KEEP, queryDefaults } from '@/lib/queryDefaults';
 
 // The venues' own bottles as the database has them now; every read of them is counted.
 let mockOwn: { id: string; name: string; bar_id: string | null }[] = [];
 let mockReads = 0;
+/** While set, reads wait for it. */
+let mockGate: Promise<void> | null = null;
 jest.mock('@/lib/supabase', () => {
   const page = () => {
     const chain = {
@@ -19,10 +21,11 @@ jest.mock('@/lib/supabase', () => {
       gt: () => chain,
       order: () => chain,
       limit: () => chain,
-      abortSignal: () => chain,
       then: (done: (r: unknown) => unknown) => {
         mockReads++;
-        return Promise.resolve({ data: mockOwn, error: null }).then(done);
+        return Promise.resolve(mockGate)
+          .then(() => ({ data: mockOwn, error: null }))
+          .then(done);
       },
     };
     return chain;
@@ -51,25 +54,51 @@ function launch(files: FileStore) {
   const client = new QueryClient({ queryCache, defaultOptions: { queries: { ...BASE, retry: false, networkMode: 'offlineFirst', persister: persister.persisterFn } } });
   for (const { queryKey, options } of queryDefaults(PERSISTED_KEYS, FILE_KEYS)) client.setQueryDefaults(queryKey, options);
   const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-  return renderHook(() => useIngredientCatalog(), { wrapper });
+  return { client, hook: renderHook(() => useIngredientCatalog(), { wrapper }) };
 }
+
+/** The saved copy of the venues' own bottles. */
+const savedOwn = (files: ReturnType<typeof memoryFiles>) =>
+  [...files.map.values()] as { queryKey: unknown[]; state: { data: unknown; dataUpdatedAt: number } }[];
 
 const GIN = { id: 'gin', name: 'House Gin', bar_id: 'rye' };
 const RUM = { id: 'rum', name: 'Reload Rum', bar_id: 'rye' };
 
-test('after a reload, the saved venue bottles are read again behind the saved copy', async () => {
-  const files = memoryFiles();
+beforeEach(() => {
   mockOwn = [GIN];
-  const first = await launch(files);
+  mockGate = null;
+});
+
+test('a copy saved by an earlier launch is read again behind it', async () => {
+  const files = memoryFiles();
+  const first = await launch(files).hook;
   await waitFor(() => expect(first.result.current.own).toEqual([GIN]));
   await waitFor(() => expect(files.map.size).toBe(1));
   await first.unmount();
+  // As an earlier launch saved it (an hour ago, well inside the day the catalog tier keeps lists fresh).
+  savedOwn(files)[0].state.dataUpdatedAt = Date.now() - 60 * 60 * 1000;
 
-  // Saved since that copy, and the refresh that would have saved it again never ran
-  // (the saving screen closed and cancelled it, a teammate added it, or the write waited for signal).
+  // Saved since, by a teammate or a write that waited for signal.
   mockOwn = [GIN, RUM];
   const reads = mockReads;
-  const reloaded = await launch(files);
+  const reloaded = await launch(files).hook;
   await waitFor(() => expect(reloaded.result.current.own).toEqual([GIN, RUM]));
   expect(mockReads).toBe(reads + 1);
+});
+
+test("a save's read finishes and is saved when its screen closes first", async () => {
+  const files = memoryFiles();
+  const launched = launch(files);
+  const hook = await launched.hook;
+  await waitFor(() => expect(hook.result.current.own).toEqual([GIN]));
+  await waitFor(() => expect(files.map.size).toBe(1));
+
+  // Add-bottle saves (refreshIngredients) and opens the bottle's page before the read comes back.
+  mockOwn = [GIN, RUM];
+  let open!: () => void;
+  mockGate = new Promise((resolve) => (open = resolve));
+  void launched.client.invalidateQueries({ queryKey: [...DROPDOWNS_QUERY_KEY, 'ingredients'] });
+  await hook.unmount();
+  open();
+  await waitFor(() => expect(savedOwn(files)[0].state.data).toEqual([GIN, RUM]));
 });
