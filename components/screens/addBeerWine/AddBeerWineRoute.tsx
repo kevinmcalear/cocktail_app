@@ -7,6 +7,7 @@ import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { BeerWineDraftEditScreen } from '@/components/screens/drink/edit/BeerWineEditScreen';
 import { useCreateBar } from '@/hooks/useBringInPlace';
 import type { DrinkKind } from '@/lib/drinkKinds';
+import { HOME_BAR } from '@/lib/itemRoutes';
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 
 import { WizardDialog } from '../addDrink/WizardDialog';
@@ -35,14 +36,14 @@ export function AddBeerWineRoute({ kind, ...props }: AddDrinkProps & { kind: Dri
   const named = (props.barIdProp !== undefined ? props.barIdProp : params.barId) || undefined;
   // No bar in the link: where you are now, once that's known (a cold link at a bar is the bar's beer, with its price).
   const place = useCreateBar(named);
-  const barId = named ?? place.barId;
+  const barId = place.barId;
   const initialName = props.initialNameProp !== undefined ? props.initialNameProp : params.name;
   const desktop = useBreakpoint() === 'desktop';
   const dialog = Platform.OS === 'web' && desktop && !props.isInline;
   // The dialog's Escape and scrim close as the X does, through the wizard (Leave it for now).
   const closeRef = useRef<(() => void) | null>(null);
   // A draft's link names its bar, or none for one at home.
-  if (draftId) return <BeerWineDraftEditScreen kind={kind} draftId={draftId} barId={named ?? null} initialName={initialName} onExit={props.onClose ?? goBack} />;
+  if (draftId) return <BeerWineDraftEditScreen kind={kind} draftId={draftId} barId={named && named !== HOME_BAR ? named : null} initialName={initialName} onExit={props.onClose ?? goBack} />;
 
   const wizard = !place.ready ? (
     <WizardWaiting />

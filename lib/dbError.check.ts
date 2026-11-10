@@ -17,6 +17,14 @@ assert.equal(saveErrorWords({ code: 'P0001', message: 'That name has a word we d
 assert.match(saveErrorWords(new TypeError('Network request failed')), /reach the server/);
 assert.match(saveErrorWords({ code: '23505', message: 'duplicate key value violates unique constraint "items_bar_name_key"' }), /already saved/);
 assert.match(saveErrorWords({ code: '42501', message: 'new row violates row-level security policy for table "items"' }), /can’t add that here/);
-for (const raw of [new Error('relation "x" does not exist'), { code: '42P01', message: 'relation "x" does not exist' }, null, 'boom']) {
-  assert.equal(saveErrorWords(raw), 'Something went wrong saving it. Try again.');
-}
+// The app's own words (a plain Error it threw) are said; anything else gets a sentence, never its text.
+assert.equal(saveErrorWords(new Error('Sign in to save drinks.')), 'Sign in to save drinks.');
+const raw = [
+  { code: '42P01', message: 'relation "x" does not exist' },
+  { code: '23503', message: 'insert or update on table "item_steps" violates foreign key constraint "item_steps_item_id_fkey"' },
+  { code: 'PGRST301', message: 'JWT expired' },
+  new TypeError('undefined is not an object (evaluating \'d.prep\')'),
+  null,
+  'boom',
+];
+for (const e of raw) assert.equal(saveErrorWords(e), 'Something went wrong saving it. Try again.');

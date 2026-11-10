@@ -11,6 +11,7 @@ import { AddBeerWineRoute } from './AddBeerWineRoute';
 let mockParams: Record<string, string> = {};
 let mockVenuesLoading = true;
 let mockCaps: string[] | undefined = undefined;
+let mockBarsPaused = false;
 const mockDraftScreen = jest.fn((_props: { barId: string | null }) => null);
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: jest.fn(), push: jest.fn(), back: jest.fn(), canGoBack: () => true }), useLocalSearchParams: () => mockParams }));
@@ -19,6 +20,7 @@ jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/components/nav/VenueBrandProvider', () => ({ VenueBrandProvider: ({ children }: { children: ReactNode }) => children }));
 jest.mock('@/components/screens/drink/edit/BeerWineEditScreen', () => ({ BeerWineDraftEditScreen: (p: { barId: string | null }) => mockDraftScreen(p) }));
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ isLoading: mockVenuesLoading, venues: [], active: null }) }));
+jest.mock('@/hooks/useBars', () => ({ useBars: () => ({ fetchStatus: mockBarsPaused ? 'paused' : mockVenuesLoading ? 'fetching' : 'idle' }) }));
 jest.mock('@/hooks/useMode', () => ({ useHereVenue: () => (mockVenuesLoading ? null : { id: 'bar-1', name: 'Little Rye' }) }));
 jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: (barId: string | null) => ({ data: barId ? mockCaps : undefined, isError: false, fetchStatus: barId && !mockCaps ? 'fetching' : 'idle' }) }));
 jest.mock('@/hooks/useCreateBeerWine', () => ({
@@ -37,6 +39,7 @@ beforeEach(() => {
   mockParams = {};
   mockVenuesLoading = true;
   mockCaps = undefined;
+  mockBarsPaused = false;
   mockDraftScreen.mockClear();
   useBeerWineWizardStore.setState({ kept: {} });
 });
@@ -60,9 +63,29 @@ test('a cold link with no bar waits for the venue, then opens as the bar’s bee
   expect(screen.getByText('BEER · 1 OF 7')).toBeTruthy();
 });
 
-test('at a venue where you can’t add, it opens in your home bar, as Add says', async () => {
+test('at a venue where you can’t add, it opens in your home bar, as Add says, and stays there', async () => {
   mockVenuesLoading = false;
   mockCaps = [];
+  const view = await renderWithProviders(<AddBeerWineRoute kind="beer" />);
+  await laidOut();
+  expect(screen.getByText('BEER · 1 OF 6')).toBeTruthy();
+  // Rights that arrive later (a slow or offline read) never move an open wizard.
+  mockCaps = ['edit_drinks'];
+  await act(() => view.rerender(<AddBeerWineRoute kind="beer" />));
+  expect(screen.getByText('BEER · 1 OF 6')).toBeTruthy();
+});
+
+test('offline with no venues saved, it opens at home rather than wait for signal', async () => {
+  mockBarsPaused = true;
+  await renderWithProviders(<AddBeerWineRoute kind="beer" />);
+  await laidOut();
+  expect(screen.getByText('BEER · 1 OF 6')).toBeTruthy();
+});
+
+test('a link that says home opens at home, even at a venue', async () => {
+  mockParams = { barId: 'home' };
+  mockVenuesLoading = false;
+  mockCaps = ['edit_drinks'];
   await renderWithProviders(<AddBeerWineRoute kind="beer" />);
   await laidOut();
   expect(screen.getByText('BEER · 1 OF 6')).toBeTruthy();

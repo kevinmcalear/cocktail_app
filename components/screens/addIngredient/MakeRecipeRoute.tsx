@@ -148,7 +148,7 @@ function MakeRecipe({ barId }: { barId: string | null }) {
         saving.current = true;
         const queued = offline;
         save.mutate(
-          { name: n, prep, barId, slot, queued, shelf: !!shelf },
+          { name: n, prep, barId, slot, kept: useHouseMadeWizardStore.getState().kept[slot]?.draft, queued, shelf: !!shelf },
           {
             onSuccess: ({ id, name, warnings }) => {
               if (queued) return;

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 import { beerWineBar, beerWinePlace, EMPTY_BEER_WINE, isBeerWineSlot, type BeerWineDraft, type BeerWineStep } from './beerWineDraft';
 import { EMPTY_DRAFT } from './drinkWizard';
-import { EMPTY_HOUSE_MADE, houseMadeBar, houseMadePlace, houseMadesAt, houseMadeSlot, isHouseMadeSlot, savedAsKept } from './houseMadeDraft';
+import { EMPTY_HOUSE_MADE, houseMadeBar, houseMadePlace, houseMadesAt, houseMadeSlot, isHouseMadeSlot, sameHouseMade } from './houseMadeDraft';
 import { startPrep } from './prepKinds';
 import { BEER_WINE_DRAFTS, DRINK_DRAFTS, HOUSE_MADE_DRAFTS, forAccount, mergeDrafts, type KeptDraft } from './draftSync';
 
@@ -109,16 +109,16 @@ assert.equal(HOUSE_MADE_DRAFTS.filled(EMPTY_HOUSE_MADE), false, 'nothing typed i
 assert.equal(HOUSE_MADE_DRAFTS.filled({ name: 'Honey-ginger syrup', prep: null }), true);
 assert.equal(HOUSE_MADE_DRAFTS.filled({ name: ' ', prep: null }), false, 'no name: kept on the phone only (an older app reads it as a drink)');
 
-// A house-made saved offline goes when its save lands: picked up and stepped through meanwhile (the step and the time
-// change, the recipe doesn't), or read back from the account in the database's key order. One written in since stays.
+// A house-made saved offline goes when its save lands if it's still what was saved: picked up and stepped through meanwhile
+// (its step and time change, not what's in it), or read back from the account in the database's key order. One written in since stays.
 {
   const prep = startPrep('syrup', 'Honey-ginger syrup');
-  const reordered = JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(prep).reverse())));
-  assert.equal(savedAsKept({ name: 'Honey-ginger syrup', prep }, 'Honey-ginger syrup', prep), true);
-  assert.equal(savedAsKept({ name: 'Honey-ginger syrup', prep: reordered }, 'Honey-ginger syrup', prep), true, 'key order is not a change');
-  assert.equal(savedAsKept({ name: '', prep }, 'Honey-ginger syrup', prep), true, 'a name passed in and never typed');
-  assert.equal(savedAsKept({ name: 'Honey-ginger syrup', prep: { ...prep, storage: 'Shelf' } }, 'Honey-ginger syrup', prep), false, 'written in since: kept');
-  assert.equal(savedAsKept({ name: 'Ginger syrup', prep }, 'Honey-ginger syrup', prep), false, 'renamed since: kept');
+  const saved = { id: 'd1', name: 'Honey-ginger syrup', prep };
+  const reordered = JSON.parse(JSON.stringify({ prep: Object.fromEntries(Object.entries(prep).reverse()), name: saved.name, id: 'd1' }));
+  assert.equal(sameHouseMade(saved, JSON.parse(JSON.stringify(saved))), true);
+  assert.equal(sameHouseMade(reordered, saved), true, 'key order is not a change');
+  assert.equal(sameHouseMade({ ...saved, prep: { ...prep, storage: 'Shelf' } }, saved), false, 'written in since: kept');
+  assert.equal(sameHouseMade({ ...saved, name: 'Ginger syrup' }, saved), false, 'renamed since: kept');
 }
 
 console.log('draftSync checks passed');

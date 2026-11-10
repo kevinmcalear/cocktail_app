@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 import { useBreakpoint } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { useCreateBar } from '@/hooks/useBringInPlace';
+import { HOME_BAR } from '@/lib/itemRoutes';
 
 import { WizardDialog } from '../addDrink/WizardDialog';
 import { WizardWaiting } from '../addDrink/WizardWaiting';
@@ -34,7 +35,7 @@ export function AddIngredientRoute() {
       initialName={params.name}
       embedded={dialog}
       closeRef={closeRef}
-      onMake={(name) => router.replace({ pathname: '/make-recipe', params: { ...(name ? { name } : {}), ...(barId ? { barId } : {}) } })}
+      onMake={(name) => router.replace({ pathname: '/make-recipe', params: { ...(name ? { name } : {}), barId: barId ?? HOME_BAR } })}
       onClose={goBack}
       onSaved={({ id }) => router.replace(`/ingredient/${id}`)}
     />

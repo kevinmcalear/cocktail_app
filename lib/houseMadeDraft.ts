@@ -26,12 +26,13 @@ export const EMPTY_HOUSE_MADE: HouseMadeDraft = { name: '', prep: null };
 export const filledHouseMade = (d: HouseMadeDraft) => !!(d.name.trim() || d.prep);
 
 /**
- * The kept draft is the one that was saved: its name and recipe as they went.
- * Picked up again and stepped through while the save waited for signal, it
- * still goes once the save is in (it used to stay listed, its name taken);
- * one written in since stays, with what was written.
+ * The kept draft is still the one that was saved: the same name and recipe
+ * as when Save was pressed. Picked up again and stepped through while the
+ * save waited for signal (its step and time change, not what's in it), it
+ * goes once the save is in (it used to stay listed, its name taken); one
+ * written in since stays, with what was written.
  */
-export const savedAsKept = (kept: HouseMadeDraft, name: string, prep: PrepDraft | null) => (kept.name.trim() || name.trim()) === name.trim() && JSON.stringify(keysInOrder(kept.prep)) === JSON.stringify(keysInOrder(prep));
+export const sameHouseMade = (a: HouseMadeDraft, b: HouseMadeDraft) => JSON.stringify(keysInOrder(a)) === JSON.stringify(keysInOrder(b));
 
 /** The same JSON whatever order its keys came in: a draft read back from the account comes in the database's order. */
 const keysInOrder = (v: unknown): unknown =>

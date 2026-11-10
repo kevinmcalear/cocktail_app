@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Caption, DsText, PressableScale, useDs, type IconName } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, radius, space } from '@/constants/tokens';
+import { HOME_BAR } from '@/lib/itemRoutes';
 import type { EditSection } from '@/lib/menuLayout';
 import type { MenuDrink } from '@/types/menus';
 
@@ -19,7 +20,9 @@ export function useMakeDrink(section: EditSection | null, barId: string | null) 
   return (name: string | null) => {
     if (!section) return;
     const kind = section.allowedTypes.includes('cocktail') ? 'cocktail' : (section.allowedTypes[0] ?? 'cocktail');
-    router.push({ pathname: CREATE_ROUTE[kind], params: { menuSectionId: section.key, ...(barId ? { barId } : {}), ...(name && kind === 'cocktail' ? { name } : {}) } });
+    // A home menu's beer or wine is your own, even opened while you're at a venue (no bar there means where you are now).
+    const bar = barId ?? (kind === 'cocktail' ? null : HOME_BAR);
+    router.push({ pathname: CREATE_ROUTE[kind], params: { menuSectionId: section.key, ...(bar ? { barId: bar } : {}), ...(name && kind === 'cocktail' ? { name } : {}) } });
   };
 }
 

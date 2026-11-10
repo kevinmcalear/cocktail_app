@@ -6,7 +6,7 @@ import { SHELF_KEY } from '@/hooks/useShelf';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { saveErrorWords } from '@/lib/dbError';
 import { houseMadePayload } from '@/lib/houseMadeParts';
-import { savedAsKept } from '@/lib/houseMadeDraft';
+import { sameHouseMade, type HouseMadeDraft } from '@/lib/houseMadeDraft';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
@@ -21,6 +21,8 @@ export interface SaveHouseMadeInput {
   barId: string | null;
   /** The draft's slot (lib/houseMadeDraft houseMadeSlot): cleared once it's in. */
   slot: string;
+  /** The kept draft as Save was pressed: a save that waited clears it only if it's still that (one written in since stays). */
+  kept?: HouseMadeDraft;
   /** Add to your bar's Make it in house: it goes on your bar too, offline as well. */
   shelf?: boolean;
   /** Saved with no signal (Save on this phone): it waits for signal and says so when it's in. */
@@ -70,12 +72,12 @@ export function useSaveHouseMade() {
       }
       return made;
     },
-    onSuccess: ({ warnings, count }, { name, prep, slot, queued }) => {
+    onSuccess: ({ warnings, count }, { name, slot, kept: asSaved, queued }) => {
       // Here, not on the screen: a save that waited for signal lands after the steps have closed.
       // ponytail: a wait cut short by closing the app loses the save, not the draft, which is still listed; setMutationDefaults would resume it.
       const store = useHouseMadeWizardStore.getState();
       const kept = store.kept[slot];
-      if (kept && savedAsKept(kept.draft, name, prep)) store.clear(slot);
+      if (kept && (!queued || !asSaved || sameHouseMade(kept.draft, asSaved))) store.clear(slot);
       void qc.invalidateQueries({ queryKey: ['same-name-prep'] });
       if (!queued) return;
       if (count > 1) toastDone(savedTogether(count), PARTS_SAVED);

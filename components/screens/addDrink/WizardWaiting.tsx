@@ -7,7 +7,7 @@ export function WizardWaiting() {
   const ds = useDs();
   return (
     <View style={[styles.fill, { backgroundColor: ds.c.ground }]}>
-      <ActivityIndicator color={ds.c.muted} accessibilityLabel="Opening" />
+      <ActivityIndicator color={ds.c.muted} aria-label="Opening" />
     </View>
   );
 }
