@@ -54,7 +54,8 @@ export function useAddActions(done: () => void, { replace = false }: { replace?:
       if (intent === 'read') return read(text.trim());
       if (intent !== 'name') return;
       done();
-      const href = newDrinkHref(capitalizeFirst(text.trim()), place.barId) as never;
+      // Before the place is known, the link names no bar and the wizard waits for it.
+      const href = newDrinkHref(capitalizeFirst(text.trim()), place.loading ? undefined : place.barId) as never;
       if (replace) router.replace(href);
       else router.push(href);
     },

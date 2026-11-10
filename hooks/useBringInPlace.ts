@@ -20,7 +20,8 @@ export function useBringInPlace() {
   const venuesPaused = useBars().fetchStatus === 'paused';
   const venue = useHereVenue();
   const caps = useCapabilities(venue?.id ?? null);
-  const capsKnown = !venue || caps.data !== undefined || caps.isError || caps.fetchStatus === 'paused';
+  // Not fetching and still nothing: offline (paused) or not asked (no user yet). Either way it settles rather than wait.
+  const capsKnown = !venue || caps.data !== undefined || caps.isError || caps.fetchStatus !== 'fetching';
   const canAdd = !venue || !!caps.data?.includes('edit_drinks');
   return {
     barId: venue && canAdd ? venue.id : null,
@@ -31,7 +32,8 @@ export function useBringInPlace() {
 }
 
 /**
- * Where a create page (/add-beer, /add-wine, /add-ingredient, /make-recipe)
+ * Where a create page (/add-cocktail, /add-beer, /add-wine, /add-ingredient,
+ * /make-recipe)
  * makes its thing: the bar its link names (`null` or HOME_BAR: at home),
  * else, with no bar in the link (a cold deep link, a bookmark, a typed
  * address), where you are now, as Bring in decides it. `ready` is false

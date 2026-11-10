@@ -12,6 +12,7 @@ import type { DrinkKind } from '@/lib/drinkKinds';
 import { hasContent, type WizardDraft } from '@/lib/drinkWizard';
 import { houseMadesAt } from '@/lib/houseMadeDraft';
 import { fileTitle, tally, waitingFor, whenWords } from '@/lib/importReview';
+import { HOME_BAR } from '@/lib/itemRoutes';
 import { recipesToFinish } from '@/lib/prepMath';
 import { slotStart } from '@/lib/wizardSlots';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
@@ -112,7 +113,7 @@ function DraftRow({ slot, draft, barId, onOpen }: { slot: string; draft: WizardD
   const left = recipesToFinish(draft.lines);
   const open = () =>
     onOpen({
-      ...(barId ? { barId } : {}),
+      barId: barId ?? HOME_BAR,
       ...(start.menuSectionId ? { menuSectionId: start.menuSectionId } : {}),
       ...(start.name ? { name: start.name } : {}),
       ...(start.from ? { from: start.from } : {}),

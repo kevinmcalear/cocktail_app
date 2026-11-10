@@ -23,8 +23,8 @@ const query = (params: Record<string, string | undefined>) => {
 export function editModeRedirect(p: { create?: string; barId?: string; name?: string; type?: string; id?: string }): string {
   if (p.create === 'menu') return '/menus/all?new=1';
   const add = p.create ? ADD[p.create] : undefined;
-  // Your own ('personal') says so: with no bar the beer, wine and bottle pages open where you are now (the drink's still means home).
-  if (add) return add + query({ barId: p.barId === 'personal' ? (p.create === 'cocktail' ? undefined : HOME_BAR) : p.barId, name: p.name });
+  // Your own ('personal') says so: with no bar a create page opens where you are now.
+  if (add) return add + query({ barId: p.barId === 'personal' ? HOME_BAR : p.barId, name: p.name });
   if (p.id) {
     if (p.type === 'published_menu') return `/menus/${encodeURIComponent(p.id)}`;
     if (p.type === 'published_ingredient') return `/ingredient/${encodeURIComponent(p.id)}`;

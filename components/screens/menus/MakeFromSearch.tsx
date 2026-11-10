@@ -20,9 +20,8 @@ export function useMakeDrink(section: EditSection | null, barId: string | null) 
   return (name: string | null) => {
     if (!section) return;
     const kind = section.allowedTypes.includes('cocktail') ? 'cocktail' : (section.allowedTypes[0] ?? 'cocktail');
-    // A home menu's beer or wine is your own, even opened while you're at a venue (no bar there means where you are now).
-    const bar = barId ?? (kind === 'cocktail' ? null : HOME_BAR);
-    router.push({ pathname: CREATE_ROUTE[kind], params: { menuSectionId: section.key, ...(bar ? { barId: bar } : {}), ...(name && kind === 'cocktail' ? { name } : {}) } });
+    // A home menu's drink is your own, even opened while you're at a venue (no bar there means where you are now).
+    router.push({ pathname: CREATE_ROUTE[kind], params: { menuSectionId: section.key, barId: barId ?? HOME_BAR, ...(name && kind === 'cocktail' ? { name } : {}) } });
   };
 }
 

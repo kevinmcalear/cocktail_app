@@ -66,7 +66,7 @@ export function AddBeerWineRoute({ kind, ...props }: AddDrinkProps & { kind: Dri
     />
   );
   if (props.isInline) return wizard;
-  return <VenueBrandProvider>{dialog ? (
+  return <VenueBrandProvider barId={place.ready ? barId : undefined}>{dialog ? (
         <WizardDialog label={`Add a ${kind}`} onClose={() => closeRef.current?.()}>
           {wizard}
         </WizardDialog>

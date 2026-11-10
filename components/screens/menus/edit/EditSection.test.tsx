@@ -91,6 +91,6 @@ test('a drink started for the section and not saved shows on it, and Keep going 
   useDrinkWizardStore.setState({ kept: { [draftSlot('home', { menuSectionId: 's1', name: 'Salty Boy' })]: kept('Salty Boy', 2) } });
   await renderSection();
   await fireEvent.press(screen.getByRole('button', { name: 'Salty Boy, draft. Keep going' }));
-  expect(mockPush).toHaveBeenCalledWith({ pathname: '/add-cocktail', params: { menuSectionId: 's1', name: 'salty boy' } });
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/add-cocktail', params: { menuSectionId: 's1', barId: 'home', name: 'salty boy' } });
   useDrinkWizardStore.setState({ kept: {} });
 });

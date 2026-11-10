@@ -10,6 +10,7 @@ import { recipePrep, type RecipeChoices } from '@/lib/bringInDraft';
 import type { MatchData } from '@/lib/bringInMatch';
 import { rematch } from '@/lib/importRematch';
 import { approved, canCheck, isFinished, nextOpen, putBack, setMark, takeOut, tally, type ImportReview } from '@/lib/importReview';
+import { HOME_BAR } from '@/lib/itemRoutes';
 import { useBringIn } from '@/store/useBringIn';
 import { draftSlot, reviewSlots, useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
@@ -148,7 +149,7 @@ export function useImportReview(id: string, data: MatchData) {
     // Begun afresh, it opens at the first step: the person asked to edit it, not to check it again (Eddie, 26 Oct). Start over comes back to it.
     wizard.begin(wizardAt, toMake(r.recipes[i], r.choices[i], r.batches).draft);
     const query = `review=${encodeURIComponent(id)}&drink=${i}&imported=1`;
-    router.push((r.barId ? `/add-cocktail?barId=${r.barId}&${query}` : `/add-cocktail?${query}`) as Href);
+    router.push(`/add-cocktail?barId=${r.barId ?? HOME_BAR}&${query}` as Href);
   };
 
   // Every drink checked and saved: Brought in, with what the approved ones made.

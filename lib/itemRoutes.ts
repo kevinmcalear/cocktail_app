@@ -18,16 +18,17 @@ export function itemHref(category: ItemCategory | undefined, id: string): string
 }
 
 /**
- * A create link's `barId` for your home bar (/add-beer, /add-wine,
- * /add-ingredient, /make-recipe; hooks/useBringInPlace useCreateBar), when you
- * may be at a venue as it opens (a home menu's Make). No bar means where you
- * are now.
+ * A create link's `barId` for your home bar (/add-cocktail, /add-beer,
+ * /add-wine, /add-ingredient, /make-recipe; hooks/useBringInPlace
+ * useCreateBar), when you may be at a venue as it opens (a home menu's Make).
+ * No bar means where you are now.
  */
 export const HOME_BAR = 'home';
 
-/** The add-drink wizard, started on a name, for a venue or (no bar) your own drinks. */
-export function newDrinkHref(name: string, barId: string | null): string {
-  return `/add-cocktail?name=${encodeURIComponent(name)}${barId ? `&barId=${encodeURIComponent(barId)}` : ''}`;
+/** The add-drink wizard, started on a name, for a venue, (null) your own drinks, or (undefined, not known yet) where you are as it opens. */
+export function newDrinkHref(name: string, barId: string | null | undefined): string {
+  const bar = barId === undefined ? '' : `&barId=${encodeURIComponent(barId ?? HOME_BAR)}`;
+  return `/add-cocktail?name=${encodeURIComponent(name)}${bar}`;
 }
 
 /**
