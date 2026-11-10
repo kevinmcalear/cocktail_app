@@ -122,13 +122,13 @@
       "measuredBy": "scripts/budgets.mjs in build:web (CI): first-load JS per page, the app's scripts in its exported HTML, brotli quality 11, in bytes (KB is 1024). A page fails when it gets worse than `current` by more than `noise`, not for being over `limit`: the gap is reported. App pages are the four tabs' first pages. LCP, INP and CLS are not measured yet (Lighthouse CI and field data).",
       "noise": 2048,
       "current": {
-        "/d/[id]": 609451,
-        "/m/[id]": 597832,
-        "/p/[id]": 662942,
-        "/": 640739,
-        "/drinks": 669102,
-        "/discover": 617777,
-        "/you": 603846
+        "/d/[id]": 595437,
+        "/m/[id]": 583812,
+        "/p/[id]": 648868,
+        "/": 627316,
+        "/drinks": 655238,
+        "/discover": 604329,
+        "/you": 590466
       },
       "limit": {
         "/d/[id]": 307200,
