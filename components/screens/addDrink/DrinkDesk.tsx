@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ComponentRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Button, Caption, TextLink, useDs } from '@/components/ds';
@@ -115,7 +115,10 @@ export function DrinkDesk(p: DrinkDeskProps) {
   // A house-made being written inside the drink: the rail says which; it opens beside the drink, in the rail's place (Add-inside, Web).
   const [prepOpen, setPrepOpen] = useState<string | null>(null);
   const [panelEl, setPanelEl] = useState<HTMLElement | null>(null);
-  const [panelInUse, setPanelInUse] = useState(false);
+  // How many are open in it (a line's house-made and a finish's can both be): it shows while any is.
+  const [panelUses, setPanelUses] = useState(0);
+  const panelInUse = panelUses > 0;
+  const onPanelUse = useCallback((inUse: boolean) => setPanelUses((n) => n + (inUse ? 1 : -1)), []);
   // A classic or a riff can bring garnishes in after the page opens: they show.
   const finishing = finishOpen || draft.garnishes.length > 0;
 
@@ -165,7 +168,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const saveLabel = p.saving ? 'Saving…' : menu ? `Add to ${menu}` : 'Save drink';
 
   return (
-    <SidePanelContext value={{ el: panelEl, onUse: setPanelInUse }}>
+    <SidePanelContext value={{ el: panelEl, onUse: onPanelUse }}>
     <View testID="add-drink" style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <WebHead>
         <title>Add a drink</title>

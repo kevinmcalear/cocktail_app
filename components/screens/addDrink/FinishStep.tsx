@@ -42,7 +42,8 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
   const [all, setAll] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   // A house-made being written inside the drink (board Add-inside): its line in the finish (its key).
-  const [making, setMaking] = useState<{ name: string; key: string } | null>(null);
+  // `fresh`: added from the search, so backing out with nothing written takes it out. `finished`: its recipe done before, and a change keeps it so.
+  const [making, setMaking] = useState<{ name: string; key: string; fresh?: boolean; finished?: boolean } | null>(null);
   const lines = draft.garnishes;
   const search = { ingredients, aliases, coreIds, loading };
   const makingLine = making ? lines.find((l) => l.key === making.key) : undefined;
@@ -91,7 +92,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
                 onChange={(c) => change(l.key, c)}
                 onRemove={() => set({ garnishes: lines.filter((x) => x.key !== l.key) })}
                 onSwap={() => setSwapKey(l.key)}
-                onEditPrep={() => setMaking({ name: l.name, key: l.key })}
+                onEditPrep={() => setMaking({ name: l.name, key: l.key, finished: !!l.prep && !l.prep.at && !l.later })}
               />
             )
           )}
@@ -110,7 +111,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
         onTyping={setTyping}
         onMake={(name) => {
           const line = add({ id: null, name }, true);
-          setMaking({ name: line.name, key: line.key });
+          setMaking({ name: line.name, key: line.key, fresh: true });
         }}
       />
       {making && makingLine ? (
@@ -125,13 +126,17 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
           bar={bar}
           ingredients={ingredients}
           aliases={aliases}
-          // A recipe to finish until Done.
-          onKeep={(prep, name) => change(making.key, { name, prep: { ...prep, at: stepToFinish(prep) }, technique: prep.technique, later: undefined })}
+          finished={!!making.finished}
+          // A recipe to finish until Done (a finished one stays finished while it could be added as it is).
+          onKeep={(prep, name, done) => change(making.key, { name, prep: { ...prep, at: done && making.finished ? undefined : stepToFinish(prep) }, technique: prep.technique, later: undefined })}
           onDone={(prep, name) => {
             change(making.key, { name, prep: { ...prep, at: undefined }, technique: prep.technique, later: undefined });
             setMaking(null);
           }}
-          onClose={() => setMaking(null)}
+          onClose={(kept) => {
+            if (making.fresh && !kept && !makingLine.prep) set({ garnishes: lines.filter((l) => l.key !== making.key) });
+            setMaking(null);
+          }}
           onUse={(id, name) => {
             change(making.key, { id, name, prep: undefined, technique: undefined, later: undefined });
             setMaking(null);

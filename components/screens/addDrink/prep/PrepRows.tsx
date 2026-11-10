@@ -15,7 +15,7 @@ const STORE_WORD: Record<string, string> = { Fridge: 'cold', Freezer: 'frozen' }
 // Short enough that a phone's row keeps its title (Method, Keeps) whole beside it.
 const short = (s: string) => (s.length > 24 ? `${s.slice(0, 23).trimEnd()}…` : s);
 
-type Row = 'kind' | 'method' | 'makes';
+type Row = 'kind' | 'method' | 'makes' | 'keeps';
 
 interface PrepRowsProps {
   name: string;
@@ -59,8 +59,9 @@ export function PrepRows({ name, draft, set, version, phrase, onKind, onTechniqu
     </>
   );
   const makesNote = <ListNote icon="info.circle" text={makes ? 'A guess from the weights. Log your first batch and it uses the real number.' : 'Give the lines amounts and it says about how much it makes.'} />;
-  const shown = open === 'kind' ? kinds : open === 'method' ? how : open === 'makes' ? makesNote : null;
-  const title = open === 'kind' ? 'What it is' : open === 'method' ? 'How it’s made' : 'Makes';
+  // Keeping is written in the method's step.
+  const shown = open === 'kind' ? kinds : open === 'method' || open === 'keeps' ? how : open === 'makes' ? makesNote : null;
+  const title = open === 'kind' ? 'What it is' : open === 'makes' ? 'Makes' : 'How it’s made';
 
   return (
     <>
@@ -68,7 +69,7 @@ export function PrepRows({ name, draft, set, version, phrase, onKind, onTechniqu
         <ListRow first title="What it is" value={kindName} expanded={inPlace && open === 'kind'} onPress={() => toggle('kind')} />
         <ListRow title="Method" value={method ?? 'Add'} warn={!method} expanded={inPlace && open === 'method'} onPress={() => toggle('method')} />
         <ListRow title="Makes" value={makes ? `About ${formatQuantity({ kind: 'ml', value: makes, unit: 'ml' })}` : 'Add'} warn={!makes} expanded={inPlace && open === 'makes'} onPress={() => toggle('makes')} />
-        <ListRow title="Keeps" value={keeps ?? 'Add'} warn={!keeps} expanded={inPlace && open === 'method'} onPress={() => toggle('method')} />
+        <ListRow title="Keeps" value={keeps ?? 'Add'} warn={!keeps} expanded={inPlace && open === 'keeps'} onPress={() => toggle('keeps')} />
       </ListGroup>
       {inPlace ? shown : (
         <Sheet visible={sheet} onClose={() => setSheet(false)} accessibilityLabel={title} keyboard header={<FlowHead title={title} done />}>

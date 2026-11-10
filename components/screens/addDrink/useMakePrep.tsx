@@ -39,6 +39,18 @@ interface Making {
   combined?: boolean;
   /** Opened finished (its recipe done before): a change keeps it finished while it could be added as it is. */
   finished?: boolean;
+  /** Made from the search or a line's name: the line as it was (null: there was none), so backing out with nothing written puts it back. */
+  was?: WizardLine | null;
+}
+
+/** Left with nothing written: two lines just combined go back to two, and a line made from the search or a name goes back to how it was. Null when there's nothing to put back. */
+function putBack(m: Making, lines: readonly WizardLine[]): WizardLine[] | null {
+  const l = lines.find((x) => x.key === m.key);
+  if (!l) return null;
+  if (m.combined) return l.combined ? uncombine(lines, m.key) : null;
+  const was = m.was;
+  if (was === undefined || l.prep) return null;
+  return was ? lines.map((x) => (x.key === m.key ? was : x)) : lines.filter((x) => x.key !== m.key);
 }
 
 /**
@@ -64,8 +76,9 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
   // Shown the way it saves ("coconut fat washed rum" is "Coconut fat washed rum"). The line comes first, a recipe to write until it's done.
   const make = (name: string, lineKey?: string, pour?: TypedPour) => {
     const named = capitalizeFirst(name);
+    const was = lineKey ? (draft.lines.find((l) => l.key === lineKey) ?? null) : null;
     if (lineKey) change(lineKey, { id: null, name: named, later: true, bottle: undefined, named: undefined });
-    setMaking({ name: named, key: lineKey ?? add({ id: null, name: named }, undefined, true, pour).key });
+    setMaking({ name: named, key: lineKey ?? add({ id: null, name: named }, undefined, true, pour).key, was });
   };
   // A bottle made in house starts from nothing written: its page opens on the technique, the bottle its base.
   const fresh = !!making?.base;
@@ -89,15 +102,15 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
         technique={making.technique ?? null}
         combined={making.combined}
         finished={!!making.finished}
-        // On the line as it's written: a recipe to finish until Done (a finished one stays finished while it could be added as it is).
-        onKeep={(prep, name, done) => change(making.key, { id: null, name, prep: { ...prep, at: done && making.finished ? undefined : stepToFinish(prep) }, technique: prep.technique, later: undefined, bottle: undefined, batch: undefined, combined: undefined })}
+        // On the line as it's written: a recipe to finish until Done (a finished one stays finished while it could be added as it is). A bottle made in house is the bottle no more; a line opened again keeps its row.
+        onKeep={(prep, name, done) => change(making.key, { ...(making.base ? { id: null } : null), name, prep: { ...prep, at: done && making.finished ? undefined : stepToFinish(prep) }, technique: prep.technique, later: undefined, bottle: undefined, batch: undefined, combined: undefined })}
         onDone={(prep, name) => {
-          change(making.key, { id: null, name, prep: { ...prep, at: undefined }, technique: prep.technique, later: undefined, bottle: undefined, batch: undefined, combined: undefined });
+          change(making.key, { ...(making.base ? { id: null } : null), name, prep: { ...prep, at: undefined }, technique: prep.technique, later: undefined, bottle: undefined, batch: undefined, combined: undefined });
           setMaking(null);
         }}
         onClose={(kept) => {
-          // Two lines just combined, left with nothing written, go back to two.
-          if (making.combined && !kept) set({ lines: uncombine(draft.lines, making.key) });
+          const back = kept ? null : putBack(making, draft.lines);
+          if (back) set({ lines: back });
           setMaking(null);
         }}
         onUse={(id, name) => {
@@ -110,7 +123,11 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
   return {
     make,
     /** Open a line's recipe again, or the page for two lines just combined. Lines combined and left untouched under another page go back. */
-    edit: (l: WizardLine) => setMaking({ name: l.name, key: l.key, combined: !!l.combined, finished: !!l.prep && !l.prep.at && !l.later }),
+    edit: (l: WizardLine) => {
+      const back = making && making.key !== l.key ? putBack(making, draft.lines) : null;
+      if (back) set({ lines: back });
+      setMaking({ name: l.name, key: l.key, combined: !!l.combined, finished: !!l.prep && !l.prep.at && !l.later });
+    },
     /** Make it house: the bottle line becomes a house-made by this technique, the bottle its base. */
     house: (l: WizardLine, name: string, technique: string) => setMaking({ name, key: l.key, technique, base: { id: l.id, name: l.name } }),
     /** The house-made's page, while one is open. */

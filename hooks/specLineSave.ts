@@ -148,13 +148,15 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
       later.push(...recipesToFinish([l]).map((r) => capitalize(r.name)));
     });
   };
-  /** The drink couldn't be saved: the house-mades saved for it go too (best effort; a retry saves them again). */
-  const dropHouseMades = async () => {
-    if (!houseMadeIds.length) return;
+  /** The drink couldn't be saved: the house-mades saved for it go too. False when they couldn't be taken out, so they're still saved. */
+  const dropHouseMades = async (): Promise<boolean> => {
+    if (!houseMadeIds.length) return true;
     // ponytail: a dropped connection here leaves them saved, and the retry is refused by name; the page's name-taken card then offers Use yours. A function saving the drink and its house-mades together would close it (gated: a new migration).
-    const ids = houseMadeIds.splice(0);
+    const { error } = await supabase.from('items').delete().in('id', [...houseMadeIds]);
+    if (error) return false;
+    houseMadeIds.length = 0;
     houseIds.clear();
-    await supabase.from('items').delete().in('id', ids);
+    return true;
   };
 
   /** The row a line saves as. */
@@ -250,11 +252,8 @@ export async function resolveEditItems(items: readonly SortableRecipeItem[], bar
     items: out,
     warnings: saver.warnings,
     created: saver.newIngredients,
-    /** The spec couldn't be saved: the house-mades written inside it go, and their lines are as they were, recipes and all (board Add-inside: all or none). */
-    undo: async (): Promise<SortableRecipeItem[]> => {
-      await saver.dropHouseMades();
-      return out.map((item, i) => (houseMade.has(i) ? items[i] : item));
-    },
+    /** The spec couldn't be saved: the house-mades written inside it go, and their lines are as they were, recipes and all (board Add-inside: all or none). Ones that couldn't be taken out stay saved, their lines on them, so a retry doesn't write them twice. */
+    undo: async (): Promise<SortableRecipeItem[]> => ((await saver.dropHouseMades()) ? out.map((item, i) => (houseMade.has(i) ? items[i] : item)) : out),
   };
 }
 

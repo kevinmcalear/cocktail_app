@@ -216,7 +216,11 @@ export function useIngredientEditor(id: string) {
             const lines = recipeLines(spec.items);
             if (JSON.stringify(lines) !== JSON.stringify(recipeLines(loaded.recipeItems))) {
                 const { error: recipeError } = await supabase.rpc("replace_recipe_lines", { p_item: id, p_lines: lines });
-                if (recipeError) throw recipeError;
+                // House-mades written inside it save with it or not at all (board Add-inside).
+                if (recipeError) {
+                    editor.setRecipeItems(await spec.undo());
+                    throw recipeError;
+                }
             }
             if (spec.created.length) void refreshIngredients(queryClient, spec.created);
             if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));
@@ -319,7 +323,10 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
                 .insert({ ...ingredientColumns(form), item_type: "ingredient" })
                 .select()
                 .single();
-            if (error || !ingredient) throw error;
+            if (error || !ingredient) {
+                editor.setRecipeItems(await spec.undo());
+                throw error;
+            }
             const newId = ingredient.id;
             for (const catId of form.selectedCategories) {
                 await supabase.from("item_categories").upsert({ item_id: newId, category_id: catId, is_primary: true }, { onConflict: "item_id,category_id" });

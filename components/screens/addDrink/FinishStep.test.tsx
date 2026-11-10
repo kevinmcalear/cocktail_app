@@ -74,6 +74,18 @@ describe('FinishStep', () => {
     expect(line.prep.keepsHours).toBe(96);
   });
 
+  test('made from the search and backed out of with nothing written: no line is left', async () => {
+    const set = jest.fn();
+    await renderWithProviders(<Stateful set={set} />);
+    await fireEvent.changeText(screen.getByLabelText('Search for a garnish'), 'rvwa');
+    await fireEvent.press(screen.getByRole('button', { name: 'Make “Rvwa” in-house' }));
+    expect(finish(set)).toHaveLength(1);
+    await partLaidOut();
+    await fireEvent.press(screen.getByRole('button', { name: /^Back to Coconut Fat-Washed Daiquiri/ }));
+    expect(screen.queryByText('Leave it for now?')).toBeNull();
+    expect(finish(set)).toEqual([]);
+  });
+
   test('a garnish the catalog lacks is added by its name, with making it in house under it', async () => {
     const set = jest.fn();
     await renderWithProviders(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
