@@ -293,7 +293,4 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  stack: { gap: space.lg },
-});
+const styles = StyleSheet.create({ root: { flex: 1 }, stack: { gap: space.lg } });

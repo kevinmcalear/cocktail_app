@@ -8,7 +8,7 @@ import { CreditsStep } from './CreditsStep';
 
 let mockCards: { id: string; name: string; imageUrl: null; glass: null; shares: string[] }[] = [];
 jest.mock('@/hooks/useClosestClassic', () => ({ useClosestClassic: () => ({ data: null }), useCloseClassics: () => ({ data: mockCards }) }));
-jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [{ id: 'c-daiquiri', name: 'Daiquiri', imageUrl: null, aliases: [] }] }) }));
+jest.mock('@/hooks/useDiscover', () => ({ useDebounced: <T,>(v: T) => v, useDrinkLists: () => ({ data: [{ id: 'c-daiquiri', name: 'Daiquiri', imageUrl: null, aliases: [] }] }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p-me', displayName: 'Jo Park' } }) }));
 jest.mock('@/hooks/useProfiles', () => ({
   usePublicPeople: (q: string) => ({
