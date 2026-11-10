@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 
 import { beerWineBar, beerWinePlace, EMPTY_BEER_WINE, isBeerWineSlot, type BeerWineDraft, type BeerWineStep } from './beerWineDraft';
 import { EMPTY_DRAFT } from './drinkWizard';
-import { EMPTY_HOUSE_MADE, houseMadeBar, houseMadePlace, houseMadesAt, houseMadeSlot, isHouseMadeSlot } from './houseMadeDraft';
+import { EMPTY_HOUSE_MADE, houseMadeBar, houseMadePlace, houseMadesAt, houseMadeSlot, isHouseMadeSlot, savedAsKept } from './houseMadeDraft';
+import { startPrep } from './prepKinds';
 import { BEER_WINE_DRAFTS, DRINK_DRAFTS, HOUSE_MADE_DRAFTS, forAccount, mergeDrafts, type KeptDraft } from './draftSync';
 
 const k = (name: string, updatedAt: number, extra: Partial<KeptDraft['draft']> = {}): KeptDraft => ({ draft: { ...EMPTY_DRAFT, name, ...extra }, step: 'ingredients', updatedAt });
@@ -20,7 +21,8 @@ assert.equal('photos' in forAccount(k('Salty Boy', 1, { photos: { side: 'file://
   assert.equal(m.kept['home|name:gone'], undefined, 'saved or started over elsewhere goes');
   assert.equal(m.kept['home|name:cleared'], undefined, 'cleared here stays gone');
   assert.deepEqual(m.push.sort(), ['home', 'home|name:a']);
-  assert.deepEqual(m.seen.sort(), ['home', 'home|name:b']);
+  // Cleared here but still in the account: seen, so it's taken out of the account (not forgotten with it still there).
+  assert.deepEqual(m.seen.sort(), ['home', 'home|name:b', 'home|name:cleared']);
 }
 
 // A draft started again elsewhere in a slot cleared here comes back; one sent since the read began isn't taken for gone.
@@ -106,5 +108,17 @@ assert.equal(houseMadeBar('house:home:d2'), null);
 assert.equal(HOUSE_MADE_DRAFTS.filled(EMPTY_HOUSE_MADE), false, 'nothing typed is not kept');
 assert.equal(HOUSE_MADE_DRAFTS.filled({ name: 'Honey-ginger syrup', prep: null }), true);
 assert.equal(HOUSE_MADE_DRAFTS.filled({ name: ' ', prep: null }), false, 'no name: kept on the phone only (an older app reads it as a drink)');
+
+// A house-made saved offline goes when its save lands: picked up and stepped through meanwhile (the step and the time
+// change, the recipe doesn't), or read back from the account in the database's key order. One written in since stays.
+{
+  const prep = startPrep('syrup', 'Honey-ginger syrup');
+  const reordered = JSON.parse(JSON.stringify(Object.fromEntries(Object.entries(prep).reverse())));
+  assert.equal(savedAsKept({ name: 'Honey-ginger syrup', prep }, 'Honey-ginger syrup', prep), true);
+  assert.equal(savedAsKept({ name: 'Honey-ginger syrup', prep: reordered }, 'Honey-ginger syrup', prep), true, 'key order is not a change');
+  assert.equal(savedAsKept({ name: '', prep }, 'Honey-ginger syrup', prep), true, 'a name passed in and never typed');
+  assert.equal(savedAsKept({ name: 'Honey-ginger syrup', prep: { ...prep, storage: 'Shelf' } }, 'Honey-ginger syrup', prep), false, 'written in since: kept');
+  assert.equal(savedAsKept({ name: 'Ginger syrup', prep }, 'Honey-ginger syrup', prep), false, 'renamed since: kept');
+}
 
 console.log('draftSync checks passed');

@@ -4,8 +4,9 @@ import { Alert } from 'react-native';
 import { refreshIngredients } from '@/hooks/useDropdowns';
 import { SHELF_KEY } from '@/hooks/useShelf';
 import { recentEntry } from '@/hooks/useTrackRecent';
-import { plainDbMessage } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/dbError';
 import { houseMadePayload } from '@/lib/houseMadeParts';
+import { savedAsKept } from '@/lib/houseMadeDraft';
 import type { PrepDraft } from '@/lib/prepKinds';
 import { capitalizeFirst } from '@/lib/stringUtils';
 import { supabase } from '@/lib/supabase';
@@ -20,8 +21,6 @@ export interface SaveHouseMadeInput {
   barId: string | null;
   /** The draft's slot (lib/houseMadeDraft houseMadeSlot): cleared once it's in. */
   slot: string;
-  /** When the kept draft last changed: it's cleared once this is in only if nothing changed since (a draft picked up again while it waited stays). */
-  keptAt?: number;
   /** Add to your bar's Make it in house: it goes on your bar too, offline as well. */
   shelf?: boolean;
   /** Saved with no signal (Save on this phone): it waits for signal and says so when it's in. */
@@ -71,12 +70,12 @@ export function useSaveHouseMade() {
       }
       return made;
     },
-    onSuccess: ({ warnings, count }, { name, slot, keptAt, queued }) => {
+    onSuccess: ({ warnings, count }, { name, prep, slot, queued }) => {
       // Here, not on the screen: a save that waited for signal lands after the steps have closed.
       // ponytail: a wait cut short by closing the app loses the save, not the draft, which is still listed; setMutationDefaults would resume it.
       const store = useHouseMadeWizardStore.getState();
       const kept = store.kept[slot];
-      if (kept && (keptAt === undefined || kept.updatedAt <= keptAt)) store.clear(slot);
+      if (kept && savedAsKept(kept.draft, name, prep)) store.clear(slot);
       void qc.invalidateQueries({ queryKey: ['same-name-prep'] });
       if (!queued) return;
       if (count > 1) toastDone(savedTogether(count), PARTS_SAVED);
@@ -84,7 +83,7 @@ export function useSaveHouseMade() {
       if (warnings.length) Alert.alert('Saved, with one thing to fix', warnings.join('\n\n'));
     },
     onError: (e, { name, barId, queued }) => {
-      if (queued) Alert.alert(`Couldn’t save ${capitalizeFirst(name.trim())}`, `${plainDbMessage(e) ?? e.message} It’s still kept, under ${barId ? 'House-made, Drafts' : 'Pick up where you left off'}.`);
+      if (queued) Alert.alert(`Couldn’t save ${capitalizeFirst(name.trim())}`, `${saveErrorWords(e)} It’s still kept, under ${barId ? 'House-made, Drafts' : 'Pick up where you left off'}.`);
     },
   });
 }
