@@ -4,7 +4,7 @@
  * choices each step offers. Screens: components/screens/addBeerWine; saving:
  * hooks/useCreateBeerWine.ts.
  */
-import { DRINK_COLORS, SKETCH_VERSION } from '../supabase/functions/_shared/sketchRules';
+import { DRINK_COLORS, SKETCH_VERSION } from '../supabase/functions/_shared/sketchKinds';
 
 import { BEER_WINE_STEPS, type BeerWineDraft, type BeerWineStep } from './beerWineDraft';
 import type { DrinkKind } from './drinkKinds';

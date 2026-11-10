@@ -5,7 +5,7 @@ import { glassSizeLabel } from './glass';
 import { variantsOf } from './sketch/geometry';
 import { SKETCH_GLASSES, type SketchGlass } from '@/lib/sketch/types';
 
-import { GLASSES, glassFromName, iceFromName, ICES, itemGlass, type Kinded } from '../supabase/functions/_shared/sketchRules';
+import { GLASSES, glassFromName, iceFromName, ICES, itemGlass, type Kinded } from '../supabase/functions/_shared/sketchKinds';
 
 export const GLASS_TYPE_LABEL: Record<SketchGlass, string> = {
   coupe: 'Coupe',

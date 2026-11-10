@@ -10,7 +10,7 @@
  * ponytail: public pages, published snapshots and the run sheet read their own
  * SQL and still show only the top ice; give them ice_build when a guest asks.
  */
-import { itemIce, type Kinded } from '@/supabase/functions/_shared/sketchRules';
+import { itemIce, type Kinded } from '@/supabase/functions/_shared/sketchKinds';
 
 /** How high a loose layer (crushed, pebble, shaved) goes. */
 export const ICE_TO = ['half', 'rim', 'mound'] as const;

@@ -10,7 +10,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, palateHues, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
-import { bareGlassSketch } from '@/lib/sketch/draft';
+import { bareGlassSketch } from '@/lib/sketch/bareGlass';
 import { liquidOf } from '@/lib/sketch/types';
 
 /**

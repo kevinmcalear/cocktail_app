@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { houseIce, iceDrawKind, iceMm, kitCount, kitHasTool, kitLine, ICE_KINDS, isVenueIce, kitIceRow, iceLooksLine, iceName, kitSourceLine, supplierLine, toolLabel, toolName, venueIceKinds, venueIceNames } from './venueKit';
+import { houseIce, iceDrawKind, iceMm, kitCount, kitHasTool, kitLine, ICE_KINDS, isVenueIce, kitIceRow, iceLooksLine, iceName, kitSourceLine, toolLabel, toolName, venueIceKinds, venueIceNames } from './venueKit';
+import { supplierLine } from './suppliers';
 
 // The drawings' kinds less 'none' (item_ice.draw_as, private.house_ice): keep them in step.
 assert.deepEqual([...ICE_KINDS], ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere']);

@@ -2,8 +2,7 @@
 // alone, and the night pass. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { BARE_GLASS } from './bareGlass';
-import { bareGlassSketch } from './draft';
+import { BARE_GLASS, bareGlassSketch } from './bareGlass';
 import { paintSketch } from './paint';
 import { CHALK, glowScene, hexToLch, lchToHex, nightScene, onlyStages, pencilOnly, withoutStages } from './passes';
 import type { Scene, SceneEl } from './scene';

@@ -14,8 +14,7 @@ import type { PrepDraft } from '@/lib/prepKinds';
 import type { DraftLook } from '@/lib/sketch/draft';
 import type { PublishMode } from '@/lib/publishing';
 import type { SameAs } from '@/lib/sameName';
-import { tidyAmount } from '@/lib/specDefaults';
-import { amountText, grated, overIce } from '@/lib/units';
+import { amountText, grated, overIce, tidyAmount } from '@/lib/units';
 
 export const WIZARD_STEPS = ['name', 'ingredients', 'method', 'glass', 'ice', 'garnish', 'credits', 'notes', 'publish', 'review'] as const;
 export type WizardStep = (typeof WIZARD_STEPS)[number];

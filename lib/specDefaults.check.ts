@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 
 import { fixesFor, balanceOf } from './balance';
-import { serveGuess, suggestAmount, tidyAmount } from './specDefaults';
+import { serveGuess, suggestAmount } from './specDefaults';
+import { tidyAmount } from './units';
 import { capitalizeFirsts } from './stringUtils';
 
 const l = (name: string) => ({ name });

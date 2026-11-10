@@ -108,3 +108,23 @@ export const overIce = (name: string) => {
 
 /** "Grated nutmeg": the garnish grated over the top, its name kept lower case after. */
 export const grated = (name: string) => `Grated ${name.charAt(0).toLowerCase()}${name.slice(1)}`;
+
+/** A number to two places at most, as an amount reads: 0.75, 1.5, 22.5. */
+export const roundAmount = (n: number) => String(Math.round(n * 100) / 100);
+
+const FRACTIONS: Record<string, number> = { '¼': 0.25, '½': 0.5, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3, '⅛': 0.125 };
+
+/**
+ * An amount as typed, tidied to a plain number: "3/4" is "0.75", "1 1/2" and
+ * "1½" are "1.5", "22,5" is "22.5". Anything else is left as it was typed.
+ */
+export function tidyAmount(text: string): string {
+  const t = text.trim().replace(',', '.');
+  if (!t) return '';
+  const m = /^(\d+(?:\.\d+)?)?\s*(?:(\d+)\s*\/\s*(\d+)|([¼½¾⅓⅔⅛]))?$/.exec(t);
+  if (!m || (!m[1] && !m[2] && !m[4])) return text.trim();
+  let n = m[1] ? parseFloat(m[1]) : 0;
+  if (m[2] && m[3] && +m[3] > 0) n += +m[2] / +m[3];
+  if (m[4]) n += FRACTIONS[m[4]];
+  return roundAmount(n);
+}

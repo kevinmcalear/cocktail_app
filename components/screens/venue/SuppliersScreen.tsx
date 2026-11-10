@@ -7,7 +7,7 @@ import { font, space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueSuppliers, type VenueSupplier } from '@/hooks/useVenueSuppliers';
-import { supplierLine } from '@/lib/venueKit';
+import { supplierLine } from '@/lib/suppliers';
 
 import { NoSupplierRow } from './NoSupplier';
 import { SupplierSheet } from './SupplierSheet';

@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 
-import { BARE_GLASS } from './bareGlass';
-import { bareGlassSketch, draftSketchInputs } from './draft';
+import { GLASSES } from '../../supabase/functions/_shared/sketchKinds';
+
+import { BARE_GLASS, bareGlassSketch, EMPTY_DRINK } from './bareGlass';
+import { draftSketchInputs } from './draft';
 import { paintSketch } from './paint';
 import { liquidOf, readSketchInputs } from './types';
 
@@ -83,6 +85,15 @@ assert.equal(both.garnish, 'olive', 'a real garnish line still draws beside a di
 
 // A drink with no drawing yet shows its bare glass, by name or icon key: no liquid, ice or garnish (i-glass-pic).
 assert.deepEqual(BARE_GLASS, readSketchInputs(bareGlassSketch('Coupe')));
+// The answer the flavour rules give a drink with no spec, worked out without loading them.
+const rulesBare = (glass: string | null) => {
+  const inputs = draftSketchInputs({ name: '', glass: glass || 'Coupe', lines: [] });
+  return { ...inputs, ice: 'none', foam: null, float: null, bleed: null, fizz: false, garnish: null, liquid: { hex: inputs.liquid.hex, alpha: 0 } };
+};
+assert.deepEqual(EMPTY_DRINK, draftSketchInputs({ name: '', lines: [] }), 'the empty drink the thumbnails draw over');
+for (const glass of [null, '', 'Coupe', 'Martini', 'Nick & Nora', 'Highball', 'Old Fashioned', 'Tiki mug', 'Custom', 'jar', ...GLASSES]) {
+  assert.deepEqual(bareGlassSketch(glass), rulesBare(glass), `bare glass for ${glass}`);
+}
 const martini = bareGlassSketch('Martini');
 assert.equal(martini.glass, 'martini');
 assert.equal(bareGlassSketch('Nick & Nora').glass, 'nick');
