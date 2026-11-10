@@ -34,7 +34,7 @@ import { SalineHint } from './SalineHint';
 import { SpecRows } from './SpecRows';
 import type { LineStock } from './StockToggle';
 import { useCombineDrop } from './useCombineDrop';
-import { useMakePrep } from './useMakePrep';
+import { useMakePrep, type InlinePrep } from './useMakePrep';
 import { useTypedHouse } from './useTypedHouse';
 import { WizardNotice } from './WizardChrome';
 import { useWizardTakeover } from './WizardFrame';
@@ -66,7 +66,7 @@ interface IngredientsStepProps extends StepProps {
   /** The desktop page: "Add “X”, a bottle you buy" adds the line with its card open under it (this line's key). */
   onNewBottle?: (key: string) => void;
   /** A new drink, kept as a draft (the draft page, the desktop page): a house-made left for now is listed with it under Drafts. */
-  inlinePrep?: { venueName: string | null; onOpen?: (making: string | null) => void };
+  inlinePrep?: InlinePrep;
   /** The venue the drink is for, whose Kit a recipe's ways are checked against; null at home. */
   bar?: { id: string; name: string } | null;
   /** Where the drink is, from the menu down to it, for a recipe's trail. */

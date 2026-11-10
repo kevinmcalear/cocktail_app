@@ -7,7 +7,7 @@ import { saveItemNotes } from '@/hooks/useItemNotes';
 import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { useRefreshSpecs } from '@/hooks/useBulk';
-import { liveIds, specLineSaver } from '@/hooks/specLineSave';
+import { liveIds, specLineSaver, withKeptHouseMades } from '@/hooks/specLineSave';
 import { saveDrinkSpec, type SpecLineInput } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
@@ -219,8 +219,8 @@ export function useCreateDrink() {
         }
         return id;
       })().catch(async (e: unknown) => {
-        await saver.dropHouseMades();
-        throw e;
+        // Taken out again on a plain refusal; still saved after a dropped connection, and the error says which, for the draft's lines to point at.
+        throw withKeptHouseMades(e, await saver.dropHouseMades(e));
       });
 
       if (updateId) {

@@ -50,6 +50,8 @@ export interface PartPageProps {
   onClose: () => void;
   /** Back, when it asks first (Add-inside: "Leave it for now?"); otherwise Back is onClose. */
   onBack?: () => void;
+  /** The drink's check (Add-inside, Saving with the drink): the top check saves the drink with it, "Saving…" while it does. */
+  save?: { onSave: (prep: PrepDraft, name: string) => void; saving: boolean; canSave: boolean };
   /** In a native Modal, Android's back goes to the Modal: it calls this, the level showing's Back. */
   backRef?: RefObject<(() => void) | null>;
   /** Its name is taken here, Use yours: the line uses that one. */
@@ -86,9 +88,17 @@ export function PartPage(p: PartPageProps) {
   const { draft, changed, setDraft, view, pickKind, pickTechnique, phrase, version, named, slotsOpen } = usePrepDraft({ name: p.name, nameNow: name, initial: p.initial, picked: p.picked, technique: p.technique, combined: p.combined, bar: p.bar, measured: true, blank: true });
   const shown = name.trim() || p.name;
   const inside = useInside(draft, setDraft);
+  const last = p.level >= MOST_LEVELS;
+
+  // Board Add-parts, 6: a part named like one you have: Use yours first, or make a new one.
+  const same = useSameNamePrep({ barId: p.bar?.id ?? null, name: shown });
+  const taken = same.data;
+  // A line that isn't one of yours yet: added by its name alone, or it sounds made (Add-parts, 2: "To make").
+  const toMake = last ? undefined : draft.lines.find((l) => !l.id && !l.prep && !l.slot && !l.bottle && l.name.trim() && (l.toMake || looksMadeInHouse(l.name)));
+  const canDone = named && !slotsOpen && !!shown.trim() && !taken;
+  const done = () => p.onDone(withFacts(draft), shown);
   const back = p.onBack ?? p.onClose;
   const trail = trailInto(p.above, back, shown);
-  const last = p.level >= MOST_LEVELS;
 
   // Android's back: the level showing goes back, one at a time. In a Modal it goes to the Modal, which asks backRef.
   const nested = !!inside.props;
@@ -102,13 +112,6 @@ export function PartPage(p: PartPageProps) {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => (back(), true));
     return () => sub.remove();
   }, [back, backRef, p.inPlace, nested]);
-
-  // Board Add-parts, 6: a part named like one you have: Use yours first, or make a new one.
-  const same = useSameNamePrep({ barId: p.bar?.id ?? null, name: shown });
-  const taken = same.data;
-  // A line that isn't one of yours yet: added by its name alone, or it sounds made (Add-parts, 2: "To make").
-  const toMake = last ? undefined : draft.lines.find((l) => !l.id && !l.prep && !l.slot && !l.bottle && l.name.trim() && (l.toMake || looksMadeInHouse(l.name)));
-  const canDone = named && !slotsOpen && !!shown.trim() && !taken;
   // What's written goes on its line as it's written, so leaving the whole house-made keeps it. Not while its name is
   // taken (or still being checked): Back then leaves the line as it was, and the save can't fail on it later.
   const free = !taken && !same.checking;
@@ -117,7 +120,6 @@ export function PartPage(p: PartPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- kept when what it keeps changes
   }, [draft, name, free]);
   const words = taken ? takenPartWords(taken, p.bar?.name ?? null) : null;
-  const done = () => p.onDone(withFacts(draft), shown);
 
   const below = (level: number, inPlace: boolean) => (inside.props && inside.line ? (
     <PartPage
@@ -192,7 +194,20 @@ export function PartPage(p: PartPageProps) {
       </View>
     );
   }
-  const head = <PageHead trail={trail} drinkName={p.top} name={shown} canAdd={canDone} onBack={back} onDone={done} eyebrow={p.eyebrow ?? `HOUSE-MADE · A PART OF ${p.parent.toUpperCase()}`} doneLabel={p.doneLabel ?? `Done: ${shown} goes in ${p.parent}`} />;
+  const { save } = p;
+  const head = (
+    <PageHead
+      trail={trail}
+      drinkName={p.top}
+      name={shown}
+      canAdd={canDone && (!save || (save.canSave && !save.saving))}
+      busy={save?.saving ? 'Saving…' : undefined}
+      onBack={back}
+      onDone={save ? () => save.onSave(withFacts(draft), shown) : done}
+      eyebrow={p.eyebrow ?? `HOUSE-MADE · A PART OF ${p.parent.toUpperCase()}`}
+      doneLabel={save ? (save.saving ? 'Saving' : `Done: save ${p.top} with ${shown}`) : (p.doneLabel ?? `Done: ${shown} goes in ${p.parent}`)}
+    />
+  );
   if (p.frame === 'panel') {
     return (
       <DragScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.page, styles.panelPage]}>

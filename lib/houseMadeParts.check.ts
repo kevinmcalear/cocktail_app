@@ -49,4 +49,10 @@ assert.equal((many.payload[1].lines[1] as { part: number }).part, 2);
 assert.equal((many.payload[2].lines.at(-1) as { part: number }).part, 3);
 many.payload.forEach((p, i) => p.lines.forEach((l) => 'part' in l && assert.ok(l.part > i && l.part < many.payload.length)));
 
+// The same house-made on two lines (a pour and a finish) goes once, and both lines use it (review of #1187: the call refuses a name twice).
+const twice = houseMadesPayload([{ name: 'Pine syrup', prep: juice }, { name: 'penicillin batch', prep: batch }, { name: ' pine  SYRUP', prep: juice }]);
+assert.deepEqual(twice.at, [0, 1, 0]);
+assert.equal(twice.payload.filter((p) => p.name === 'Pine syrup').length, 1);
+assert.equal(twice.payload.length, many.payload.length);
+
 console.log('houseMadeParts checks passed');

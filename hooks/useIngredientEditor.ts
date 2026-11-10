@@ -4,7 +4,7 @@ import { Alert } from "react-native";
 
 import type { SortableRecipeItem } from '@/lib/recipeItem';
 import { useDrafts } from "@/hooks/useDrafts";
-import { resolveEditItems } from "@/hooks/specLineSave";
+import { saveEditItems } from "@/hooks/specLineSave";
 import { showMessage } from "@/lib/dialogs";
 import { amountOf } from "@/lib/drinkWizard";
 import { refreshIngredients, useDropdowns } from "@/hooks/useDropdowns";
@@ -211,17 +211,13 @@ export function useIngredientEditor(id: string) {
 
             // One transaction: a failed save keeps the recipe it had, and each line keeps its row. Skipped when the lines didn't change.
             // A name typed here that isn't an ingredient yet is found or added the way New does it.
-            const spec = await resolveEditItems(f.recipeItems, f.barId || null);
-            editor.setRecipeItems(spec.items);
-            const lines = recipeLines(spec.items);
-            if (JSON.stringify(lines) !== JSON.stringify(recipeLines(loaded.recipeItems))) {
+            // House-mades written inside it save with it or not at all (board Add-inside): saveEditItems takes them back if this fails.
+            const spec = await saveEditItems(f.recipeItems, f.barId || null, editor.setRecipeItems, async (items) => {
+                const lines = recipeLines(items);
+                if (JSON.stringify(lines) === JSON.stringify(recipeLines(loaded.recipeItems))) return;
                 const { error: recipeError } = await supabase.rpc("replace_recipe_lines", { p_item: id, p_lines: lines });
-                // House-mades written inside it save with it or not at all (board Add-inside).
-                if (recipeError) {
-                    editor.setRecipeItems(await spec.undo());
-                    throw recipeError;
-                }
-            }
+                if (recipeError) throw recipeError;
+            });
             if (spec.created.length) void refreshIngredients(queryClient, spec.created);
             if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));
 
@@ -309,42 +305,47 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
         }
         setSaving(true);
         try {
-            // A drafted ingredient in its recipe is published first.
-            const spec = await resolveEditItems(withoutSelfRecipeRefs(form.recipeItems, draftId), form.barId || null);
-            editor.setRecipeItems(spec.items);
-            const lines = [];
-            for (const item of spec.items) {
-                const resolvedId = await resolveIngredientId(item.ingredient_id, drafts);
-                if (resolvedId !== item.ingredient_id) await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
-                lines.push({ ...item, ingredient_id: resolvedId });
-            }
-            const { data: ingredient, error } = await supabase
-                .from("items")
-                .insert({ ...ingredientColumns(form), item_type: "ingredient" })
-                .select()
-                .single();
-            if (error || !ingredient) {
-                editor.setRecipeItems(await spec.undo());
-                throw error;
-            }
-            const newId = ingredient.id;
-            for (const catId of form.selectedCategories) {
-                await supabase.from("item_categories").upsert({ item_id: newId, category_id: catId, is_primary: true }, { onConflict: "item_id,category_id" });
-            }
-            if (lines.length > 0) {
-                const { error: recipeError } = await supabase.from("recipes").insert(
-                    lines.map((item, index) => ({
-                        recipe_item_id: newId,
-                        ingredient_item_id: item.ingredient_id,
-                        amount: amountOf(item.amount) || null,
-                        unit: item.unit || null,
-                        preparation_notes: item.preparation_notes?.trim() || null,
-                        is_optional: !!item.is_optional,
-                        sort_order: index,
-                    }))
-                );
-                if (recipeError) throw recipeError;
-            }
+            // A drafted ingredient in its recipe is published first. House-mades written inside it save with it
+            // or not at all (board Add-inside): saveEditItems takes them back if any of this fails.
+            const spec = await saveEditItems(withoutSelfRecipeRefs(form.recipeItems, draftId), form.barId || null, editor.setRecipeItems, async (items) => {
+                const lines = [];
+                for (const item of items) {
+                    const resolvedId = await resolveIngredientId(item.ingredient_id, drafts);
+                    if (resolvedId !== item.ingredient_id) await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
+                    lines.push({ ...item, ingredient_id: resolvedId });
+                }
+                const { data: ingredient, error } = await supabase
+                    .from("items")
+                    .insert({ ...ingredientColumns(form), item_type: "ingredient" })
+                    .select()
+                    .single();
+                if (error || !ingredient) throw error ?? new Error("Couldn’t add the ingredient.");
+                // A recipe that won't go in takes the new ingredient with it, so a retry doesn't add a second.
+                try {
+                    for (const catId of form.selectedCategories) {
+                        await supabase.from("item_categories").upsert({ item_id: ingredient.id, category_id: catId, is_primary: true }, { onConflict: "item_id,category_id" });
+                    }
+                    if (lines.length > 0) {
+                        const { error: recipeError } = await supabase.from("recipes").insert(
+                            lines.map((item, index) => ({
+                                recipe_item_id: ingredient.id,
+                                ingredient_item_id: item.ingredient_id,
+                                amount: amountOf(item.amount) || null,
+                                unit: item.unit || null,
+                                preparation_notes: item.preparation_notes?.trim() || null,
+                                is_optional: !!item.is_optional,
+                                sort_order: index,
+                            }))
+                        );
+                        if (recipeError) throw recipeError;
+                    }
+                } catch (e) {
+                    await supabase.from("items").delete().eq("id", ingredient.id);
+                    throw e;
+                }
+                return ingredient.id;
+            });
+            const newId = spec.result;
 
             queryClient.invalidateQueries({ queryKey: ["ingredients"] });
             await refreshIngredients(queryClient, [newId, ...spec.created]);

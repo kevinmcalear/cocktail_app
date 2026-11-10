@@ -5,6 +5,7 @@
  * all save together in one call (save_house_mades), all or none. Pure and
  * plain JSON.
  */
+import { ingredientKey } from './ingredientNames';
 import { prepAmounts, prepYield, type PrepDraft } from './prepKinds';
 import { capitalizeFirst } from './stringUtils';
 
@@ -92,12 +93,22 @@ export function houseMadePayload(name: string, prep: PrepDraft): PayloadPrep[] {
  * (board Add-inside: the drink's house-mades save with it, all or none):
  * their payloads one after another, each part's index moved along with it.
  * `at` is where each one starts, its id's place in what the call returns.
+ * Two lines with one house-made (a pour and a finish) send it once, the
+ * first line's recipe, and both use it: the call refuses a name twice.
  */
 export function houseMadesPayload(made: readonly { name: string; prep: PrepDraft }[]): { payload: PayloadPrep[]; at: number[] } {
   const payload: PayloadPrep[] = [];
   const at: number[] = [];
+  const sent = new Map<string, number>();
   for (const m of made) {
+    const key = ingredientKey(m.name);
+    const again = sent.get(key);
+    if (again !== undefined) {
+      at.push(again);
+      continue;
+    }
     const from = payload.length;
+    sent.set(key, from);
     at.push(from);
     payload.push(...houseMadePayload(m.name, m.prep).map((p) => ({ ...p, lines: p.lines.map((l) => ('part' in l ? { ...l, part: l.part + from } : l)) })));
   }

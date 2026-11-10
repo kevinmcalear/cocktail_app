@@ -45,6 +45,10 @@ export interface DrinkHouseMadeProps {
   onClose: (kept: boolean) => void;
   /** Its name is taken, Use yours: the line uses that one. */
   onUse: (id: string, name: string) => void;
+  /** The drink's check (Add-inside, Saving with the drink): finished on the line, and the drink saves with it. */
+  save?: { onSave: (prep: PrepDraft, name: string) => void; saving: boolean; canSave: boolean };
+  /** Don't keep it, on Leave it for now?: the line goes back to how it was (the bottle a Make it house started from). */
+  onDrop?: () => void;
 }
 
 /**
@@ -98,6 +102,7 @@ export function DrinkHouseMade(p: DrinkHouseMadeProps) {
       onDone={p.onDone}
       onClose={close}
       onBack={ask}
+      save={p.save}
       onUse={p.onUse}
     />
   );
@@ -108,6 +113,7 @@ export function DrinkHouseMade(p: DrinkHouseMadeProps) {
       body={`What you’ve done is kept. ${drink} shows it as Recipe to finish${p.drafts ? ', and Drafts lists the drink with the way back' : ''}.`}
       onLeave={close}
       onStay={() => setAsking(false)}
+      onDrop={p.onDrop}
     />
   ) : null;
 

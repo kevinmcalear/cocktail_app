@@ -11,13 +11,26 @@ import type { CatalogIngredient } from './IngredientSearch';
 import type { TrailItem } from './Trail';
 import { DrinkHouseMade } from './prep/DrinkHouseMade';
 
+/** The drink's check (Add-inside, Saving with the drink): the house-made's own check saves the drink with it, "Saving…" while it does. */
+export interface DrinkSave {
+  onSave: () => void;
+  saving: boolean;
+  canSave: boolean;
+}
+
+/** A new drink, kept as a draft (the draft page, the desktop page): `onOpen` says which house-made is open (null when none), for the page's rail; `save` is the drink's check. */
+export interface InlinePrep {
+  venueName: string | null;
+  onOpen?: (making: string | null) => void;
+  save?: DrinkSave;
+}
+
 interface MakePrepArgs {
   draft: WizardDraft;
   set: (change: Partial<WizardDraft>) => void;
   ingredients: readonly CatalogIngredient[];
   aliases: readonly IngredientAlias[];
-  /** A new drink, kept as a draft (the draft page, the desktop page); `onOpen` says which house-made is open (null when none), for the page's rail. */
-  inlinePrep?: { venueName: string | null; onOpen?: (making: string | null) => void };
+  inlinePrep?: InlinePrep;
   add: (pick: WizardPick, prep?: PrepDraft, later?: boolean, pour?: TypedPour) => WizardLine;
   change: (key: string, c: Partial<WizardLine>) => void;
   /** The venue the drink is for, whose Kit How? is checked against; null at home. */
@@ -43,13 +56,18 @@ interface Making {
   was?: WizardLine | null;
 }
 
-/** Left with nothing written: two lines just combined go back to two, and a line made from the search or a name goes back to how it was. Null when there's nothing to put back. */
-function putBack(m: Making, lines: readonly WizardLine[]): WizardLine[] | null {
+/**
+ * Left with nothing written: two lines just combined go back to two, and a
+ * line made from the search, a name or a bottle goes back to how it was.
+ * `drop` (Don't keep it) puts that line back even with something written.
+ * Null when there's nothing to put back.
+ */
+function putBack(m: Making, lines: readonly WizardLine[], drop = false): WizardLine[] | null {
   const l = lines.find((x) => x.key === m.key);
   if (!l) return null;
   if (m.combined) return l.combined ? uncombine(lines, m.key) : null;
   const was = m.was;
-  if (was === undefined || l.prep) return null;
+  if (was === undefined || (l.prep && !drop)) return null;
   return was ? lines.map((x) => (x.key === m.key ? was : x)) : lines.filter((x) => x.key !== m.key);
 }
 
@@ -84,6 +102,9 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
   const fresh = !!making?.base;
   const initial = line && !fresh ? (linePrep(line) ?? null) : null;
   const drinkName = draft.name.trim();
+  // Done: on the line, finished.
+  const finish = (m: Making, prep: PrepDraft, name: string) => change(m.key, { ...(m.base ? { id: null } : null), name, prep: { ...prep, at: undefined }, technique: prep.technique, later: undefined, bottle: undefined, batch: undefined, combined: undefined });
+  const drinkSave = inlinePrep?.save;
 
   const page =
     open && making && line ? (
@@ -105,14 +126,34 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
         // On the line as it's written: a recipe to finish until Done (a finished one stays finished while it could be added as it is). A bottle made in house is the bottle no more; a line opened again keeps its row.
         onKeep={(prep, name, done) => change(making.key, { ...(making.base ? { id: null } : null), name, prep: { ...prep, at: done && making.finished ? undefined : stepToFinish(prep) }, technique: prep.technique, later: undefined, bottle: undefined, batch: undefined, combined: undefined })}
         onDone={(prep, name) => {
-          change(making.key, { ...(making.base ? { id: null } : null), name, prep: { ...prep, at: undefined }, technique: prep.technique, later: undefined, bottle: undefined, batch: undefined, combined: undefined });
+          finish(making, prep, name);
           setMaking(null);
         }}
+        // The drink's check: finished on its line, and the drink saves with it, the page open ("Saving…").
+        save={
+          drinkSave && {
+            ...drinkSave,
+            onSave: (prep, name) => {
+              finish(making, prep, name);
+              drinkSave.onSave();
+            },
+          }
+        }
         onClose={(kept) => {
           const back = kept ? null : putBack(making, draft.lines);
           if (back) set({ lines: back });
           setMaking(null);
         }}
+        // Don't keep it: the line as it was before (the bottle a Make it house started from), when there was one to go back to.
+        onDrop={
+          making.was === undefined
+            ? undefined
+            : () => {
+                const back = putBack(making, draft.lines, true);
+                if (back) set({ lines: back });
+                setMaking(null);
+              }
+        }
         onUse={(id, name) => {
           change(making.key, { id, name, prep: undefined, technique: undefined, later: undefined, bottle: undefined, batch: undefined, combined: undefined });
           setMaking(null);
@@ -129,7 +170,7 @@ export function useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add,
       setMaking({ name: l.name, key: l.key, combined: !!l.combined, finished: !!l.prep && !l.prep.at && !l.later });
     },
     /** Make it house: the bottle line becomes a house-made by this technique, the bottle its base. */
-    house: (l: WizardLine, name: string, technique: string) => setMaking({ name, key: l.key, technique, base: { id: l.id, name: l.name } }),
+    house: (l: WizardLine, name: string, technique: string) => setMaking({ name, key: l.key, technique, base: { id: l.id, name: l.name }, was: l }),
     /** The house-made's page, while one is open. */
     builder: page,
   };

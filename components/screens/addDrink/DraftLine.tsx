@@ -77,8 +77,8 @@ export function DraftLine({ line, row, write, hint, grip, onMove, lifted, dropTa
   const top = line.unit === 'top';
   const missing = !top && !line.amount.trim();
   const fresh = toWrite(line);
-  // Started and left for now (Add-inside, Back before it's done): the drink shows it as Recipe to finish (the amber "?" still says the amount).
-  const flag = fresh && line.prep?.at ? 'Recipe to finish' : missing ? 'Add amount' : fresh ? 'New' : null;
+  // A house-made to write is New (Add-inside, 1), started and left for now Recipe to finish (Back before it's done): the amber "?" still says the amount.
+  const flag = fresh ? (line.prep?.at ? 'Recipe to finish' : 'New') : missing ? 'Add amount' : null;
   const said = top ? `Top with ${line.name}` : missing ? `${line.name}, no amount yet` : `${line.amount} ${line.unit} ${line.name}`;
   return (
     <View>

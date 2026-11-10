@@ -83,3 +83,27 @@ test('Back with nothing written just closes; one finished before closes with its
   expect(screen.queryByText('Leave it for now?')).toBeNull();
   expect(again.onClose).toHaveBeenCalledWith(true);
 });
+
+test('the check saves the drink with it, the page open, and says Saving… while it does (Add-inside, Saving with the drink)', async () => {
+  const onSave = jest.fn();
+  const p = props({ initial: startPrep('syrup', 'Pine syrup'), save: { onSave, saving: false, canSave: true } });
+  await renderWithProviders(<DrinkHouseMade {...p} />);
+  await laidOut();
+  // Read from the name, and said so.
+  expect(screen.getByText('Syrup · from the name')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Done: save Pine Fizz with Pine syrup' }));
+  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ kind: 'syrup' }), 'Pine syrup');
+  expect(p.onDone).not.toHaveBeenCalled();
+
+  await renderWithProviders(<DrinkHouseMade {...props({ initial: startPrep('syrup', 'Pine syrup'), save: { onSave, saving: true, canSave: true } })} />);
+  await laidOut();
+  expect(screen.getByText('Saving…')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Saving' })).toBeDisabled();
+});
+
+test('empty, with a name that says nothing: all four rows say Add (Add-inside, Empty)', async () => {
+  await renderWithProviders(<DrinkHouseMade {...props({ name: 'Rvwa' })} />);
+  await laidOut();
+  for (const row of ['What it is', 'Method', 'Makes', 'Keeps']) expect(screen.getByText(row)).toBeTruthy();
+  expect(screen.getAllByText('Add')).toHaveLength(4);
+});

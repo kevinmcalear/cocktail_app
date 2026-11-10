@@ -11,6 +11,7 @@ import { useShelf } from '@/hooks/useHomeBar';
 import { useMyProfile } from '@/hooks/useMyProfile';
 import { useHoldUpdates } from '@/hooks/useOtaUpdates';
 import { useSameNameDrink } from '@/hooks/useSameNameDrink';
+import { linesOnKeptHouseMades } from '@/hooks/specLineSave';
 import { useVenueIce } from '@/hooks/useVenueIce';
 import { suggestClassic } from '@/lib/classics';
 import { stepWaits } from '@/lib/sameName';
@@ -107,21 +108,29 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
     });
   }, [startFrom, initialName, place, patch, startSpec]);
 
-  const save = () =>
+  const save = () => {
+    // As it is now, not as this render had it: a house-made's check finishes its line just before it saves the drink (Add-inside).
+    const now: WizardDraft = withMethodIce({ ...EMPTY_DRAFT, ...useDrinkWizardStore.getState().kept[place]?.draft }, barIce);
     create.mutate(
-      { draft, barId, myProfileId: me?.id ?? null, menuSectionId, sketch: draftSketchInputs(sketchLook(draft, barVariants)) },
+      { draft: now, barId, myProfileId: me?.id ?? null, menuSectionId, sketch: draftSketchInputs(sketchLook(now, barVariants)) },
       {
         onSuccess: ({ id, warnings, later = [] }) => {
           useDrinkWizardStore.getState().clear(place);
           if (firstRound) roundDone('house_spec', id);
-          toastDone('Drink saved', draft.name.trim());
+          toastDone('Drink saved', now.name.trim());
           const notice = savedNotice(warnings, later);
           if (notice) Alert.alert(notice.title, notice.body);
           onSaved(id);
         },
-        onError: (e) => Alert.alert('Couldn’t save the drink', `${plainDbMessage(e) ?? e.message} Your draft is kept on this device.`),
+        onError: (e) => {
+          // House-mades the save left saved (a dropped connection): the lines use them now, so trying again isn't refused by their names.
+          const on = linesOnKeptHouseMades(e, now);
+          if (on) patch(place, on);
+          Alert.alert('Couldn’t save the drink', `${plainDbMessage(e) ?? e.message} Your draft is kept on this device.`);
+        },
       }
     );
+  };
   const startOver = () => {
     useDrinkWizardStore.getState().restart(place);
     setResumed(false);

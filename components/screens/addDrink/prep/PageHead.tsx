@@ -12,7 +12,7 @@ import { Trail, type TrailItem } from '../Trail';
  * it, then back) or inside another house-made (Add-parts, a part): Back, the
  * name of what it's inside, Done; the trail from there to it; then its name.
  */
-export function PageHead({ trail, drinkName, name, canAdd, onBack, onDone, eyebrow = 'HOUSE-MADE · DRAFT, INSIDE THE DRINK', doneLabel = `Done: add ${name} to ${drinkName}`, children }: { trail: readonly TrailItem[]; drinkName: string; name: string; canAdd: boolean; onBack: () => void; onDone: () => void; eyebrow?: string; doneLabel?: string; /** In place of the plain name: a field to rename it. */ children?: ReactNode }) {
+export function PageHead({ trail, drinkName, name, canAdd, busy, onBack, onDone, eyebrow = 'HOUSE-MADE · DRAFT, INSIDE THE DRINK', doneLabel = `Done: add ${name} to ${drinkName}`, children }: { trail: readonly TrailItem[]; drinkName: string; name: string; canAdd: boolean; /** On the check while it works ("Saving…", Add-inside, Saving with the drink). */ busy?: string; onBack: () => void; onDone: () => void; eyebrow?: string; doneLabel?: string; /** In place of the plain name: a field to rename it. */ children?: ReactNode }) {
   const ds = useDs();
   return (
     <View style={styles.head}>
@@ -21,8 +21,13 @@ export function PageHead({ trail, drinkName, name, canAdd, onBack, onDone, eyebr
         <DsText numberOfLines={1} tone="muted" style={styles.drink}>
           {drinkName}
         </DsText>
-        <PressableScale role="button" accessibilityLabel={doneLabel} disabled={!canAdd} onPress={onDone} style={[styles.done, { backgroundColor: ds.accentFill.fill, opacity: canAdd ? 1 : 0.45 }]}>
+        <PressableScale role="button" accessibilityLabel={doneLabel} disabled={!canAdd} onPress={onDone} style={[styles.done, busy ? styles.busy : null, { backgroundColor: ds.accentFill.fill, opacity: canAdd || busy ? 1 : 0.45 }]}>
           <IconSymbol name="checkmark" size={20} color={ds.accentFill.text} />
+          {busy ? (
+            <DsText variant="label" color={ds.accentFill.text} style={styles.busyText}>
+              {busy}
+            </DsText>
+          ) : null}
         </PressableScale>
       </View>
       <Trail items={trail} />
@@ -43,6 +48,8 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.md },
   drink: { flex: 1, textAlign: 'center', ...font.semiBold },
   done: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  busy: { width: 'auto', flexDirection: 'row', gap: space.xs, paddingHorizontal: space.md },
+  busyText: { ...font.semiBold },
   eyebrow: { letterSpacing: 0.6, ...font.medium },
   title: { ...type.title },
 });

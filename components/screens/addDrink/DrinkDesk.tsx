@@ -228,7 +228,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             lineDetail={lineDetail}
             lineBelow={lineBelow}
             onNewBottle={onNewBottle}
-            inlinePrep={{ venueName: barId ? p.venueName : null, onOpen: setPrepOpen }}
+            inlinePrep={{ venueName: barId ? p.venueName : null, onOpen: setPrepOpen, save: { onSave: p.onSave, saving: p.saving, canSave: p.canSave } }}
             bar={barId ? { id: barId, name: p.venueName } : null}
             trail={trail}
             placeholder="Add an ingredient: “30 pommeau” works too"
