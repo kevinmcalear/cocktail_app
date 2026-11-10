@@ -26,7 +26,7 @@ export function LeaveCard({ where, step, drink, body, onLeave, onStay, onDrop }:
       <View role="alertdialog" aria-modal aria-label="Leave it for now?" style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}>
         {where && step ? <Caption tone="muted">{`${where} · ${step}`.toUpperCase()}</Caption> : null}
         <Headline role="heading">Leave it for now?</Headline>
-        <Body tone="muted">{body ?? `What you’ve done is kept. ${drink} shows it as Recipe to finish, and New lists ${drink} under Drafts, with the way back.`}</Body>
+        <Body tone="muted">{body ?? `What you’ve done is kept. ${drink} shows it as Recipe to finish, and New lists ${drink} under Pick up where you left off, with the way back.`}</Body>
         <View style={styles.buttons}>
           <Button label="Leave it for now" variant="ink" onPress={onLeave} />
           <Button label="Keep going" variant="secondary" onPress={onStay} />
