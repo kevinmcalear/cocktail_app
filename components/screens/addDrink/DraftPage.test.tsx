@@ -83,7 +83,7 @@ describe('the draft page', () => {
     expect(screen.getByText('Recipe to finish')).toBeTruthy();
   });
 
-  test('made from the search, then Back with nothing written: no line is left', async () => {
+  test('made from the search, then Back with nothing written asks, and Don’t keep it leaves no line', async () => {
     useDrinkWizardStore.getState().patch('home', { name: 'Pine Fizz', lines: [{ key: 'k1', id: 'gin', name: 'Gin', amount: '30', unit: 'ml' }] });
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
@@ -93,7 +93,8 @@ describe('the draft page', () => {
     expect(useDrinkWizardStore.getState().kept.home.draft.lines).toHaveLength(2);
     await fireEvent(screen.getByTestId('part-page'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } } });
     await fireEvent.press(screen.getByRole('button', { name: /^Back to Pine Fizz/ }));
-    expect(screen.queryByText('Leave it for now?')).toBeNull();
+    expect(screen.getByText('Leave it for now?')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Don’t keep it' }));
     expect(screen.queryByTestId('part-page')).toBeNull();
     expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => l.name)).toEqual(['Gin']);
   });

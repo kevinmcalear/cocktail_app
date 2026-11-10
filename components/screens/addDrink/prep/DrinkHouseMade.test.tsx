@@ -14,7 +14,8 @@ jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrep
 let mockConnected = true;
 jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: mockConnected }) }));
 const mockSame = jest.fn((): unknown => null);
-jest.mock('@/hooks/useSameNamePrep', () => ({ ...jest.requireActual('@/hooks/useSameNamePrep'), useSameNamePrep: () => ({ data: mockSame(), checking: false }) }));
+let mockChecking = false;
+jest.mock('@/hooks/useSameNamePrep', () => ({ ...jest.requireActual('@/hooks/useSameNamePrep'), useSameNamePrep: () => ({ data: mockSame(), checking: mockChecking }) }));
 
 const laidOut = () => fireEvent(screen.getByTestId('part-page'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
 
@@ -36,6 +37,7 @@ const props = (more: Partial<DrinkHouseMadeProps> = {}): DrinkHouseMadeProps => 
 
 afterEach(() => {
   mockConnected = true;
+  mockChecking = false;
   mockSame.mockReturnValue(null);
 });
 
@@ -62,16 +64,25 @@ test('offline it says the drink’s draft keeps it on this phone', async () => {
   expect(screen.queryByText('Saves with the drink. It shows on House-made too.')).toBeNull();
 });
 
-test('Back with nothing written just closes; one finished before closes with its changes kept, no asking', async () => {
+test('Back before it’s done asks, even with nothing written; one finished before closes with its changes kept, no asking', async () => {
   // A name that says no kind starts with no lines.
   const p = props({ name: 'Rvwa' });
   await renderWithProviders(<DrinkHouseMade {...p} />);
   await laidOut();
-  // Nothing in it yet (Add-inside, Empty).
+  // Nothing in it yet (Add-inside, Empty): come back to it, the drink shows Recipe to finish.
   expect(screen.getByText('Nothing in it yet. Add what goes in, or come back to it: the drink shows Recipe to finish.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: /^Back to Pine Fizz/ }));
+  expect(screen.getByText('Leave it for now?')).toBeTruthy();
+  expect(p.onClose).not.toHaveBeenCalled();
+  // Keep going, then Escape (the web) or Android's back on the page: the same card.
+  await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
   expect(screen.queryByText('Leave it for now?')).toBeNull();
-  expect(p.onClose).toHaveBeenCalledWith(false);
+  await fireEvent(screen.getByTestId('part-page'), 'requestClose');
+  expect(screen.getByText('Leave it for now?')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Leave it for now' }));
+  // What the page shows goes on the line (nothing yet), and it's left as kept.
+  expect(p.onKeep).toHaveBeenCalledWith(expect.objectContaining({ lines: [] }), 'Rvwa', false);
+  expect(p.onClose).toHaveBeenCalledWith(true);
 
   const again = props({ initial: startPrep('syrup', 'Pine syrup'), finished: true });
   await renderWithProviders(<DrinkHouseMade {...again} />);
@@ -106,4 +117,16 @@ test('empty, with a name that says nothing: all four rows say Add (Add-inside, E
   await laidOut();
   for (const row of ['What it is', 'Method', 'Makes', 'Keeps']) expect(screen.getByText(row)).toBeTruthy();
   expect(screen.getAllByText('Add')).toHaveLength(4);
+});
+
+test('Back while its name is still being checked asks too; Leave keeps the line a name to make, no recipe on it', async () => {
+  mockChecking = true;
+  const p = props({ initial: startPrep('syrup', 'Pine syrup') });
+  await renderWithProviders(<DrinkHouseMade {...p} />);
+  await laidOut();
+  await fireEvent(screen.getByTestId('part-page'), 'requestClose');
+  expect(screen.getByText('Leave it for now?')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Leave it for now' }));
+  expect(p.onKeep).not.toHaveBeenCalled();
+  expect(p.onClose).toHaveBeenCalledWith(true);
 });
