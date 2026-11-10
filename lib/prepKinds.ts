@@ -395,7 +395,7 @@ export function startPrep(kind: PrepKindId, name: string, way?: string): PrepDra
             s('Cover and leave in the fridge until it’s syrupy.', DAY * 3600),
             s('Strain, pressing the fruit. Scrape in any sugar left behind.'),
             s('Stir in the vinegar until the sugar is gone.'),
-            s('Bottle and rest in the fridge before using.', 2 * DAY * 3600),
+            s('Bottle and rest in the fridge before using.', DAY * 3600), // A timer runs a day at most (item_steps.timer_seconds); the lead time says the rest.
           ], 3 * WEEK, fridge, hot ? 60 : shrubWay === 'oleo' ? 2 * DAY * 60 : 3 * DAY * 60, ['Infuse', 'Strain']); // 3 to 6 weeks if opened often: the shorter.
     case 'cordial':
       return draft([flavour ? line(`${flavour} juice`, 1, 'g', 1) : slotLine('Juice', 'juice', 1, 'g', 1), line('Sugar', 1, 'g', 0.62), line('Citric acid', 0.02, 'g', 0), ...extras], 500, [

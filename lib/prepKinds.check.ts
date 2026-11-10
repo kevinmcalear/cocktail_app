@@ -1,7 +1,7 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, kindOfTechnique, MOST_MADE_KINDS, shownKinds, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, sameStart, slotMessage, sourceSite, startPrep, tileOf, wayOf, waysByKit, withFacts, withMethod } from './prepKinds';
+import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, KIND_WAYS, kindOfTechnique, MOST_MADE_KINDS, shownKinds, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, sameStart, slotMessage, sourceSite, startPrep, tileOf, wayOf, waysByKit, withFacts, withMethod } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';
 import { nameFor, nameParts, prepFacts, slotIngredient } from './techniques/template';
@@ -87,6 +87,11 @@ assert.equal(partsText(2, 1), '2 parts');
 // Super juice per gram of peel.
 assert.deepEqual(prepAmounts(startPrep('super', 'Lime super juice')).map((a) => a.amount), [60, 39.6, 19.8, 1000.2]);
 
+// Every starting timer fits the column (item_steps.timer_seconds, 1 s to a day), or the save fails (Android walk, 9 Nov: a cold shrub's 2-day rest).
+for (const k of PREP_KINDS)
+  for (const way of [undefined, ...(KIND_WAYS[k.id] ?? []).map((w) => w.id)])
+    for (const st of startPrep(k.id, 'Pineapple chili test', way).steps)
+      assert.ok(st.timer_seconds == null || (st.timer_seconds > 0 && st.timer_seconds <= 86400), `${k.id}/${way}: ${st.body} ${st.timer_seconds}`);
 // Every kind but Something else starts with at least one line (it has none until the maker adds them), and blank keeps no method.
 for (const k of PREP_KINDS) assert.ok(k.id === 'other' ? startPrep(k.id, 'Test').lines.length === 0 : startPrep(k.id, 'Test').lines.length >= 1, k.id);
 assert.deepEqual(startPrep('other', 'Smoked salt').steps, []);
