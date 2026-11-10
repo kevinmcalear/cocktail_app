@@ -10,7 +10,6 @@ import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { WebHead } from '@/components/WebHead';
 import { useWebNav } from '@/hooks/useIsWideWeb';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
-import { BottlePhotoSheet } from '@/components/screens/bottles/BottlePhotoSheet';
 import { MatchClassicsNudge } from '@/components/screens/classics/MatchClassicsNudge';
 import { ResumeCard } from '@/components/screens/bringin/ResumeCard';
 import { BottleChips, bottlesFor, ToOrder, useBottleFacts } from '@/components/screens/drinks/Bottles';
@@ -40,6 +39,8 @@ import type { SearchItem } from '@/types/search';
 const StaffList = lazy(() => import('@/components/screens/drinks/StaffList').then((m) => ({ default: m.StaffList })));
 // Swap a bottle's sheet loads when it's first opened.
 const SwapSheet = lazy(() => import('@/components/screens/drinks/SwapSheet').then((m) => ({ default: m.SwapSheet })));
+// Snap a bottle's sheet (photo picking, Bring in) loads the first time it's opened, then stays mounted to close with its animation.
+const BottlePhotoSheet = lazy(() => import('@/components/screens/bottles/BottlePhotoSheet').then((m) => ({ default: m.BottlePhotoSheet })));
 
 const NO_IDS: string[] = [];
 const EVERYWHERE = { area: { kind: 'anywhere' }, kinds: ['drink', 'bar', 'person', 'ingredient'] } as const;
@@ -75,6 +76,8 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
   const canOrder = !!d.capabilities?.includes('menus');
   const [swap, setSwap] = useState(false);
   const [snapping, setSnapping] = useState(false);
+  const [snapped, setSnapped] = useState(false);
+  if (snapping && !snapped) setSnapped(true);
   // Phones search from the search circle; wider screens narrow the list in place.
   const phone = breakpoint === 'phone';
   const [find, setFind] = useState('');
@@ -196,7 +199,11 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
           <SwapSheet barId={activeId} onClose={() => setSwap(false)} />
         </Suspense>
       ) : null}
-      {active ? <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} /> : null}
+      {active && snapped ? (
+        <Suspense fallback={null}>
+          <BottlePhotoSheet visible={snapping} target={{ kind: 'venue', barId: active.id, name: active.name, canEdit }} onClose={() => setSnapping(false)} />
+        </Suspense>
+      ) : null}
     </View>
   );
 }

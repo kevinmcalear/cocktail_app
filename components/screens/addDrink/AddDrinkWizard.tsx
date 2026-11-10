@@ -15,7 +15,7 @@ import { linesOnKeptHouseMades } from '@/hooks/specLineSave';
 import { useVenueIce } from '@/hooks/useVenueIce';
 import { suggestClassic } from '@/lib/classics';
 import { stepWaits } from '@/lib/sameName';
-import { saveErrorWords } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, savedNotice, sketchLook, withMethodIce, type WizardDraft } from '@/lib/drinkWizard';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { serveGuess } from '@/lib/specDefaults';
