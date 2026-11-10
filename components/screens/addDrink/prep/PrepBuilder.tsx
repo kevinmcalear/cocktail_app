@@ -126,8 +126,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   // Leaving keeps what's done on the line, a recipe to finish; lines just combined go back to two, and a finished recipe stays as it was.
   const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: step }, shown) : null;
   // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
-  // On its own page (Kevin, 8 Nov: "Later on close") what's written is already kept: closing asks first, and with nothing written just goes.
-  // Written: typed or picked here, or picked up from before. A name passed in and nothing else is not.
+  // On its own page (Kevin, 8 Nov: "Later on close") what's written is already kept: closing asks first, and with nothing written just goes. Written: typed or picked here, or picked up from before. A name passed in and nothing else is not.
   const [typed, setTyped] = useState(false);
   const filled = typed || changed() || !!initial;
   const leave = page ? (filled ? onClose : (onDrop ?? onClose)) : (keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())));
