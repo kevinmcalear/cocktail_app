@@ -3,7 +3,7 @@ import { Alert } from 'react-native';
 
 import { useIngredientDraftEditor, useIngredientEditor, type IngredientEditor, type IngredientForm } from '@/hooks/useIngredientEditor';
 import { useItemPrep, useSaveItemPrep, type PrepCardData } from '@/hooks/usePrepCard';
-import { saveErrorWords } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { prepCardInput, prepFields, samePrepCard, type PrepFields } from '@/lib/prepCardForm';
 
 import type { PendingEdits } from '../../drink/edit/VenueSections';

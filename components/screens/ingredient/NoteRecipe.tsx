@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useAdoptNoteRecipe, type PrepCardData } from '@/hooks/usePrepCard';
 import { withAlpha } from '@/lib/color';
-import { saveErrorWords } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import type { NoteLine, NoteRecipe as Read } from '@/lib/noteRecipe';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 

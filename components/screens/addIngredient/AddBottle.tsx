@@ -10,7 +10,7 @@ import { useReadLabel } from '@/hooks/useReadLabel';
 import { useBottleHere, useBottleStrengths, useSaveBottle } from '@/hooks/useSaveBottle';
 import { abvError, abvNumber, bottleMatches, kindHelp, notABottleWords, ownBottle, savedDetail, takenWords, type BottleRow } from '@/lib/addBottle';
 import { readableAccent } from '@/lib/color';
-import { saveErrorWords } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { confirmDiscardChanges } from '@/lib/dialogs';
 import { newDraftId, type WizardPick } from '@/lib/drinkWizard';
 import { sameBottle } from '@/lib/ingredientNames';

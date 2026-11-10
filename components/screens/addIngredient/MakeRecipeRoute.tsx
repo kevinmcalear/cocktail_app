@@ -14,7 +14,7 @@ import { useDropdowns } from '@/hooks/useDropdowns';
 import { takenPrepWords, useSameNamePrep } from '@/hooks/useSameNamePrep';
 import { PARTS_SAVED, savedTogether, useHouseMadeWaiting, useSaveHouseMade } from '@/hooks/useSaveHouseMade';
 import { readableAccent } from '@/lib/color';
-import { saveErrorWords } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { newDraftId } from '@/lib/drinkWizard';
 import { houseMadeBar, houseMadesAt, houseMadeSlot, isHouseMadeSlot } from '@/lib/houseMadeDraft';
 import { partsOf } from '@/lib/houseMadeParts';
