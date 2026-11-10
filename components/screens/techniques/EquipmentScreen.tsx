@@ -12,6 +12,7 @@ export function EquipmentScreen() {
   const ds = useDs();
   const { kit, toggle } = useKit();
   const can = allTechniques().filter((t) => canMake(t, kit)).length;
+  const equipment = allEquipment();
   return (
     <TechniquePage
       title="My kit"
@@ -26,8 +27,8 @@ export function EquipmentScreen() {
         <Body color={ds.c.ground}>{`of ${allTechniques().length} techniques you can make`}</Body>
       </View>
       <Surface style={styles.list}>
-        {allEquipment().map((e, i) => (
-          <KitRow key={e.id} e={e} kit={kit} onToggle={toggle} last={i === allEquipment().length - 1} />
+        {equipment.map((e, i) => (
+          <KitRow key={e.id} e={e} kit={kit} onToggle={toggle} last={i === equipment.length - 1} />
         ))}
       </Surface>
     </TechniquePage>

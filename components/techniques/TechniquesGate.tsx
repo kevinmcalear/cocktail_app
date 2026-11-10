@@ -10,6 +10,6 @@ import { useTechniques } from '@/lib/techniques';
  * root layout starts the load once the first screen's data is in, so a tap
  * through the app rarely waits; a deep link waits on one small fetch.
  */
-export function TechniquesGate({ children }: { children: ReactNode }) {
-  return useTechniques() ? children : null;
+export function TechniquesGate({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
+  return useTechniques() ? children : fallback;
 }

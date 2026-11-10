@@ -68,13 +68,25 @@ const subscribe = (l: () => void) => {
   return () => listeners.delete(l);
 };
 
-/** True once the library is in; starts the load. */
-export function useTechniques(): boolean {
+/**
+ * True once the library is in. Starts the load when `want` (a screen that
+ * may never need it passes false), and while it's mounted keeps trying a
+ * failed one (offline), every few seconds, longer each time.
+ */
+export function useTechniques(want = true): boolean {
   const ready = useSyncExternalStore(subscribe, techniquesLoaded, notOnServer);
   useEffect(() => {
-    // A failed load leaves the gate closed; the next screen that needs it tries again.
-    if (!ready) loadTechniques().catch(() => {});
-  }, [ready]);
+    if (ready || !want) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let wait = 2000;
+    const tryLoad = () =>
+      loadTechniques().catch(() => {
+        timer = setTimeout(tryLoad, wait);
+        wait = Math.min(wait * 2, 30_000);
+      });
+    void tryLoad();
+    return () => clearTimeout(timer);
+  }, [ready, want]);
   return ready;
 }
 

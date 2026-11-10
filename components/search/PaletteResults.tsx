@@ -119,7 +119,7 @@ export function PaletteResults({ query: typed, mine, onEverywhere }: { query: st
   const ingredients = [...preps, ...groups.ingredients.filter((i) => !preps.some((p) => p.id === i.id))];
   // Techniques, at a venue that switched them on (lib/venueFeatures.ts), once the library is in (lib/techniques).
   const techniques = useVenueFeature('techniques');
-  const library = useTechniques();
+  const library = useTechniques(techniques);
   const learn = useMemo(() => (techniques && library ? searchTechniques(q).slice(0, LEARN) : []), [q, techniques, library]);
   const open = (item: SearchItem) => openSearchItem(item, (href) => router.push(href as never));
   const made = madeFirst({ drinks: groups.drinks, ingredients }, q);
