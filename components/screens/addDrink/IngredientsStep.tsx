@@ -65,7 +65,7 @@ interface IngredientsStepProps extends StepProps {
   placeholder?: string;
   /** The desktop page: "Add “X”, a bottle you buy" adds the line with its card open under it (this line's key). */
   onNewBottle?: (key: string) => void;
-  /** A new drink, kept as a draft (the draft page, the desktop page): a house-made left for now is listed with it under Drafts. */
+  /** A new drink, kept as a draft (the draft page, the desktop page): a house-made left for now is listed with it under Pick up where you left off. */
   inlinePrep?: InlinePrep;
   /** The venue the drink is for, whose Kit a recipe's ways are checked against; null at home. */
   bar?: { id: string; name: string } | null;

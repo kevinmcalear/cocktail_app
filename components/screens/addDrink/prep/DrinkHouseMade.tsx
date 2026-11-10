@@ -25,7 +25,7 @@ export interface DrinkHouseMadeProps {
   drinkName: string;
   /** In a drink (the eyebrow and the notes say so), or in another house-made's recipe (a part). */
   forDrink: boolean;
-  /** A new drink, kept as a draft: Drafts lists it with the way back. */
+  /** A new drink, kept as a draft: New lists it under Pick up where you left off, with the way back. */
   drafts: boolean;
   /** Where the drink is, down to it: the trail. */
   above: readonly TrailItem[];
@@ -110,7 +110,7 @@ export function DrinkHouseMade(p: DrinkHouseMadeProps) {
   const leave = asking ? (
     <LeaveCard
       drink={drink}
-      body={`What you’ve done is kept. ${drink} shows it as Recipe to finish${p.drafts ? ', and Drafts lists the drink with the way back' : ''}.`}
+      body={`What you’ve done is kept. ${drink} shows it as Recipe to finish${p.drafts ? ', and New lists the drink under Pick up where you left off, with the way back' : ''}.`}
       onLeave={close}
       onStay={() => setAsking(false)}
       onDrop={p.onDrop}
