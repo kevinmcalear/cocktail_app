@@ -19,7 +19,7 @@ describe('PrepBuilder on its own page', () => {
     const onKeep = jest.fn();
     const onClose = jest.fn();
     const onDrop = jest.fn();
-    await renderWithProviders(<PrepBuilder page name="" drinkName="" above={[]} ingredients={[]} onDone={onDone} onKeep={onKeep} onDrop={onDrop} onClose={onClose} />);
+    await renderWithProviders(<PrepBuilder name="" ingredients={[]} onDone={onDone} onKeep={onKeep} onDrop={onDrop} onClose={onClose} />);
     await laidOut();
     expect(screen.getByText('Something you make')).toBeTruthy();
     expect(screen.getByText('HOUSE-MADE · 1 OF 3')).toBeTruthy();
@@ -68,7 +68,7 @@ describe('PrepBuilder on its own page', () => {
 
   test('on its own page a name taken here is one card, Open it or Rename this one, and Next waits', async () => {
     const onOpen = jest.fn();
-    await renderWithProviders(<PrepBuilder page name="Honey syrup" drinkName="" above={[]} ingredients={[]} taken={{ title: 'Honey syrup is already here', body: 'Caretaker’s has one, in 3 drinks.', onOpen, openLabel: 'Open Honey syrup' }} onDone={jest.fn()} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="Honey syrup" ingredients={[]} taken={{ title: 'Honey syrup is already here', body: 'Caretaker’s has one, in 3 drinks.', onOpen, openLabel: 'Open Honey syrup' }} onDone={jest.fn()} onClose={jest.fn()} />);
     await laidOut();
     expect(screen.getByText('Honey syrup is already here')).toBeTruthy();
     expect(screen.queryByRole('radio', { name: 'Syrup' })).toBeNull();
@@ -79,7 +79,7 @@ describe('PrepBuilder on its own page', () => {
   });
 
   test('at a bar the kit is in Settings › Kit, as drawn', async () => {
-    await renderWithProviders(<PrepBuilder page name="Pine syrup" drinkName="" above={[]} ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onDone={jest.fn()} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="Pine syrup" ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onDone={jest.fn()} onClose={jest.fn()} />);
     await laidOut();
     expect(screen.getByText('Your kit is in Settings › Kit. The rest stay here, dimmed, in case you have it.')).toBeTruthy();
   });

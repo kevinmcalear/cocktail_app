@@ -35,13 +35,13 @@ const next = async (...labels: string[]) => {
   for (const name of labels) await fireEvent.press(screen.getByRole('button', { name }));
 };
 
-// A draft picked up again (a kept one, or one already in the drink), another kind picked, and added.
+// A draft picked up again (a kept one) on What is it, another kind picked, and saved.
 const pickedUp = async (initial: PrepDraft, kind: string) => {
   const onDone = jest.fn();
-  await renderWithProviders(<PrepBuilder name="Pineapple shrub" drinkName="Daiquiri" initial={initial} first ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
+  await renderWithProviders(<PrepBuilder name="Pineapple shrub" initial={initial} startAt="kind" ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
   await laidOut();
   await fireEvent.press(screen.getByRole('radio', { name: kind }));
-  await next('Next: what goes in', 'Next: how it’s made', 'Add it to Daiquiri');
+  await next('Next: what goes in', 'Next: how it’s made', 'Save it');
   return onDone.mock.calls[0][0] as PrepDraft;
 };
 
@@ -61,13 +61,13 @@ describe('usePrepDraft', () => {
 
   test('another way of a syrup keeps a line added to what goes in, and takes the way’s steps (review of #1183)', async () => {
     const onDone = jest.fn();
-    await renderWithProviders(<PrepBuilder name="Honey syrup" drinkName="Daiquiri" ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="Honey syrup" ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
     await laidOut();
     await next('Next: what goes in');
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Fresh ginger');
-    await next('Just add the name “Fresh ginger”', 'Back');
+    await next('Add “Fresh ginger”', 'Back');
     await fireEvent.press(screen.getByRole('radio', { name: /^Sous vide\./ }));
-    await next('Next: what goes in', 'Next: how it’s made', 'Add it to Daiquiri');
+    await next('Next: what goes in', 'Next: how it’s made', 'Save it');
     const prep = onDone.mock.calls[0][0] as PrepDraft;
     expect(prep.way).toBe('sous-vide');
     expect(prep.lines.map((l) => l.name)).toEqual(['Sugar', 'Water', 'Fresh ginger']);
@@ -76,7 +76,7 @@ describe('usePrepDraft', () => {
 
   test('on its own page a name typed there starts from the catalog’s recipe once typing pauses, and stays on the name (review of #1183)', async () => {
     const onDone = jest.fn();
-    await renderWithProviders(<PrepBuilder page name="" drinkName="" above={[]} ingredients={[]} onDone={onDone} onKeep={jest.fn()} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="" above={[]} ingredients={[]} onDone={onDone} onKeep={jest.fn()} onClose={jest.fn()} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Grapefruit cordial');
     await act(() => new Promise((r) => setTimeout(r, 350)));
@@ -89,7 +89,7 @@ describe('usePrepDraft', () => {
 
   test('a name changed after its kind still starts another kind’s own lines: they were the kind’s, not the maker’s (review)', async () => {
     const onDone = jest.fn();
-    await renderWithProviders(<PrepBuilder page name="" drinkName="" above={[]} ingredients={[]} onDone={onDone} onKeep={jest.fn()} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="" above={[]} ingredients={[]} onDone={onDone} onKeep={jest.fn()} onClose={jest.fn()} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Pear shrub');
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Pear and fig shrub');
@@ -98,24 +98,24 @@ describe('usePrepDraft', () => {
     expect(onDone.mock.calls[0][0].lines.map((l: { name: string }) => l.name)).toEqual(startPrep('cordial', 'Pear and fig shrub').lines.map((l) => l.name));
   });
 
-  test('a name retyped in the drink’s builder starts from its catalog recipe, stays on the name, and Later keeps that recipe', async () => {
-    const onLater = jest.fn();
-    await renderWithProviders(<PrepBuilder name="Grapefruit syrup" drinkName="Daiquiri" ingredients={[]} onDone={jest.fn()} onLater={onLater} onClose={jest.fn()} />);
+  test('a name retyped starts from its catalog recipe, stays on the name, and the kept draft has that recipe', async () => {
+    const onKeep = jest.fn();
+    await renderWithProviders(<PrepBuilder name="Grapefruit syrup" ingredients={[]} onDone={jest.fn()} onKeep={onKeep} onClose={jest.fn()} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Grapefruit cordial');
     await act(() => new Promise((r) => setTimeout(r, 350)));
     expect(screen.getByText('What are you making?')).toBeTruthy();
-    await next('Later');
-    expect(onLater.mock.calls[0][0].lines.map((l: { id: string }) => l.id)).toEqual(['gj', 'su']);
+    await next('Next: what goes in');
+    expect(onKeep.mock.calls.at(-1)[0].lines.map((l: { id: string }) => l.id)).toEqual(['gj', 'su']);
   });
 
   test('another way of a syrup keeps its keeps, storage and allergens set by hand (review)', async () => {
     const syrup: PrepDraft = { ...startPrep('syrup', 'Honey syrup'), keepsHours: 336, storage: 'Freezer', allergens: ['sulphites'], allergensSet: true };
     const onDone = jest.fn();
-    await renderWithProviders(<PrepBuilder name="Honey syrup" drinkName="Daiquiri" initial={syrup} first ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="Honey syrup" initial={syrup} startAt="kind" ingredients={[]} onDone={onDone} onClose={jest.fn()} />);
     await laidOut();
     await fireEvent.press(screen.getByRole('radio', { name: /^Rotovap\./ }));
-    await next('Next: what goes in', 'Next: how it’s made', 'Add it to Daiquiri');
+    await next('Next: what goes in', 'Next: how it’s made', 'Save it');
     const prep = onDone.mock.calls[0][0] as PrepDraft;
     expect([prep.way, prep.keepsHours, prep.storage, prep.allergens]).toEqual(['rotovap', 336, 'Freezer', ['sulphites']]);
     expect(prep.steps[0].body).toBe('Distil the flavour under vacuum at low heat.');

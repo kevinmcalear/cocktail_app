@@ -102,14 +102,11 @@ function MakeRecipe() {
   const label = waiting && !save.isPending ? 'Saves when you’re back' : save.isPending && !offline ? (count > 1 ? `Saving ${count}…` : 'Saving…') : offline ? 'Save on this phone' : 'Save it';
   const builder = (
     <PrepBuilder
-      page
       embedded={dialog}
       closeRef={closeRef}
       name={kept?.draft.name ?? nameParam ?? ''}
       initial={kept?.draft.prep ?? null}
       startAt={kept?.draft.prep ? kept.step : undefined}
-      drinkName=""
-      above={[]}
       bar={venue ? { id: venue.id, name: venue.name } : null}
       ingredients={dropdowns?.ingredients ?? []}
       aliases={dropdowns?.ingredientAliases}

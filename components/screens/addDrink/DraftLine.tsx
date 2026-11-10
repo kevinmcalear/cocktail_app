@@ -47,7 +47,7 @@ const toWrite = (l: WizardLine) => !l.id && (l.later || !!l.prep?.at);
  * A spec line on the draft page (Prod-add-flow 3, Kept-add-helpers): "45 ml
  * Mezcal", in pencil until saved. A gap is amber: "?" and Add amount where
  * there's no amount, New for a house-made still to write, which also asks
- * to write it here (Write it now, Later). A tap opens the line's editor.
+ * to write it here (Make it here). A tap opens the line's editor.
  * A line that matched nothing, or loose salt, opens straight away: it has a
  * question to answer. Closed, it's still held and moved by its grip (DragRow):
  * it folds, says what letting go does, and lights up to be dropped on.
@@ -55,7 +55,6 @@ const toWrite = (l: WizardLine) => !l.id && (l.later || !!l.prep?.at);
 export function DraftLine({ line, row, write, hint, grip, onMove, lifted, dropTarget, combineWith, moveTo, detail, below }: Props) {
   const ds = useDs();
   const [open, setOpen] = useState(false);
-  const [later, setLater] = useState(false);
   const held = useHeldStyle(lifted, combineWith, dropTarget);
   const amber = readableAccent(STATUS.warning, ds.c.ground);
   if (open || unmatched(line) || isLooseSalt(line.name)) {
@@ -78,7 +77,8 @@ export function DraftLine({ line, row, write, hint, grip, onMove, lifted, dropTa
   const top = line.unit === 'top';
   const missing = !top && !line.amount.trim();
   const fresh = toWrite(line);
-  const flag = missing ? 'Add amount' : fresh ? 'New' : null;
+  // A house-made to write is New (Add-inside, 1), started and left for now Recipe to finish (Back before it's done): the amber "?" still says the amount.
+  const flag = fresh ? (line.prep?.at ? 'Recipe to finish' : 'New') : missing ? 'Add amount' : null;
   const said = top ? `Top with ${line.name}` : missing ? `${line.name}, no amount yet` : `${line.amount} ${line.unit} ${line.name}`;
   return (
     <View>
@@ -113,16 +113,14 @@ export function DraftLine({ line, row, write, hint, grip, onMove, lifted, dropTa
         {detail && !lifted ? <View style={styles.detail}>{detail}</View> : null}
       </View>
       {lifted ? null : below}
-      {fresh && !later && !lifted ? (
+      {fresh && !lifted ? (
         <View style={styles.prompt}>
           <Prompt
             icon="flask"
             title={`${line.name} isn’t one of yours yet.`}
             body="Write it as a house-made, here, without leaving this drink."
-            actions={[
-              { label: 'Write it now', onPress: write },
-              { label: 'Later', onPress: () => setLater(true) },
-            ]}
+            // Kevin, 8 Nov: the main button alone ("Later on close"), in plainer words (as Add-parts' "Make X here").
+            actions={[{ label: `Make ${line.name} here`, onPress: write }]}
           />
         </View>
       ) : null}

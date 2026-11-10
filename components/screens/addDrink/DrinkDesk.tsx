@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ComponentRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Button, Caption, TextLink, useDs } from '@/components/ds';
@@ -23,7 +23,7 @@ import { suggestAmount } from '@/lib/specDefaults';
 import { getPreferredUnit } from '@/store/useSettingsStore';
 
 import { CreditsStep } from './CreditsStep';
-import { DeskColour, DeskCost, deskSketch, DeskKit, DeskMenuNote, DeskTaste, DeskToFinish } from './DrinkDeskRail';
+import { DeskColour, DeskCost, deskSketch, DeskMenuNote, DeskTaste, DeskToFinish } from './DrinkDeskRail';
 import { FinishStep } from './FinishStep';
 import { GlassStep } from './GlassStep';
 import { IngredientsStep } from './IngredientsStep';
@@ -33,7 +33,7 @@ import { IceStep } from './IceStep';
 import { MethodParts, PartsSwitch } from './MethodParts';
 import { MethodIceLine } from './MethodStep';
 import { PickStep } from './PickStep';
-import { PREP_CARD_ID } from './prep/PrepCard';
+import { SIDE_PANEL_ID, SidePanelContext } from './prep/sidePanel';
 import { drinkTrail, Trail } from './Trail';
 import { PublishStep } from './PublishStep';
 import { ReviewPhotos } from './ReviewPhotos';
@@ -112,8 +112,13 @@ export function DrinkDesk(p: DrinkDeskProps) {
     currency,
   });
   const [finishOpen, setFinishOpen] = useState(false);
-  // A recipe being written under its line: the rail shows the kit its ways are checked against.
+  // A house-made being written inside the drink: the rail says which; it opens beside the drink, in the rail's place (Add-inside, Web).
   const [prepOpen, setPrepOpen] = useState<string | null>(null);
+  const [panelEl, setPanelEl] = useState<HTMLElement | null>(null);
+  // How many are open in it (a line's house-made and a finish's can both be): it shows while any is.
+  const [panelUses, setPanelUses] = useState(0);
+  const panelInUse = panelUses > 0;
+  const onPanelUse = useCallback((inUse: boolean) => setPanelUses((n) => n + (inUse ? 1 : -1)), []);
   // A classic or a riff can bring garnishes in after the page opens: they show.
   const finishing = finishOpen || draft.garnishes.length > 0;
 
@@ -133,8 +138,8 @@ export function DrinkDesk(p: DrinkDeskProps) {
   });
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      // Not while a sheet is open over the page, or a prep is being written under its line: that work isn't done.
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !document.querySelector(`[role="dialog"][aria-modal="true"], #${PREP_CARD_ID}`)) {
+      // Not while a sheet is open over the page, or a house-made is open beside it: that work isn't done.
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !document.querySelector(`[role="dialog"][aria-modal="true"], #${SIDE_PANEL_ID}`)) {
         e.preventDefault();
         latest.current();
       }
@@ -163,6 +168,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const saveLabel = p.saving ? 'Saving…' : menu ? `Add to ${menu}` : 'Save drink';
 
   return (
+    <SidePanelContext value={{ el: panelEl, onUse: onPanelUse }}>
     <View testID="add-drink" style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <WebHead>
         <title>Add a drink</title>
@@ -222,7 +228,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
             lineDetail={lineDetail}
             lineBelow={lineBelow}
             onNewBottle={onNewBottle}
-            inlinePrep={{ venueName: barId ? p.venueName : null, onOpen: setPrepOpen }}
+            inlinePrep={{ venueName: barId ? p.venueName : null, onOpen: setPrepOpen, save: { onSave: p.onSave, saving: p.saving, canSave: p.canSave } }}
             bar={barId ? { id: barId, name: p.venueName } : null}
             trail={trail}
             placeholder="Add an ingredient: “30 pommeau” works too"
@@ -241,7 +247,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
           </Row>
           <Row label="Finish">
             {finishing ? (
-              <FinishStep draft={draft} set={set} ingredients={p.ingredients} loading={p.loading} aliases={p.aliases} coreIds={p.coreIds} />
+              <FinishStep draft={draft} set={set} ingredients={p.ingredients} loading={p.loading} aliases={p.aliases} coreIds={p.coreIds} bar={barId ? { id: barId, name: p.venueName } : null} />
             ) : (
               <View style={styles.chips}>
                 <WizardChip label="Garnish, oil, mist or rinse" add kind="button" onPress={() => setFinishOpen(true)} />
@@ -257,17 +263,19 @@ export function DrinkDesk(p: DrinkDeskProps) {
           <Eyebrow>Photos</Eyebrow>
           <ReviewPhotos photos={draft.photos ?? {}} onChange={(photos) => set({ photos })} sketch={draftSketchInputs(sketchLook(draft, p.barVariants, p.barIceKinds))} seed={draft.id ?? 'new-drink'} />
         </DragScrollView>
-        <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }]} contentContainerStyle={styles.railBody}>
+        {/* react-native-web's View is its DOM node: the house-made's panel goes in it. */}
+        <View ref={(v) => setPanelEl(v as unknown as HTMLElement | null)} style={[styles.rail, { borderLeftColor: ds.c.line }, !panelInUse && styles.gone]} />
+        <ScrollView style={[styles.rail, { backgroundColor: ds.c.surface, borderLeftColor: ds.c.line }, panelInUse && styles.gone]} contentContainerStyle={styles.railBody}>
           <Suspense fallback={null}><PhoneFrame item={draftPreviewItem(draft, barId, p.ingredients)} photo={draft.photos?.hero} sketch={sketch} /></Suspense>
           <DeskColour draft={draft} inputs={sketch} seed={draft.id ?? 'new-drink'} onTint={(tint) => set({ tint })} />
           <DeskToFinish lines={draft.lines} making={prepOpen} />
-          {prepOpen ? <DeskKit bar={barId ? { id: barId, name: p.venueName } : null} /> : null}
           <DeskTaste lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} onAdd={addByName} />
           {canCost ? <DeskCost lines={costLines} pricing={pricing} currency={currency} price={draft.price ?? ''} onPrice={(price) => set({ price })} /> : null}
           <DeskMenuNote sectionId={p.menuSectionId} menu={menu} lines={perDrinkLines(draft.lines)} ingredients={p.ingredients} />
         </ScrollView>
       </View>
     </View>
+    </SidePanelContext>
   );
 }
 
@@ -282,5 +290,6 @@ const styles = StyleSheet.create({
   version: { gap: space.sm },
   undo: { alignSelf: 'flex-start' },
   rail: { flex: 1, minWidth: layout.phoneFrame + space.xl * 2, borderLeftWidth: StyleSheet.hairlineWidth },
+  gone: { display: 'none' },
   railBody: { padding: space.xl, gap: space.lg, width: layout.phoneFrame + space.xl * 2, alignSelf: 'center' },
 });

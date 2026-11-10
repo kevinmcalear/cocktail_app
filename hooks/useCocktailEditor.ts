@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { saveDrinkSpec } from "@/hooks/useVersions";
 import { fetchStepNotes, saveStepNotes } from "@/hooks/useStepNotes";
 import { carryFloatWords, carryPartWords, draftSteps, stepDraft, stepNoteChanges, type StepDraft, type StepNote, type StepWords } from "@/lib/stepNotes";
-import { resolveEditItems } from "@/hooks/specLineSave";
+import { saveEditItems } from "@/hooks/specLineSave";
 import { refreshIngredients } from "@/hooks/useDropdowns";
 import { showMessage } from "@/lib/dialogs";
 import { isNetworkError, specFingerprint } from "@/lib/offlineWrites";
@@ -268,8 +268,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     // The spec as it loaded, for telling whether it changed under an edit kept offline. Not the step words: a read of them that failed once isn't a change.
     const loadedBase = useRef("");
     const baseOf = ({ stepNotes: _words, ...form }: SpecForm) => specFingerprint(form);
-    const keepOffline = () => {
-        useOfflineEdits.getState().keep(id, { at: Date.now(), base: loadedBase.current, form: specForm() });
+    /** `lines`: the lines as a failed save left them (on the house-mades it saved), when this render's are older. */
+    const keepOffline = (lines?: SortableRecipeItem[]) => {
+        useOfflineEdits.getState().keep(id, { at: Date.now(), base: loadedBase.current, form: { ...specForm(), ...(lines ? { recipeItems: lines } : {}) } });
         showMessage("Kept on this phone", "There’s no signal, so your edit is saved here as a draft. Open this drink’s editor with signal and save to send it.");
     };
     useEffect(() => {
@@ -451,6 +452,12 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         }
 
         setSaving(true);
+        // The lines as the save leaves them, for an edit kept offline after it.
+        let lines: SortableRecipeItem[] | undefined;
+        const putLines = (items: SortableRecipeItem[]) => {
+            lines = items;
+            setRecipeItems(items);
+        };
         try {
             const finalImageIds: string[] = [];
             for (const img of localImages) {
@@ -495,37 +502,40 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             // Only when changed: notes for a role above yours never reach the editor, so an empty box isn't a clear (E29).
             if (notes.trim() !== loadedNotes.current.trim()) await saveItemNotes(id, notes);
 
-            // A line typed, combined or made in-house here is added the way New adds it.
-            const spec = await resolveEditItems(recipeItems, barId || null);
-            setRecipeItems(spec.items);
-            // Made in parts: each line's part, each part's methods with its number (Build can be in two), and the parts.
-            // Turned off here, everything goes back to one part; a drink that never had parts sends none, as before.
-            const parted = parts && parts.length > 1 ? parts : null;
-            const ordered = orderByPart(parted, spec.items);
-            const partOf = (item: SortableRecipeItem, i: number) => (parted ? linePart(parted, keyOf(item, i), false) : 1);
-            const byPartMethods = parted ? parted.flatMap((p, i) => idsOf(p.methods).map((mid) => ({ id: mid, part: i + 1 }))) : null;
-            // Lines and method go through save_drink_spec: one transaction, and a
-            // version of the spec written with it (History on the drink page).
-            await saveDrinkSpec(
-                id,
-                ordered.map((item, i) => ({
-                    id: item.id ?? null,
-                    ingredient_item_id: item.ingredient_id,
-                    amount: amountOf(item.amount) || null,
-                    unit: item.unit || null,
-                    preparation_notes: item.preparation_notes || null,
-                    is_optional: item.is_optional || false,
-                    is_float: item.is_float || false,
-                    ...(parted || hadParts.current ? { part: partOf(item, i) } : {}),
-                })),
-                byPartMethods ? byPartMethods.map((m) => m.id) : methodIds,
-                null,
-                parted && byPartMethods
-                    ? { methodParts: byPartMethods.map((m) => m.part), parts: storedParts(parted) }
-                    : hadParts.current
-                      ? { methodParts: methodIds.map(() => 1), parts: [] }
-                      : undefined
-            );
+            // A line typed, combined or made in-house here is added the way New adds it. House-mades written
+            // inside it save with the spec or not at all (board Add-inside): saveEditItems takes them back if it fails.
+            const spec = await saveEditItems(recipeItems, barId || null, putLines, async (items) => {
+                // Made in parts: each line's part, each part's methods with its number (Build can be in two), and the parts.
+                // Turned off here, everything goes back to one part; a drink that never had parts sends none, as before.
+                const parted = parts && parts.length > 1 ? parts : null;
+                const ordered = orderByPart(parted, items);
+                const partOf = (item: SortableRecipeItem, i: number) => (parted ? linePart(parted, keyOf(item, i), false) : 1);
+                const byPartMethods = parted ? parted.flatMap((p, i) => idsOf(p.methods).map((mid) => ({ id: mid, part: i + 1 }))) : null;
+                // Lines and method go through save_drink_spec: one transaction, and a
+                // version of the spec written with it (History on the drink page).
+                await saveDrinkSpec(
+                    id,
+                    ordered.map((item, i) => ({
+                        id: item.id ?? null,
+                        ingredient_item_id: item.ingredient_id,
+                        amount: amountOf(item.amount) || null,
+                        unit: item.unit || null,
+                        preparation_notes: item.preparation_notes || null,
+                        is_optional: item.is_optional || false,
+                        is_float: item.is_float || false,
+                        ...(parted || hadParts.current ? { part: partOf(item, i) } : {}),
+                    })),
+                    byPartMethods ? byPartMethods.map((m) => m.id) : methodIds,
+                    null,
+                    parted && byPartMethods
+                        ? { methodParts: byPartMethods.map((m) => m.part), parts: storedParts(parted) }
+                        : hadParts.current
+                          ? { methodParts: methodIds.map(() => 1), parts: [] }
+                          : undefined
+                );
+                return { ordered, parted };
+            });
+            const { ordered, parted } = spec.result;
             // The words on its steps, by the steps it has now: a step gone takes its words with it.
             // A Float step gone because its lines moved into a part hands its words to that part's step.
             const steps = draftSteps(ordered, parted, null);
@@ -549,7 +559,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             return true;
         } catch (error) {
             // The connection dropped on the way: keep the edit, a save with signal sends it all again.
-            if (isNetworkError(error)) keepOffline();
+            if (isNetworkError(error)) keepOffline(lines);
             else Alert.alert("Error", plainDbMessage(error) ?? "Failed to update cocktail.");
             return false;
         } finally {

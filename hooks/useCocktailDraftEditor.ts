@@ -11,7 +11,7 @@ import { saveItemNotes } from "@/hooks/useItemNotes";
 import { dropdownKeys, useDropdowns } from "@/hooks/useDropdowns";
 import { recentEntry, useTrackRecent } from "@/hooks/useTrackRecent";
 import { saveDrinkSpec } from "@/hooks/useVersions";
-import { resolveEditItems } from "@/hooks/specLineSave";
+import { saveEditItems } from "@/hooks/specLineSave";
 import { showMessage } from "@/lib/dialogs";
 import { amountOf } from "@/lib/drinkWizard";
 import {
@@ -381,73 +381,76 @@ export function useCocktailDraftEditor({
     const performPublish = async (): Promise<boolean> => {
         setSaving(true);
         try {
-            // A line typed, combined or made in-house here is added the way New adds it.
-            const spec = await resolveEditItems(recipeItems, barId || null);
-            setRecipeItems(spec.items);
-            const resolvedRecipeItems = [];
-            for (const item of spec.items) {
-                const resolvedId = await resolveIngredientId(item.ingredient_id, drafts, item.name);
-                if (resolvedId !== item.ingredient_id) {
-                    await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
-                }
-                resolvedRecipeItems.push({ ...item, ingredient_id: resolvedId });
-            }
-
-            const { data: cocktail, error: cocktailError } = await supabase
-                .from("items")
-                .insert({
-                    name: capitalize(name),
-                    description,
-                    origin: capitalize(origin) || null,
-                    glassware_id: glasswareId,
-                    family_id: familyId,
-                    ice_id: iceId,
-                    item_type: "cocktail",
-                    bar_id: barId || null,
-                    override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
-                    override_generic_ingredient_level: overrideGeneric ? parseInt(overrideGeneric) : null,
-                    override_specific_brand_level: overrideSpecific ? parseInt(overrideSpecific) : null,
-                    override_measurement_level: overrideMeasurement ? parseInt(overrideMeasurement) : null,
-                    override_prep_level: overridePrep ? parseInt(overridePrep) : null,
-                })
-                .select()
-                .single();
-
-            if (cocktailError || !cocktail) throw cocktailError;
-            const cocktailId = cocktail.id;
-
-            // Every write throws, and a half-made drink is removed again, so a
-            // failed publish keeps the draft and trying again doesn't leave a copy.
-            try {
-                for (let i = 0; i < localImages.length; i++) {
-                    const imgId = await uploadImage(localImages[i].url, cocktailId);
-                    const { error } = await supabase.from("item_images").insert({
-                        item_id: cocktailId,
-                        image_id: imgId,
-                        sort_order: i,
-                    });
-                    if (error) throw error;
+            // A line typed, combined or made in-house here is added the way New adds it. House-mades written
+            // inside it save with the drink or not at all (board Add-inside): saveEditItems takes them back if any of this fails.
+            const spec = await saveEditItems(recipeItems, barId || null, setRecipeItems, async (items) => {
+                const resolvedRecipeItems = [];
+                for (const item of items) {
+                    const resolvedId = await resolveIngredientId(item.ingredient_id, drafts, item.name);
+                    if (resolvedId !== item.ingredient_id) {
+                        await updateParentDraftsWithPublishedId(item.ingredient_id, resolvedId, drafts, saveDraft);
+                    }
+                    resolvedRecipeItems.push({ ...item, ingredient_id: resolvedId });
                 }
 
-                // Lines and methods, in order, in one transaction (its first version).
-                await saveDrinkSpec(
-                    cocktailId,
-                    resolvedRecipeItems.map((item) => ({
-                        ingredient_item_id: item.ingredient_id,
-                        amount: amountOf(item.amount) || null,
-                        unit: item.unit || null,
-                        preparation_notes: item.preparation_notes || null,
-                        is_optional: item.is_optional || false,
-                        is_float: item.is_float || false,
-                    })),
-                    methodIds,
-                    null
-                );
-                if (notes.trim()) await saveItemNotes(cocktailId, notes);
-            } catch (e) {
-                await supabase.from("items").delete().eq("id", cocktailId);
-                throw e;
-            }
+                const { data: cocktail, error: cocktailError } = await supabase
+                    .from("items")
+                    .insert({
+                        name: capitalize(name),
+                        description,
+                        origin: capitalize(origin) || null,
+                        glassware_id: glasswareId,
+                        family_id: familyId,
+                        ice_id: iceId,
+                        item_type: "cocktail",
+                        bar_id: barId || null,
+                        override_visibility_level: overrideVisibility ? parseInt(overrideVisibility) : null,
+                        override_generic_ingredient_level: overrideGeneric ? parseInt(overrideGeneric) : null,
+                        override_specific_brand_level: overrideSpecific ? parseInt(overrideSpecific) : null,
+                        override_measurement_level: overrideMeasurement ? parseInt(overrideMeasurement) : null,
+                        override_prep_level: overridePrep ? parseInt(overridePrep) : null,
+                    })
+                    .select()
+                    .single();
+
+                if (cocktailError || !cocktail) throw cocktailError ?? new Error("Couldn’t save the drink.");
+                const cocktailId = cocktail.id;
+
+                // Every write throws, and a half-made drink is removed again, so a
+                // failed publish keeps the draft and trying again doesn't leave a copy.
+                try {
+                    for (let i = 0; i < localImages.length; i++) {
+                        const imgId = await uploadImage(localImages[i].url, cocktailId);
+                        const { error } = await supabase.from("item_images").insert({
+                            item_id: cocktailId,
+                            image_id: imgId,
+                            sort_order: i,
+                        });
+                        if (error) throw error;
+                    }
+
+                    // Lines and methods, in order, in one transaction (its first version).
+                    await saveDrinkSpec(
+                        cocktailId,
+                        resolvedRecipeItems.map((item) => ({
+                            ingredient_item_id: item.ingredient_id,
+                            amount: amountOf(item.amount) || null,
+                            unit: item.unit || null,
+                            preparation_notes: item.preparation_notes || null,
+                            is_optional: item.is_optional || false,
+                            is_float: item.is_float || false,
+                        })),
+                        methodIds,
+                        null
+                    );
+                    if (notes.trim()) await saveItemNotes(cocktailId, notes);
+                } catch (e) {
+                    await supabase.from("items").delete().eq("id", cocktailId);
+                    throw e;
+                }
+                return cocktailId;
+            });
+            const cocktailId = spec.result;
             if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));
 
             queryClient.invalidateQueries({ queryKey: ["cocktails"] });

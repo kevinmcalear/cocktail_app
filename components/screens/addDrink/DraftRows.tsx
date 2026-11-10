@@ -76,7 +76,7 @@ export function DraftRows(p: DrinkDeskProps & { onRename: () => void; sketch: Sk
     ),
     glass: () => <GlassStep compact draft={draft} set={set} options={p.glasses} barId={barId} barGlasses={p.barGlasses} barVariants={p.barVariants} suggested={p.guess.glass} />,
     ice: () => <IceStep compact draft={draft} set={set} ices={p.ices} barIce={p.barIce} suggested={p.guess.ice} kit={p.venueIce} barGlasses={p.barGlasses} barVariants={p.barVariants} venueName={venue} barId={barId} tellUs={tellUsAbout} />,
-    finish: () => <FinishStep draft={draft} set={set} ingredients={p.ingredients} loading={p.loading} aliases={p.aliases} coreIds={p.coreIds} />,
+    finish: () => <FinishStep draft={draft} set={set} ingredients={p.ingredients} loading={p.loading} aliases={p.aliases} coreIds={p.coreIds} bar={barId ? { id: barId, name: p.venueName } : null} />,
     credit: () => <CreditsStep draft={draft} set={set} venueName={venue} ingredients={p.ingredients} match={p.atPlace} onRename={() => (setOpen(null), p.onRename())} />,
     notes: () => <NotesStep draft={draft} set={set} barId={barId} />,
     publish: () => <PublishStep draft={draft} set={set} barId={barId} />,

@@ -35,6 +35,8 @@ jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(),
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/useDrinkDesk', () => ({ ...jest.requireActual('@/hooks/useDrinkDesk'), useMenuSectionPlace: () => ({ data: undefined }) }));
 jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrepCard'), useCatalogRecipe: () => ({ data: null }) }));
+jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: true }) }));
+jest.mock('@/hooks/useSameNamePrep', () => ({ ...jest.requireActual('@/hooks/useSameNamePrep'), useSameNamePrep: () => ({ data: null, checking: false }) }));
 // A venue's suppliers and costs (m01) read their own hooks; these tests are about the page.
 jest.mock('./useDeskLines', () => ({ ...jest.requireActual('./useDeskLines'), useVenueLines: () => ({ lines: {}, cost: null }) }));
 
@@ -60,16 +62,40 @@ describe('the draft page', () => {
     expect(screen.queryByText('Gin is on your shelf')).toBeNull();
   });
 
-  test('Write it now, then Back: what’s done stays on the line as a recipe to finish', async () => {
+  test('Make it here, then Back: Leave it for now? and the line is a recipe to finish, Drafts the way back', async () => {
     useDrinkWizardStore.getState().patch('home', { name: 'Pine Fizz', lines: [{ key: 'k1', id: null, name: 'Pine syrup', amount: '20', unit: 'ml', later: true }] });
     await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
     await laidOut();
-    await fireEvent.press(screen.getByRole('button', { name: 'Write it now' }));
-    await fireEvent(screen.getByTestId('nested-prep'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } } });
+    // The main button alone (Kevin, 8 Nov: "Later on close").
+    expect(screen.queryByRole('button', { name: 'Later' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Make Pine syrup here' }));
+    await fireEvent(screen.getByTestId('part-page'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } } });
+    expect(screen.getByText('HOUSE-MADE · DRAFT, INSIDE THE DRINK')).toBeTruthy();
+    await fireEvent.changeText(screen.getAllByLabelText('Add an ingredient').at(-1)!, 'Spruce tips');
+    await fireEvent.press(screen.getByRole('button', { name: /^Add “Spruce tips”$/ }));
     await fireEvent.press(screen.getByRole('button', { name: /^Back to Pine Fizz/ }));
+    expect(screen.getByText('What you’ve done is kept. Pine Fizz shows it as Recipe to finish, and Drafts lists the drink with the way back.')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Leave it for now' }));
+    expect(screen.queryByTestId('part-page')).toBeNull();
     const kept = useDrinkWizardStore.getState().kept.home.draft.lines[0];
-    expect(kept.later).toBe(true);
+    expect(kept.prep?.lines.map((l) => l.name)).toContain('Spruce tips');
     expect(kept.prep?.at).toBeTruthy();
+    expect(screen.getByText('Recipe to finish')).toBeTruthy();
+  });
+
+  test('made from the search, then Back with nothing written: no line is left', async () => {
+    useDrinkWizardStore.getState().patch('home', { name: 'Pine Fizz', lines: [{ key: 'k1', id: 'gin', name: 'Gin', amount: '30', unit: 'ml' }] });
+    await renderWithProviders(<AddDrinkWizard onClose={jest.fn()} onSaved={mockSaved} />);
+    await laidOut();
+    await fireEvent(screen.getByLabelText('Add another ingredient'), 'focus');
+    await fireEvent.changeText(screen.getByLabelText('Add another ingredient'), 'Rvwa');
+    await fireEvent.press(screen.getByRole('button', { name: 'Make “Rvwa” in-house' }));
+    expect(useDrinkWizardStore.getState().kept.home.draft.lines).toHaveLength(2);
+    await fireEvent(screen.getByTestId('part-page'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } } });
+    await fireEvent.press(screen.getByRole('button', { name: /^Back to Pine Fizz/ }));
+    expect(screen.queryByText('Leave it for now?')).toBeNull();
+    expect(screen.queryByTestId('part-page')).toBeNull();
+    expect(useDrinkWizardStore.getState().kept.home.draft.lines.map((l) => l.name)).toEqual(['Gin']);
   });
 
   test('on a phone the search takes the page, and Cancel gives it back', async () => {

@@ -7,16 +7,18 @@ import {
   FINISH_CHIPS, FINISH_UNITS, finishStart, GARNISH_CHIPS, newLine, pickByName, shownGarnishes, type FinishChip, type StepProps, type WizardLine, type WizardPick,
 } from '@/lib/drinkWizard';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import type { PrepDraft } from '@/lib/prepKinds';
+import { stepToFinish } from '@/lib/prepKinds';
 import { capitalizeFirst } from '@/lib/stringUtils';
 
 import { IngredientSearch, type CatalogIngredient } from './IngredientSearch';
 import { LineRow } from './LineRow';
-import { PrepBuilder } from './prep/PrepBuilder';
+import { DrinkHouseMade } from './prep/DrinkHouseMade';
 import { WizardChip } from './WizardChrome';
 
 interface FinishStepProps extends StepProps {
   ingredients: readonly CatalogIngredient[];
+  /** The venue the drink is for, whose Kit a house-made's ways are checked against; null at home. */
+  bar?: { id: string; name: string } | null;
   loading?: boolean;
   aliases?: readonly IngredientAlias[];
   coreIds?: ReadonlySet<string>;
@@ -32,27 +34,28 @@ const same = (l: WizardLine, name: string, unit: string) => l.name.toLowerCase()
  * leaf, a salt, a flower) is added by its name; making it in house is there
  * too, and leads only for a name that sounds made (an oil, a cordial).
  */
-export function FinishStep({ draft, set, ingredients, loading, aliases = [], coreIds }: FinishStepProps) {
+export function FinishStep({ draft, set, ingredients, loading, aliases = [], coreIds, bar = null }: FinishStepProps) {
   const ds = useDs();
   // A chip that asks "of what?": its unit waits for what's picked in the search.
   const [asking, setAsking] = useState<FinishChip | null>(null);
   const [typing, setTyping] = useState(false);
   const [all, setAll] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
-  // A house prep being made: a new line, or the recipe of one in the finish (its key).
-  const [making, setMaking] = useState<{ name: string; key?: string } | null>(null);
-  // Plain values: the React Compiler reads `making.key` eagerly for its memo deps, which throws while it's closed.
-  const makingName = making?.name ?? null;
-  const editingKey = making?.key ?? null;
+  // A house-made being written inside the drink (board Add-inside): its line in the finish (its key).
+  // `fresh`: added from the search, so backing out with nothing written takes it out. `finished`: its recipe done before, and a change keeps it so.
+  const [making, setMaking] = useState<{ name: string; key: string; fresh?: boolean; finished?: boolean } | null>(null);
   const lines = draft.garnishes;
   const search = { ingredients, aliases, coreIds, loading };
+  const makingLine = making ? lines.find((l) => l.key === making.key) : undefined;
 
-  const add = (pick: WizardPick, prep?: PrepDraft) => {
+  const add = (pick: WizardPick, later?: boolean) => {
     const start = asking ?? finishStart(pick.name);
     // A new name starts with a capital ("Lime leaf"), as the save writes it.
     const named = pick.id ? pick : { ...pick, name: capitalizeFirst(pick.name.trim()) };
-    set({ garnishes: [...lines, { ...newLine(named, start.unit, start.amount), ...(prep ? { prep, technique: prep.technique } : null) }] });
+    const line = { ...newLine(named, start.unit, start.amount), ...(later ? { later } : null) };
+    set({ garnishes: [...lines, line] });
     setAsking(null);
+    return line;
   };
   const change = (key: string, c: Partial<WizardLine>) => set({ garnishes: lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
   const toggle = (name: string, unit: string, amount: string) => {
@@ -89,7 +92,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
                 onChange={(c) => change(l.key, c)}
                 onRemove={() => set({ garnishes: lines.filter((x) => x.key !== l.key) })}
                 onSwap={() => setSwapKey(l.key)}
-                onEditPrep={() => setMaking({ name: l.name, key: l.key })}
+                onEditPrep={() => setMaking({ name: l.name, key: l.key, finished: !!l.prep && !l.prep.at && !l.later })}
               />
             )
           )}
@@ -106,21 +109,40 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
         nameFirst
         onPick={(pick) => add(pick)}
         onTyping={setTyping}
-        onMake={(name) => setMaking({ name: capitalizeFirst(name) })}
-      />
-      <PrepBuilder
-        name={makingName}
-        drinkName={draft.name.trim()}
-        initial={editingKey ? lines.find((l) => l.key === editingKey)?.prep : null}
-        ingredients={ingredients}
-        aliases={aliases}
-        onClose={() => setMaking(null)}
-        onDone={(prep) => {
-          if (editingKey) change(editingKey, { prep, technique: prep.technique });
-          else if (makingName) add({ id: null, name: makingName }, prep);
-          setMaking(null);
+        onMake={(name) => {
+          const line = add({ id: null, name }, true);
+          setMaking({ name: line.name, key: line.key, fresh: true });
         }}
       />
+      {making && makingLine ? (
+        <DrinkHouseMade
+          key={making.key}
+          name={making.name}
+          initial={makingLine.prep ?? null}
+          drinkName={draft.name.trim() || 'Your drink'}
+          forDrink
+          drafts
+          above={[{ label: draft.name.trim() || 'Your drink' }]}
+          bar={bar}
+          ingredients={ingredients}
+          aliases={aliases}
+          finished={!!making.finished}
+          // A recipe to finish until Done (a finished one stays finished while it could be added as it is).
+          onKeep={(prep, name, done) => change(making.key, { name, prep: { ...prep, at: done && making.finished ? undefined : stepToFinish(prep) }, technique: prep.technique, later: undefined })}
+          onDone={(prep, name) => {
+            change(making.key, { name, prep: { ...prep, at: undefined }, technique: prep.technique, later: undefined });
+            setMaking(null);
+          }}
+          onClose={(kept) => {
+            if (making.fresh && !kept && !makingLine.prep) set({ garnishes: lines.filter((l) => l.key !== making.key) });
+            setMaking(null);
+          }}
+          onUse={(id, name) => {
+            change(making.key, { id, name, prep: undefined, technique: undefined, later: undefined });
+            setMaking(null);
+          }}
+        />
+      ) : null}
 
       {typing ? null : (
         <>

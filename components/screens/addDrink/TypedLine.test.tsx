@@ -18,7 +18,10 @@ jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(),
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrepCard'), useCatalogRecipe: () => ({ data: null }) }));
 
-const laidOut = () => fireEvent(screen.getByTestId('add-prep'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
+jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: true }) }));
+jest.mock('@/hooks/useSameNamePrep', () => ({ ...jest.requireActual('@/hooks/useSameNamePrep'), useSameNamePrep: () => ({ data: null, checking: false }) }));
+// The house-made's page lays out before it draws on iOS (KeyboardScreen).
+const laidOut = () => fireEvent(screen.getByTestId('part-page'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
 
 const INGREDIENTS = [
   { id: 'bacardi', name: 'Bacardí Carta Blanca', generic_id: 'white-rum' },
@@ -55,21 +58,22 @@ describe('typing a line the way you’d write it', () => {
     await laidOut();
     expect(screen.getByLabelText('Bacardí Carta Blanca. Swap it')).toBeTruthy();
     expect(screen.getByLabelText('Coconut Oil. Swap it')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Add it to Daiquiri' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Done: Coconut fat-washed Bacardí Carta Blanca goes in Daiquiri' }));
     const [line] = latest().lines;
     expect(line).toMatchObject({ name: 'Coconut fat-washed Bacardí Carta Blanca', amount: '60', unit: 'ml', technique: 'fat-wash' });
     expect(line.prep?.madeFrom).toEqual({ id: 'bacardi', name: 'Bacardí Carta Blanca' });
   });
 
-  test('Check it adds the bottle and opens the house prep steps on What is it, the way you typed picked', async () => {
+  test('Check it adds the bottle and opens its house-made page, the way you typed picked', async () => {
     await renderWithProviders(<Step />);
     await type('coconut fat-washed bacardi');
     await fireEvent.press(screen.getByRole('button', { name: 'Check how Bacardí Carta Blanca was made' }));
     await laidOut();
     expect(latest().lines.map((l) => l.id)).toEqual(['bacardi']);
-    expect(screen.getByText('What are you making?')).toBeTruthy();
+    // What it is opens the kinds as a sheet, Method the ways (board Add-inside, 3).
+    await fireEvent.press(screen.getByRole('link', { name: /^What it is\. Wash/ }));
     expect(screen.getByRole('radio', { name: 'Wash', checked: true })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('link', { name: /^Method\. / }));
     expect(screen.getByRole('radio', { name: /^Fat wash\. Overnight\. Nothing special/, checked: true })).toBeTruthy();
     // Under the lines, it waits to be answered.
     expect(screen.getByText('You wrote coconut fat-washed. Make the Bacardí Carta Blanca that way?')).toBeTruthy();

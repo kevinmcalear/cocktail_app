@@ -18,7 +18,6 @@ import { prepUnit } from '@/lib/unitGuess';
 
 import { IngredientSearch, type CatalogIngredient } from '../IngredientSearch';
 import { WizardChip } from '../WizardChrome';
-import { InDrink, type InDrinkPour } from './InDrink';
 import { NumberField } from './RecipeBits';
 
 interface PrepRecipeStepProps {
@@ -28,8 +27,6 @@ interface PrepRecipeStepProps {
   set: (change: Partial<PrepDraft>) => void;
   ingredients: readonly CatalogIngredient[];
   aliases?: readonly IngredientAlias[];
-  /** The drink's pour of it, for "In Salty Boy 22.5 ml" and how many a bottle makes. */
-  inDrink?: InDrinkPour;
   /** Make a line in-house too, one level down (make-anything-steps-2, step 8): its key, once it's in the recipe, and the lines as they were if it was just added or renamed. */
   onMake?: (key: string, before?: PrepDraftLine[]) => void;
   /** Under a line: its own recipe, open in place on the desktop page. */
@@ -63,7 +60,7 @@ export function RecipeView({ value, onChange }: { value: RecipeViewKind; onChang
  * as "Pick the spirit" and has to be picked or taken out before the prep
  * can be added.
  */
-export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink, onMake, below, parts, flat, openKey }: PrepRecipeStepProps) {
+export function PrepRecipeStep({ draft, view, set, ingredients, aliases, onMake, below, parts, flat, openKey }: PrepRecipeStepProps) {
   const ds = useDs();
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [noteKey, setNoteKey] = useState<string | null>(null);
@@ -244,12 +241,6 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
         <ListRow title="Allergens" value={contains ? contains[0].toUpperCase() + contains.slice(1) : draft.allergensSet ? 'None' : 'None found'} expanded={allergensOpen} onPress={() => setAllergensOpen(!allergensOpen)} />
       </ListGroup>
       {makesOpen ? <ListNote icon="info.circle" text="A guess from the weights. Log your first batch and it uses the real number." /> : null}
-      {inDrink ? (
-        <View style={styles.facts}>
-          <InDrink pour={inDrink} draft={draft} makes={makes} />
-        </View>
-      ) : null}
-      {inDrink ? <InDrink pour={inDrink} draft={draft} makes={makes} caption /> : null}
       {allergensOpen ? (
         <View role="group" accessibilityLabel="Allergens in it" style={styles.toggles}>
           {ALLERGENS.map((a) => {
@@ -294,5 +285,4 @@ const styles = StyleSheet.create({
   tap: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   own: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   unit: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
-  facts: { flexDirection: 'row', gap: space.sm },
 });

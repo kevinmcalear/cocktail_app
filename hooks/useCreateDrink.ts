@@ -7,7 +7,7 @@ import { saveItemNotes } from '@/hooks/useItemNotes';
 import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { useRefreshSpecs } from '@/hooks/useBulk';
-import { liveIds, specLineSaver } from '@/hooks/specLineSave';
+import { liveIds, specLineSaver, withKeptHouseMades } from '@/hooks/specLineSave';
 import { saveDrinkSpec, type SpecLineInput } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
@@ -99,125 +99,136 @@ export function useCreateDrink() {
       ]);
       const saver = specLineSaver(barId, live);
       const { ensure, warnings, created, later, newIngredients } = saver;
+      const creatorId = creatorProfileId(draft, myProfileId);
+      const creatorNames = namedOnly(draft);
+      // At home the notes are yours to start (Q27); at a venue, the drink's.
+      const privateNotes = notesArePrivate(draft, barId);
+      // Who made it (item_credits), as the drink editor saves it: the creator and people with no page, by name (tf-063).
+      const saveCredits = (id: string, add: string[]) =>
+        // Null is nobody; the generated types don't say a uuid argument can be null.
+        supabase.rpc('set_drink_credits', { p_item_id: id, p_creator_profile_id: creatorId as string, p_creator_names: creatorNames, p_add: add, p_remove: [] });
+      // House-mades written inside the drink (board Add-inside) save with it: first, in one call, and out again if the drink can't be saved.
+      await saver.houseMades(specLines(draft).map(({ line }) => line));
+      const id = await (async () => {
+        const lines: SpecLineInput[] = [];
+        const garnishes = new Set(draft.garnishes.map((g) => g.key));
+        for (const { line, amount } of specLines(draft)) {
+          lines.push({
+            id: null,
+            ingredient_item_id: await saver.line(line),
+            amount,
+            unit: line.unit || null,
+            preparation_notes: line.note?.trim() || null,
+            is_optional: !!line.optional,
+            is_float: !!line.float,
+            ...(draft.parts?.length ? { part: linePart(draft.parts, line.key, garnishes.has(line.key)) } : {}),
+          });
+        }
+        // Made in parts: each part's methods in turn, with its number (Build can be in two parts).
+        const methodIds: string[] = [];
+        const methodParts: number[] = [];
+        const byPart = draft.parts?.length ? draft.parts.flatMap((p, i) => p.methods.map((m) => ({ m, part: i + 1 }))) : draft.methods.map((m) => ({ m, part: 1 }));
+        for (const { m, part } of byPart) {
+          methodIds.push(await ensure(m, 'method'));
+          methodParts.push(part);
+        }
+        const parts = draft.parts?.length ? { methodParts, parts: storedParts(draft.parts) } : undefined;
+        if (updateId) {
+          // Its ranks, photos and menus stay; the spec it had is the version before, so it can be put back.
+          const [had, hadMethods] = await Promise.all([fetchEditableRecipes(updateId), supabase.from('item_methods').select('method_item_id, sort_order').eq('item_id', updateId)]);
+          if (hadMethods.error) throw hadMethods.error;
+          // Its own rows keep their notes and service decisions, and a sheet that names no method we know (it went to notes) keeps the drink's.
+          await saveDrinkSpec(updateId, ontoBarLines(lines, had), methodIds.length ? methodIds : orderedMethodIds(hadMethods.data), 'Updated from Bring in');
+          return updateId;
+        }
+        const glassId = draft.glass ? await ensure(draft.glass, 'glassware') : null;
+        const iceId = draft.ice ? await ensure(draft.ice, 'ice') : null;
+        const methodIceId = draft.methodIce ? await ensure(draft.methodIce, 'ice') : null;
+        // How the ice sits, when it says more than its one ice (the top layer, ice_id).
+        let iceBuild: IceLayer<string>[] | null = null;
+        if (saysMore(draft.iceBuild)) {
+          const ids: string[] = [];
+          for (const l of draft.iceBuild) ids.push(await ensure(l.ice, 'ice'));
+          iceBuild = toStored(draft.iceBuild.map((l, i) => ({ ...l, ice: ids[i] })), (x) => x);
+        }
 
-      const lines: SpecLineInput[] = [];
-      const garnishes = new Set(draft.garnishes.map((g) => g.key));
-      for (const { line, amount } of specLines(draft)) {
-        lines.push({
-          id: null,
-          ingredient_item_id: await saver.line(line),
-          amount,
-          unit: line.unit || null,
-          preparation_notes: line.note?.trim() || null,
-          is_optional: !!line.optional,
-          is_float: !!line.float,
-          ...(draft.parts?.length ? { part: linePart(draft.parts, line.key, garnishes.has(line.key)) } : {}),
-        });
-      }
-      // Made in parts: each part's methods in turn, with its number (Build can be in two parts).
-      const methodIds: string[] = [];
-      const methodParts: number[] = [];
-      const byPart = draft.parts?.length ? draft.parts.flatMap((p, i) => p.methods.map((m) => ({ m, part: i + 1 }))) : draft.methods.map((m) => ({ m, part: 1 }));
-      for (const { m, part } of byPart) {
-        methodIds.push(await ensure(m, 'method'));
-        methodParts.push(part);
-      }
-      const parts = draft.parts?.length ? { methodParts, parts: storedParts(draft.parts) } : undefined;
+        // A venue's drink is credited to the venue too, unless it's from somewhere else; one added at home, to the bar it was first made at.
+        const fromElsewhere = !barId || !!draft.elsewhere;
+        let originBar: string | null = fromElsewhere ? (draft.place?.id ?? null) : null;
+        if (!fromElsewhere) {
+          const { data } = await supabase.from('profiles').select('id').eq('bar_id', barId).eq('kind', 'bar').limit(1).maybeSingle();
+          originBar = data?.id ?? null;
+        }
+        // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
+        const otherBar = fromElsewhere && !!originBar;
+
+        const row: Insert<'items'> = {
+          id: undefined,
+          name: capitalize(draft.name),
+          item_type: 'cocktail',
+          bar_id: barId,
+          description: draft.description.trim() || null,
+          glassware_id: glassId,
+          sketch_variant: draft.glassVariant ?? null,
+          // One of the venue's real glasses, when one was picked; the database sets glassware_id to its kind.
+          ...(draft.glassModelId ? { glass_model_id: draft.glassModelId } : {}),
+          // The colour picked as it was made; the database copies it into the drawing (20261017100000_sketch_liquid).
+          sketch_liquid: draft.tint ?? null,
+          // A hero photo replaces the drawing unless Keep it was picked (20261123200000_show_sketch). Only when it does, so other saves never send the column.
+          ...(draft.photos?.hero && !draft.keepDrawing ? { show_sketch: false } : {}),
+          ice_id: iceId,
+          // Only when there is one: a database without 20261029100000 refuses an unknown column, so every other save keeps working whichever lands first.
+          ...(methodIceId ? { method_ice_id: methodIceId } : {}),
+          // The same for the build (20261029500000).
+          ...(iceBuild ? { ice_build: iceBuild } : {}),
+          based_on_id: draft.riffOf?.id ?? null,
+          based_on_kind: draft.riffOf ? 'riff' : null,
+          // The bar it was first made at (its credit follows from it); who made it is saved below.
+          origin_bar_profile_id: originBar,
+          origin_year: draft.originYear ?? null,
+          price: barId ? await draftPrice(draft, barId) : null,
+        };
+        // Under the draft's id, so it's drawn with the wizard's seed. A clash
+        // (an earlier try that saved but never answered) gets an id of its own.
+        // (undefined is left out of the request, so the database makes one.)
+        const insert = (id: string | undefined) => supabase.from('items').insert({ ...row, id }).select('id').single();
+        let { data: item, error: itemError } = await insert(draft.id);
+        if (itemError?.code === '23505' && draft.id) ({ data: item, error: itemError } = await insert(undefined));
+        if (itemError || !item) throw itemError ?? new Error('Couldn’t save the drink.');
+        const id = item.id as string;
+
+        try {
+          if (creatorId || creatorNames.length) {
+            const { error } = await saveCredits(id, []);
+            if (error) throw error;
+          }
+          // You can say yes to your own credit; anyone else's starts as suggested.
+          if (creatorId && creatorId === myProfileId && !otherBar) {
+            const lead = await supabase.from('item_credits').select('id').eq('item_id', id).eq('role', 'creator').eq('profile_id', creatorId).maybeSingle();
+            if (lead.error) throw lead.error;
+            if (lead.data) {
+              const { error } = await supabase.rpc('answer_item_credit', { p_credit_id: lead.data.id, p_accept: true });
+              if (error) throw error;
+            }
+          }
+          // Every method, in order, in the same transaction as the spec.
+          await saveDrinkSpec(id, lines, methodIds, null, parts);
+        } catch (e) {
+          await supabase.from('items').delete().eq('id', id);
+          throw e;
+        }
+        return id;
+      })().catch(async (e: unknown) => {
+        // Taken out again on a plain refusal; still saved after a dropped connection, and the error says which, for the draft's lines to point at.
+        throw withKeptHouseMades(e, await saver.dropHouseMades(e));
+      });
+
       if (updateId) {
-        // Its ranks, photos and menus stay; the spec it had is the version before, so it can be put back.
-        const [had, hadMethods] = await Promise.all([fetchEditableRecipes(updateId), supabase.from('item_methods').select('method_item_id, sort_order').eq('item_id', updateId)]);
-        if (hadMethods.error) throw hadMethods.error;
-        // Its own rows keep their notes and service decisions, and a sheet that names no method we know (it went to notes) keeps the drink's.
-        await saveDrinkSpec(updateId, ontoBarLines(lines, had), methodIds.length ? methodIds : orderedMethodIds(hadMethods.data), 'Updated from Bring in');
         // A batch read from the sheet keeps its bottle's recipe.
         await saver.saveOwnPreps();
         void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
         void refreshSpecs({ drinkIds: [updateId], ingredientIds: newIngredients });
         return { id: updateId, warnings, created, later };
-      }
-      const glassId = draft.glass ? await ensure(draft.glass, 'glassware') : null;
-      const iceId = draft.ice ? await ensure(draft.ice, 'ice') : null;
-      const methodIceId = draft.methodIce ? await ensure(draft.methodIce, 'ice') : null;
-      // How the ice sits, when it says more than its one ice (the top layer, ice_id).
-      let iceBuild: IceLayer<string>[] | null = null;
-      if (saysMore(draft.iceBuild)) {
-        const ids: string[] = [];
-        for (const l of draft.iceBuild) ids.push(await ensure(l.ice, 'ice'));
-        iceBuild = toStored(draft.iceBuild.map((l, i) => ({ ...l, ice: ids[i] })), (x) => x);
-      }
-
-      // A venue's drink is credited to the venue too, unless it's from somewhere else; one added at home, to the bar it was first made at.
-      const fromElsewhere = !barId || !!draft.elsewhere;
-      let originBar: string | null = fromElsewhere ? (draft.place?.id ?? null) : null;
-      if (!fromElsewhere) {
-        const { data } = await supabase.from('profiles').select('id').eq('bar_id', barId).eq('kind', 'bar').limit(1).maybeSingle();
-        originBar = data?.id ?? null;
-      }
-      const creatorId = creatorProfileId(draft, myProfileId);
-      const creatorNames = namedOnly(draft);
-      // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
-      const otherBar = fromElsewhere && !!originBar;
-
-      // At home the notes are yours to start (Q27); at a venue, the drink's.
-      const privateNotes = notesArePrivate(draft, barId);
-      const row: Insert<'items'> = {
-        id: undefined,
-        name: capitalize(draft.name),
-        item_type: 'cocktail',
-        bar_id: barId,
-        description: draft.description.trim() || null,
-        glassware_id: glassId,
-        sketch_variant: draft.glassVariant ?? null,
-        // One of the venue's real glasses, when one was picked; the database sets glassware_id to its kind.
-        ...(draft.glassModelId ? { glass_model_id: draft.glassModelId } : {}),
-        // The colour picked as it was made; the database copies it into the drawing (20261017100000_sketch_liquid).
-        sketch_liquid: draft.tint ?? null,
-        // A hero photo replaces the drawing unless Keep it was picked (20261123200000_show_sketch). Only when it does, so other saves never send the column.
-        ...(draft.photos?.hero && !draft.keepDrawing ? { show_sketch: false } : {}),
-        ice_id: iceId,
-        // Only when there is one: a database without 20261029100000 refuses an unknown column, so every other save keeps working whichever lands first.
-        ...(methodIceId ? { method_ice_id: methodIceId } : {}),
-        // The same for the build (20261029500000).
-        ...(iceBuild ? { ice_build: iceBuild } : {}),
-        based_on_id: draft.riffOf?.id ?? null,
-        based_on_kind: draft.riffOf ? 'riff' : null,
-        // The bar it was first made at (its credit follows from it); who made it is saved below.
-        origin_bar_profile_id: originBar,
-        origin_year: draft.originYear ?? null,
-        price: barId ? await draftPrice(draft, barId) : null,
-      };
-      // Under the draft's id, so it's drawn with the wizard's seed. A clash
-      // (an earlier try that saved but never answered) gets an id of its own.
-      // (undefined is left out of the request, so the database makes one.)
-      const insert = (id: string | undefined) => supabase.from('items').insert({ ...row, id }).select('id').single();
-      let { data: item, error: itemError } = await insert(draft.id);
-      if (itemError?.code === '23505' && draft.id) ({ data: item, error: itemError } = await insert(undefined));
-      if (itemError || !item) throw itemError ?? new Error('Couldn’t save the drink.');
-      const id = item.id as string;
-
-      // Who made it (item_credits), as the drink editor saves it: the creator and people with no page, by name (tf-063).
-      const saveCredits = (add: string[]) =>
-        // Null is nobody; the generated types don't say a uuid argument can be null.
-        supabase.rpc('set_drink_credits', { p_item_id: id, p_creator_profile_id: creatorId as string, p_creator_names: creatorNames, p_add: add, p_remove: [] });
-      try {
-        if (creatorId || creatorNames.length) {
-          const { error } = await saveCredits([]);
-          if (error) throw error;
-        }
-        // You can say yes to your own credit; anyone else's starts as suggested.
-        if (creatorId && creatorId === myProfileId && !otherBar) {
-          const lead = await supabase.from('item_credits').select('id').eq('item_id', id).eq('role', 'creator').eq('profile_id', creatorId).maybeSingle();
-          if (lead.error) throw lead.error;
-          if (lead.data) {
-            const { error } = await supabase.rpc('answer_item_credit', { p_credit_id: lead.data.id, p_accept: true });
-            if (error) throw error;
-          }
-        }
-        // Every method, in order, in the same transaction as the spec.
-        await saveDrinkSpec(id, lines, methodIds, null, parts);
-      } catch (e) {
-        await supabase.from('items').delete().eq('id', id);
-        throw e;
       }
 
       // The drawing the wizard showed stays the drink's: the worker won't
@@ -240,7 +251,7 @@ export function useCreateDrink() {
       // Not the person credited first, and only people with a profile (the database checks both).
       const coIds = [...new Set((draft.coCreators ?? []).map((c) => c.id).filter((p): p is string => !!p && p !== creatorId))];
       if (coIds.length) {
-        const { error } = await saveCredits(coIds);
+        const { error } = await saveCredits(id, coIds);
         if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
       }
 
