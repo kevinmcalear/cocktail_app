@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, GlassButton, PressableScale, useDs } from '@/components/ds';
@@ -8,10 +9,10 @@ import { Trail, type TrailItem } from '../Trail';
 
 /**
  * The top of a house-made written inside a drink (Kept-add-helpers, Writing
- * it, then back): Back, the drink's name, Done; the trail from the drink to
- * it; then its name, a draft inside the drink.
+ * it, then back) or inside another house-made (Add-parts, a part): Back, the
+ * name of what it's inside, Done; the trail from there to it; then its name.
  */
-export function PageHead({ trail, drinkName, name, canAdd, onBack, onDone }: { trail: readonly TrailItem[]; drinkName: string; name: string; canAdd: boolean; onBack: () => void; onDone: () => void }) {
+export function PageHead({ trail, drinkName, name, canAdd, onBack, onDone, eyebrow = 'HOUSE-MADE · DRAFT, INSIDE THE DRINK', doneLabel = `Done: add ${name} to ${drinkName}`, children }: { trail: readonly TrailItem[]; drinkName: string; name: string; canAdd: boolean; onBack: () => void; onDone: () => void; eyebrow?: string; doneLabel?: string; /** In place of the plain name: a field to rename it. */ children?: ReactNode }) {
   const ds = useDs();
   return (
     <View style={styles.head}>
@@ -20,17 +21,19 @@ export function PageHead({ trail, drinkName, name, canAdd, onBack, onDone }: { t
         <DsText numberOfLines={1} tone="muted" style={styles.drink}>
           {drinkName}
         </DsText>
-        <PressableScale role="button" accessibilityLabel={`Done: add ${name} to ${drinkName}`} disabled={!canAdd} onPress={onDone} style={[styles.done, { backgroundColor: ds.accentFill.fill, opacity: canAdd ? 1 : 0.45 }]}>
+        <PressableScale role="button" accessibilityLabel={doneLabel} disabled={!canAdd} onPress={onDone} style={[styles.done, { backgroundColor: ds.accentFill.fill, opacity: canAdd ? 1 : 0.45 }]}>
           <IconSymbol name="checkmark" size={20} color={ds.accentFill.text} />
         </PressableScale>
       </View>
       <Trail items={trail} />
       <Caption tone="muted" style={styles.eyebrow}>
-        HOUSE-MADE · DRAFT, INSIDE THE DRINK
+        {eyebrow}
       </Caption>
-      <DsText role="heading" style={[styles.title, { fontFamily: displayFaces[ds.displayFace].regular }]}>
-        {name}
-      </DsText>
+      {children ?? (
+        <DsText role="heading" style={[styles.title, { fontFamily: displayFaces[ds.displayFace].regular }]}>
+          {name}
+        </DsText>
+      )}
     </View>
   );
 }

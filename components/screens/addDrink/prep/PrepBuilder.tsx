@@ -3,8 +3,10 @@ import { Modal, StyleSheet, TextInput, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Field, IngredientDrawing } from '@/components/ds';
+import { ListNote } from '@/components/ds/ListGroup';
 import { space } from '@/constants/tokens';
 import { guessKind, RECIPE_STEPS, recipeEyebrow, withFacts, type PrepDraft, type PrepPick, type RecipeStep } from '@/lib/prepKinds';
+import { savesTogether } from '@/lib/houseMadeParts';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 
 import { BeerWineBand } from '../../addBeerWine/BeerWineBand';
@@ -19,6 +21,7 @@ import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
 import { PrepRecipeStep, RecipeView } from './PrepRecipeStep';
 import { LeaveCard } from './LeaveCard';
+import { PartPage } from './PartPage';
 import { useInside } from './useInside';
 import { usePrepDraft } from './usePrepDraft';
 
@@ -123,8 +126,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   // Leaving keeps what's done on the line, a recipe to finish; lines just combined go back to two, and a finished recipe stays as it was.
   const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: step }, shown) : null;
   // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
-  // On its own page (Kevin, 8 Nov: "Later on close") what's written is already kept: closing asks first, and with nothing written just goes.
-  // Written: typed or picked here, or picked up from before. A name passed in and nothing else is not.
+  // On its own page (Kevin, 8 Nov: "Later on close") what's written is already kept: closing asks first, and with nothing written just goes. Written: typed or picked here, or picked up from before. A name passed in and nothing else is not.
   const [typed, setTyped] = useState(false);
   const filled = typed || changed() || !!initial;
   const leave = page ? (filled ? onClose : (onDrop ?? onClose)) : (keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())));
@@ -187,7 +189,12 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   ) : null;
 
   const intro = 'Start from a step or write your own. A time you write becomes a timer when you make it.';
-  if (inside.props) return <Builder key={inside.line!.key} {...inside.props} ingredients={ingredients} aliases={aliases} bar={bar} above={trail} backRef={backRef} embedded={embedded} closeRef={closeRef} />;
+  // Its own page (Add-parts): a part opens as one flat page, or under its line on the web's dialog; over a drink, the steps again one level down.
+  const part = (inPlace: boolean) =>
+    inside.props && inside.line ? <PartPage key={inside.line.key} name={inside.props.name} initial={inside.props.initial} parent={shown} top={shown} above={trail} level={2} bar={bar} ingredients={ingredients} aliases={aliases} inPlace={inPlace} onKeep={inside.keep} onDone={inside.props.onDone} onClose={inside.props.onClose} onUse={inside.use} /> : null;
+  if (inside.props && page && !embedded) return part(false);
+  if (inside.props && !page) return <Builder key={inside.line!.key} {...inside.props} ingredients={ingredients} aliases={aliases} bar={bar} above={trail} backRef={backRef} embedded={embedded} closeRef={closeRef} />;
+  const together = page && step !== 'kind' ? savesTogether(shown, draft) : null;
   const from = combinedFrom?.length ? `From ${combinedFrom.slice(0, -1).join(', ')} and ${combinedFrom.at(-1)}` : null;
   return (
     <View style={styles.root}>
@@ -233,7 +240,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
           skipLabel={keep ? 'Later' : 'Skip'}
           canNext={ready && !!name.trim()}
           saving={saving}
-          notice={page && taken && step !== 'kind' ? takenCard : step === 'method' ? notice : undefined}
+          notice={page && taken && step !== 'kind' ? takenCard : step === 'method' && notice ? notice : together ? <ListNote icon="info.circle" text={together} /> : undefined}
           onSkip={keep ?? (() => go('recipe'))}
           onNext={next}
         />
@@ -263,7 +270,7 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
           )}
         </View>
       ) : step === 'recipe' ? (
-        <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} inDrink={inDrink} onMake={inside.open} />
+        <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} inDrink={inDrink} onMake={inside.open} parts={page} openKey={page && embedded ? inside.line?.key : null} below={page && embedded ? (l) => (l.key === inside.line?.key ? part(true) : null) : undefined} />
       ) : (
         <PrepMethodStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} />
       )}

@@ -11,11 +11,12 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { takenPrepWords, useSameNamePrep } from '@/hooks/useSameNamePrep';
-import { useHouseMadeWaiting, useSaveHouseMade } from '@/hooks/useSaveHouseMade';
+import { PARTS_SAVED, savedTogether, useHouseMadeWaiting, useSaveHouseMade } from '@/hooks/useSaveHouseMade';
 import { readableAccent } from '@/lib/color';
 import { plainDbMessage } from '@/lib/dbError';
 import { newDraftId } from '@/lib/drinkWizard';
 import { houseMadeBar, houseMadesAt, houseMadeSlot, isHouseMadeSlot } from '@/lib/houseMadeDraft';
+import { partsOf } from '@/lib/houseMadeParts';
 import { prepYield } from '@/lib/prepKinds';
 import { nameKey } from '@/lib/sameName';
 import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
@@ -74,6 +75,8 @@ function MakeRecipe() {
   // Read once, so the steps start from it and then own it.
   const [kept] = useState(() => useHouseMadeWizardStore.getState().kept[slot] ?? null);
   const waiting = useHouseMadeWaiting(slot);
+  // Made in parts (Add-parts): how many save together, for Saving 3… and the offline note.
+  const count = useHouseMadeWizardStore((s) => 1 + partsOf(s.kept[slot]?.draft.prep ?? null).length);
   const [typedName, setTypedName] = useState(kept?.draft.name ?? nameParam ?? '');
   const wrote = useRef(false);
   // One save at a time: a quick second tap lands before the screen knows it's saving.
@@ -85,16 +88,18 @@ function MakeRecipe() {
   const taken = same.data;
   const card = taken ? { ...takenPrepWords(taken, venue?.name ?? null), onOpen: () => router.replace(`/ingredient/${taken.id}` as Href), openLabel: `Open ${taken.name}. Your draft is kept` } : null;
 
-  const saved = (id: string, name: string, makes: number | null) => {
+  const saved = (id: string, name: string, makes: number | null, together: number) => {
     // Log batch: one batch at the bar, where the recipe says what it makes; otherwise its Make mode.
     const logBatch = () => (barId && canLog && makes ? logNow(id, name, { amount: makes, unit: 'ml' })() : router.push(`/ingredient/${id}/make` as Href));
-    toast.show({ title: 'Recipe saved', detail: barId ? 'It’s on House-made; log a batch when you make it.' : 'Log a batch when you make it.', action: { label: 'Log batch', onPress: logBatch } });
+    // Board Add-parts, 4: "Saved 3 house-mades. Each is on House-made with its own page and Used in." Green, as drawn; b1's Log batch stays.
+    const title = together > 1 ? savedTogether(together) : 'Recipe saved';
+    toast.show({ title, detail: together > 1 ? PARTS_SAVED : barId ? 'It’s on House-made; log a batch when you make it.' : 'Log a batch when you make it.', tone: 'success', action: { label: 'Log batch', onPress: logBatch } });
     if (shelf) return goBack();
     // Its page with the Done rows (board Add-house, Done: Makes, Keeps, Used in).
     router.replace(`/ingredient/${id}?saved=1` as Href);
   };
 
-  const label = waiting && !save.isPending ? 'Saves when you’re back' : save.isPending && !offline ? 'Saving…' : offline ? 'Save on this phone' : 'Save it';
+  const label = waiting && !save.isPending ? 'Saves when you’re back' : save.isPending && !offline ? (count > 1 ? `Saving ${count}…` : 'Saving…') : offline ? 'Save on this phone' : 'Save it';
   const builder = (
     <PrepBuilder
       page
@@ -113,11 +118,16 @@ function MakeRecipe() {
       saveLabel={label}
       // Saved on this phone and picked up again before it's in: the button says so and can't be pressed (review of #1183).
       saving={(save.isPending && !offline) || waiting}
-      notice={offline ? <Caption color={readableAccent(STATUS.warning, ds.c.ground)}>You’re offline. It’s kept on this phone and saves when you’re back.</Caption> : undefined}
+      notice={offline ? <Caption color={readableAccent(STATUS.warning, ds.c.ground)}>{count > 1 ? `You’re offline. All ${count} are kept on this phone and save together when you’re back.` : 'You’re offline. It’s kept on this phone and saves when you’re back.'}</Caption> : undefined}
       onName={setTypedName}
       onKeep={(prep, name, step) => {
-        // The slot goes in the address once something is kept: a reload on the web picks this one up.
-        if (!wrote.current && slotParam !== slot) router.setParams({ slot });
+        // The slot goes in the address once something is kept: a reload on the web picks this one up. Not through the
+        // router: a new param there remounts the steps, so a part opened as the first thing written (Add-parts) closed again.
+        if (!wrote.current && slotParam !== slot && Platform.OS === 'web') {
+          const url = new URL(window.location.href);
+          url.searchParams.set('slot', slot);
+          window.history.replaceState(window.history.state, '', url);
+        }
         wrote.current = true;
         patch(slot, { name, prep });
         setStep(slot, step);
@@ -139,7 +149,7 @@ function MakeRecipe() {
             onSuccess: ({ id, name, warnings }) => {
               if (queued) return;
               if (warnings.length) Alert.alert('Saved, with one thing to fix', warnings.join('\n\n'));
-              saved(id, name, prepYield(prep));
+              saved(id, name, prepYield(prep), 1 + partsOf(prep).length);
             },
             onError: (e) => {
               saving.current = false;
@@ -148,7 +158,8 @@ function MakeRecipe() {
           }
         );
         if (queued) {
-          toast.show({ title: 'Kept on this phone', detail: `${n} saves when you’re back.` });
+          const parts = partsOf(prep).length;
+          toast.show({ title: 'Kept on this phone', detail: parts ? `${n} and its ${parts === 1 ? 'part save' : `${parts} parts save`} together when you’re back.` : `${n} saves when you’re back.` });
           goBack();
         }
       }}

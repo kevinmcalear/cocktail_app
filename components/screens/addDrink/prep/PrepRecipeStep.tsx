@@ -12,6 +12,8 @@ import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
 import { MEASURE_UNITS, partsText, prepAmounts, prepSummary, prepYield, slotMessage, toFinishSummary, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { capitalizeFirst } from '@/lib/stringUtils';
+import { hasPart } from '@/lib/houseMadeParts';
+import { looksMadeInHouse } from '@/lib/techniques/makeIt';
 import { prepUnit } from '@/lib/unitGuess';
 
 import { IngredientSearch, type CatalogIngredient } from '../IngredientSearch';
@@ -32,6 +34,12 @@ interface PrepRecipeStepProps {
   onMake?: (key: string, before?: PrepDraftLine[]) => void;
   /** Under a line: its own recipe, open in place on the desktop page. */
   below?: (line: PrepDraftLine) => ReactNode;
+  /** Something you make (Add-parts): the search leads with Make “X” here and Add “X” as a bottle; parts are tagged New, Has a part, Open, To make. */
+  parts?: boolean;
+  /** A part's flat page (Add-parts, 2): only the lines and the search; its own rows say what it makes. */
+  flat?: boolean;
+  /** The line whose part is open under it (Add-parts, Web): tagged Open. */
+  openKey?: string | null;
 }
 
 const VIEWS = [
@@ -55,7 +63,7 @@ export function RecipeView({ value, onChange }: { value: RecipeViewKind; onChang
  * as "Pick the spirit" and has to be picked or taken out before the prep
  * can be added.
  */
-export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink, onMake, below }: PrepRecipeStepProps) {
+export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink, onMake, below, parts, flat, openKey }: PrepRecipeStepProps) {
   const ds = useDs();
   const [swapKey, setSwapKey] = useState<string | null>(null);
   const [noteKey, setNoteKey] = useState<string | null>(null);
@@ -76,14 +84,13 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
     const nextBase = l.key === draft.baseKey ? lines.find((x) => x.parts !== null) : null;
     set({ lines, ...(nextBase ? { baseKey: nextBase.key, baseAmount: Math.round(((amounts.find((a) => a.line.key === nextBase.key)?.amount ?? 100) * 10)) / 10 } : null) });
   };
+  const addLine = (line: Partial<PrepDraftLine> & { name: string }) => {
+    const key = `n${Date.now().toString(36)}`;
+    set({ lines: [...draft.lines, { key, id: null, parts: null, unit: prepUnit(line.name), amount: '', ...line }] });
+    return key;
+  };
   // A new line made in-house: in the recipe first, then its own steps one level down.
-  const makeNew = onMake
-    ? (name: string) => {
-        const key = `n${Date.now().toString(36)}`;
-        set({ lines: [...draft.lines, { key, id: null, name: capitalizeFirst(name), parts: null, unit: prepUnit(name), amount: '' }] });
-        onMake(key, draft.lines);
-      }
-    : undefined;
+  const makeNew = onMake ? (name: string) => onMake(addLine({ name: capitalizeFirst(name) }), draft.lines) : undefined;
   const step = draft.baseAmount >= 100 ? 50 : 10;
   const search = { ingredients, aliases };
   // As measured: the base's amount is the batch's; another part follows from it; a line of its own keeps what's typed. An emptied part waits for a number.
@@ -126,8 +133,8 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                 label={l.slot ? `Pick the ${l.slot}` : `Swap ${l.name} for…`}
                 autoFocus
                 onCancel={() => setSwapKey(null)}
-                onPick={(p) => {
-                  change(l.key, { id: p.id, name: p.name, slot: undefined, prep: undefined });
+                onPick={(p, _, isNew) => {
+                  change(l.key, { id: p.id, name: p.name, slot: undefined, prep: undefined, bottle: undefined, toMake: (parts && isNew) || undefined });
                   setSwapKey(null);
                 }}
                 onMake={
@@ -136,6 +143,15 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                         change(l.key, { id: null, name: capitalizeFirst(name), slot: undefined });
                         setSwapKey(null);
                         onMake(l.key, draft.lines);
+                      }
+                    : undefined
+                }
+                parts={parts}
+                onBottle={
+                  parts
+                    ? (name) => {
+                        change(l.key, { id: null, name, bottle: true, slot: undefined, prep: undefined });
+                        setSwapKey(null);
                       }
                     : undefined
                 }
@@ -153,7 +169,8 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
                     style={styles.swapName}
                   >
                     <Body numberOfLines={3} tone={l.slot ? 'accent' : undefined}>{l.slot ? `Pick the ${l.slot}` : l.name}</Body>
-                    {l.prep ? <Caption tone="accent">{l.prep.at ? `Recipe to finish · ${toFinishSummary(l.prep)}` : `House-made · ${prepSummary(l.prep)}`}</Caption> : null}
+                    {openKey === l.key ? <Caption tone="accent">Open</Caption> : l.prep ? <Caption tone="accent">{l.prep.at ? `Recipe to finish · ${toFinishSummary(l.prep)}` : `${parts ? (hasPart(l.prep) ? 'Has a part' : 'New') : 'House-made'} · ${prepSummary(l.prep)}`}</Caption> : null}
+                    {parts && onMake && openKey !== l.key && !l.prep && !l.id && !l.slot && !l.bottle && (l.toMake || looksMadeInHouse(l.name)) ? <Caption tone="accent">To make</Caption> : null}
                     {isBase ? <Caption tone="accent">{view === 'amounts' ? 'The base' : 'The base, everything follows it'}</Caption> : l.removed ? <Caption tone="muted">Taken out before bottling</Caption> : view === 'amounts' && l.parts !== null && base?.parts ? <Caption tone="muted">{partsText(l.parts, base.parts)}</Caption> : null}
                   </PressableScale>
                   {l.slot ? null : noteKey === l.key ? (
@@ -216,7 +233,9 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
           );
         }} />
       {waiting ? <Caption tone="accent">{waiting}</Caption> : null}
-      <IngredientSearch {...search} label="Add an ingredient" onPick={(p) => set({ lines: [...draft.lines, { key: `n${Date.now().toString(36)}`, id: p.id, name: p.name, parts: null, unit: prepUnit(p.name), amount: '' }] })} onMake={makeNew} />
+      <IngredientSearch {...search} label="Add an ingredient" parts={parts} captions={parts} onPick={(p, _, isNew) => addLine({ id: p.id, name: p.name, toMake: (parts && isNew) || undefined })} onMake={makeNew} onBottle={parts ? (name) => addLine({ name, bottle: true }) : undefined} />
+      {flat ? null : (
+        <>
       {/* Board Add-house, 2: what it makes and its allergens as one group of rows. */}
       <SectionLabel title="What it makes" />
       <ListGroup>
@@ -251,6 +270,8 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, inDrink
         </View>
       ) : null}
       {onMake ? <ListNote icon="info.circle" text="Any line can be made in-house too: tap it, and it opens one level in." /> : null}
+        </>
+      )}
     </View>
   );
 }

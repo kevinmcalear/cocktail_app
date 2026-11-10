@@ -64,6 +64,8 @@ export interface IngredientSearchProps {
   /** A new name is added as it's typed, over making it in house: a garnish ("Lime leaf") is picked or bought, not made. A name that sounds made still leads with Make (makeFirst). */
   nameFirst?: boolean;
   ownVersion?: boolean;
+  /** Something you make (Add-parts, 1): Make “X” here first, then Add “X” as a bottle, then Add “X” (the name alone, to make later), then the near ones you have. */
+  parts?: boolean;
   /** Under each found ingredient, where it's from: "On your shelf" (these ids) or back bar, "House-made at Little Rye", else "In the catalog" (board q16-2). */
   captions?: boolean;
   shelf?: ReadonlySet<string>;
@@ -90,7 +92,7 @@ export interface IngredientSearchProps {
  * and steps into the house prep steps. Return takes the top hit; it adds nothing new while it asks.
  */
 export function IngredientSearch(props: IngredientSearchProps) {
-  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, initial = '', onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, nameFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true, takeover } = props;
+  const { ingredients, aliases = [], coreIds, loading, onPick, label, placeholder, amounts, autoFocus, initial = '', onCancel, onTyping, allowNew = true, onMake, onBottle, onLater, makeFirst, nameFirst, captions, shelf, backBar, brands, onHouse, ownVersion = true, takeover, parts } = props;
   const ds = useDs();
   const [text, setQueryState] = useState(initial);
   // The whole pill rings in the accent while it has focus (no browser focus box inside it).
@@ -135,8 +137,8 @@ export function IngredientSearch(props: IngredientSearchProps) {
   };
   const makeRow = onMake && (ownVersion || !exact) ? (
     <ResultRow
-      label={`Make “${q.charAt(0).toUpperCase()}${q.slice(1)}” in-house`}
-      sub={exact ? 'Your own version: steps into its recipe, then back here' : 'A recipe of your own: steps into it, then back here'}
+      label={`Make “${q.charAt(0).toUpperCase()}${q.slice(1)}” ${parts ? 'here' : 'in-house'}`}
+      sub={parts ? 'A new house-made, one level in. It saves with this one.' : exact ? 'Your own version: steps into its recipe, then back here' : 'A recipe of your own: steps into it, then back here'}
       icon="make"
       onPress={() => {
         onMake(q, pour ?? undefined);
@@ -147,9 +149,9 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const Name = `${q.charAt(0).toUpperCase()}${q.slice(1)}`;
   const bottleRow = onBottle ? (
     <ResultRow
-      label="A bottle you buy"
+      label={parts ? `Add “${Name}” as a bottle` : 'A bottle you buy'}
       a11y={`Add “${Name}”, a bottle you buy`}
-      sub={`Add “${Name}” as a bottle: what it is, its pack`}
+      sub={parts ? 'Something you buy' : `Add “${Name}” as a bottle: what it is, its pack`}
       icon="make"
       onPress={() => {
         onBottle(Name, pour ?? undefined);
@@ -160,18 +162,19 @@ export function IngredientSearch(props: IngredientSearchProps) {
   const later = !!onLater && prepLike;
   const newRow = (
     <ResultRow
-      label={nameFirst ? `Add “${Name}”` : 'Just add the name'}
-      a11y={nameFirst ? `Add “${Name}”` : `Just add the name “${q}”`}
+      label={nameFirst || parts ? `Add “${Name}”` : 'Just add the name'}
+      a11y={nameFirst || parts ? `Add “${Name}”` : `Just add the name “${q}”`}
       sub={later ? 'Write the recipe later. We’ll remind you.' : 'Added as new when you save.'}
       icon="new"
       onPress={() => {
         if (later) onLater?.(q, pour ?? undefined);
-        else onPick({ id: null, name: q }, pour ?? undefined, true);
+        else onPick({ id: null, name: parts ? Name : q }, pour ?? undefined, true);
         done();
       }}
     />
   );
   const lead = makeFirst && prepLike && !exact && !loading;
+  const partsFirst = parts && !exact && !loading;
   const pick = (p: WizardPick) => {
     onPick(p, pour ?? undefined);
     done();
@@ -248,16 +251,13 @@ export function IngredientSearch(props: IngredientSearchProps) {
       {q && kindView ? <KindResults key={kindView.id} kind={kindView} bottles={bottles} have={have} haveLabel={backBar ? 'On your back bar' : 'On your shelf'} onPick={pick} /> : null}
       {q && (!kindView || listed.length || loading || makeRow) ? (
         <View role="list" style={[styles.results, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
-          {kindView && listed.length ? (
-            <Caption tone="muted" style={styles.label}>
-              {`More with “${q}” in the name`}
-            </Caption>
-          ) : null}
+          {partsFirst ? <>{makeRow}{bottleRow}{allowNew ? newRow : null}</> : null}
+          {kindView && listed.length ? <Caption tone="muted" style={styles.label}>{`More with “${q}” in the name`}</Caption> : null}
           {closest.length ? (
             <Caption tone="muted" style={styles.label}>
               Nothing called that yet. Closest:
             </Caption>
-          ) : !results.length && !near.length && !exact && !loading && allowNew ? (
+          ) : !results.length && !near.length && !exact && !loading && allowNew && !parts ? (
             <Caption tone="muted" style={styles.label}>{checking ? 'Looking…' : nameFirst ? 'Nothing by that name yet.' : 'No bottle by that name.'}</Caption>
           ) : null}
           {closest.map((r) => found(r))}
@@ -272,7 +272,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
           ) : (
             <NearPicks found={listed.length > 0} near={near} render={(r) => found(r, undefined, true)} labelStyle={styles.label}>
               {/* Making it in house, under the bottles that match, then a bottle you buy, then the name alone (make-anything-steps-1, step 3); nameFirst puts the name on top. */}
-              {allowNew ? <>{nameFirst ? newRow : null}{lead ? null : makeRow}{bottleRow}{nameFirst ? null : newRow}</> : null}
+              {allowNew && !parts ? <>{nameFirst ? newRow : null}{lead ? null : makeRow}{bottleRow}{nameFirst ? null : newRow}</> : null}
             </NearPicks>
           )}
         </View>

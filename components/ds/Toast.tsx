@@ -140,8 +140,9 @@ function ToastPill({ toast, move, drag, still, handlers, above }: { toast: Toast
   const fabTop = useToastStore((s) => s.fabTop);
   const hide = () => useToastStore.getState().hide(toast.id);
   const error = toast.tone === 'error';
-  // The board's warn look: the amber triangle, on an amber wash.
-  const amber = toastWarnInk(STATUS.warning, ds.c.raised, ds.c.ground).ink;
+  // The board's warn look: the amber triangle, on an amber wash. A success is the same wash in green, with its tick.
+  const wash = error ? STATUS.warning : toast.tone === 'success' ? STATUS.success : null;
+  const ink = wash ? toastWarnInk(wash, ds.c.raised, ds.c.ground).ink : null;
   const rise = still ? 0 : move.interpolate({ inputRange: [0, 1], outputRange: [space.xxl, 0] });
   return (
     <View pointerEvents="box-none" style={[styles.layer, { bottom: Math.max(above || insets.bottom, fabTop) + space.lg + (toast.lift ?? 0) }]}>
@@ -158,9 +159,9 @@ function ToastPill({ toast, move, drag, still, handlers, above }: { toast: Toast
         {/* Thicker than a glass button: words sit on it, so what scrolls behind must not read through. */}
         <GlassSurface style={styles.pill}>
           <View style={[styles.fill, { backgroundColor: withAlpha(ds.c.raised, 0.85) }]}>
-            {error ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(STATUS.warning, 0.16) }]} /> : null}
+            {wash ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: withAlpha(wash, 0.16) }]} /> : null}
             <PressableScale role={error ? 'alert' : 'status'} aria-live={error ? 'assertive' : 'polite'} accessibilityLabel={[toast.title, toast.detail].filter(Boolean).join('. ')} accessibilityHint="Closes it" haptic={false} onPress={hide} style={styles.body}>
-              <IconSymbol name={error ? 'exclamationmark.triangle' : 'checkmark'} size={error ? 18 : 16} color={error ? amber : (toast.accent ?? ds.accentText)} />
+              <IconSymbol name={error ? 'exclamationmark.triangle' : 'checkmark'} size={error ? 18 : 16} color={ink ?? toast.accent ?? ds.accentText} />
               <View style={styles.text}>
                 <DsText variant="label" numberOfLines={2} style={styles.title}>
                   {toast.title}

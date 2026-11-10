@@ -15,8 +15,8 @@ export interface Toast {
   accent?: string;
   /** Points to sit above the bottom edge's usual spot, for a screen with its own bottom bar. */
   lift?: number;
-  /** `error` is for a save or change that was refused (board Sta-errors): amber, a triangle, announced as an alert. */
-  tone?: 'error';
+  /** `error` is for a save or change that was refused (board Sta-errors): amber, a triangle, announced as an alert. `success`: a save the board draws green (Add-house and Add-parts, Done), a green wash and tick. */
+  tone?: 'error' | 'success';
 }
 
 interface ToastState {

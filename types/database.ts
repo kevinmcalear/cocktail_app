@@ -8798,6 +8798,10 @@ export type Database = {
             }
             Returns: number
           }
+      save_house_mades: {
+        Args: { p_bar: string; p_preps: Json }
+        Returns: Json
+      }
       save_item_flavor: {
         Args: {
           p_coverage: number

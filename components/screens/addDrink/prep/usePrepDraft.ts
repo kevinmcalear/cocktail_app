@@ -24,16 +24,20 @@ export interface PrepStart {
   bar?: { id: string; name: string } | null;
   /** What goes in opens As measured (board Add-house, 2), not as parts. */
   measured?: boolean;
+  /** A part (Add-parts, 3): a name that says nothing about how it's made starts with no lines, none guessed from its words. */
+  blank?: boolean;
 }
 
 /** A new prep's first draft: the technique picked, else the kind its name says, else the technique that most likely makes it, else blank. */
-function firstDraft(name: string, picked: PrepStart['picked'], technique: string | null | undefined, kit: ReadonlySet<string> | null): PrepDraft {
+function firstDraft(name: string, picked: PrepStart['picked'], technique: string | null | undefined, kit: ReadonlySet<string> | null, blank?: boolean): PrepDraft {
   const chosen = techniqueById(technique);
   if (chosen) return prepFromTechnique(chosen, name, prepCardFor(chosen), picked);
   const kind = guessKind(name);
   // A kind made one of the library's ways (a clarified juice) starts from the way its name points to, else the first the kit covers.
   const way = kind && !FROM_TECHNIQUE.includes(kind) ? null : (waysToMake(name)[0] ?? techniqueById(kind ? kitFirstWay(kind, kit)?.technique : null));
-  return way ? prepFromTechnique(way, name, prepCardFor(way), picked) : startPrep(kind ?? 'other', name);
+  if (way) return prepFromTechnique(way, name, prepCardFor(way), picked);
+  const start = startPrep(kind ?? 'other', name);
+  return blank && !kind ? { ...start, lines: [], baseKey: '' } : start;
 }
 
 /**
@@ -43,12 +47,12 @@ function firstDraft(name: string, picked: PrepStart['picked'], technique: string
  * desktop page (PrepCard) both write it. `onSeeded` runs when the catalog's
  * recipe arrives, so the builder can move on to the recipe.
  */
-export function usePrepDraft({ name: started, initial, picked, technique, combined, nameNow, bar = null, measured }: PrepStart, onSeeded?: () => void) {
+export function usePrepDraft({ name: started, initial, picked, technique, combined, nameNow, bar = null, measured, blank }: PrepStart, onSeeded?: () => void) {
   const { kit } = useMakingKit(bar);
   const name = nameNow?.trim() || started;
   // A recipe already written (or lines just combined) keeps what goes in when another kind is picked.
   const keep = combined || !!initial;
-  const [draft, setDraftState] = useState<PrepDraft>(() => initial ?? firstDraft(started, picked, technique, kit));
+  const [draft, setDraftState] = useState<PrepDraft>(() => initial ?? firstDraft(started, picked, technique, kit, blank));
   // Amounts typed as they go in (make-anything-steps-2, step 5) for lines combined from the drink's own.
   const [view, setView] = useState<RecipeViewKind>(measured || combined || initial?.kind === 'batch' ? 'amounts' : 'parts');
   // Goes up when the draft starts over (a kind, a technique, the catalog's recipe): steps that keep their own rows remount.
@@ -98,7 +102,8 @@ export function usePrepDraft({ name: started, initial, picked, technique, combin
     // The same kind made another way: what goes in stays, unless it was an oil's or a tincture's own.
     if (t && draft.kind === k && !wayOf(draft)?.own) return restart(method(draft));
     const fresh = startPrep(k, as, way?.id);
-    restart(method(keep ? keepLines(fresh, draft) : fresh));
+    // A part picked as Something else keeps its lines too: none are guessed from its name's words.
+    restart(method(keep || (blank && k === 'other') ? keepLines(fresh, draft) : fresh));
   };
   const pickTechnique = (id: string) => {
     const t = techniqueById(id);

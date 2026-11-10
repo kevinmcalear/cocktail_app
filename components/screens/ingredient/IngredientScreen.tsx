@@ -19,6 +19,7 @@ import { usePairings } from '@/hooks/usePairings';
 import { useItemPrep, usePrepSources, usePrepUsedIn } from '@/hooks/usePrepCard';
 import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { useEffectiveRole } from '@/hooks/useViewAs';
+import { useItsParts } from '@/hooks/useItsParts';
 import { labelDate, useByDate as expiry } from '@/lib/makeSteps';
 import { ingredientHeroPictures, shownIngredientPicture, type IngredientPicture } from '@/lib/ingredientPicture';
 import { readNoteRecipe } from '@/lib/noteRecipe';
@@ -35,6 +36,7 @@ import { BehindTheBar } from './BehindTheBar';
 import { ForTheBar } from './ForTheBar';
 import { HouseMadeRecipe, type PrepLine } from './HouseMadeRecipe';
 import { prepFacts, savedPrepFacts } from './IngredientBits';
+import { ItsParts } from './ItsParts';
 import { NoteBar, NoteRecipe, useNoteChoice } from './NoteRecipe';
 import { PrepUsedIn } from './PrepUsedIn';
 
@@ -153,7 +155,9 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const parent = isPrep ? ((used?.preps ?? []).find((p) => p.id === from) ?? used?.preps[0]) : undefined;
   const whose = [owner, parent ? `used in ${parent.name}` : null].filter(Boolean).join(' · ') || null;
   const sky = useIngredientColour(ingredient.id, ingredient.name);
-  const eyebrow = scanned ? 'House-made · scanned from a label' : isPrep ? ['House-made', prep?.actions?.[0]].filter(Boolean).join(' · ') : (ingredient.generic?.name ?? (ingredient.ingredient_role === 'product' ? 'Bottle' : 'Ingredient'));
+  // Made from house-mades of its own (board Add-parts, 4): "House-made · Made in parts", and Its parts under the recipe.
+  const parts = useItsParts(ingredient.id, isPrep && showRecipe).data ?? [];
+  const eyebrow = scanned ? 'House-made · scanned from a label' : isPrep ? ['House-made', parts.length ? 'Made in parts' : prep?.actions?.[0]].filter(Boolean).join(' · ') : (ingredient.generic?.name ?? (ingredient.ingredient_role === 'product' ? 'Bottle' : 'Ingredient'));
   // One action at most: Log batch, for whoever can read the recipe.
   const logLabel = `Log batch · ${size.makes}`;
   const action = showRecipe ? <Button label={logLabel} variant="ink" size="lg" onPress={log} /> : null;
@@ -170,6 +174,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
       <FactRows rows={facts} />
       {technical ? <TechnicalIngredientCard name={ingredient.name} /> : null}
       {showRecipe ? <HouseMadeRecipe itemId={ingredient.id} lines={lines} steps={steps} sizes={sizes} size={size} onSize={setSizeKey} onMake={make} checkedOn={sources?.filter((s) => s.field === 'recipe').map((s) => s.url)} /> : null}
+      {showRecipe ? <ItsParts itemId={ingredient.id} parts={parts} /> : null}
       {columns || fab ? null : action}
       {team ? <BehindTheBar item={ingredient} names={lines.map((l) => l.name)} drinks={drinks} used={used} from={from} canEditItem={canEdit} houseMade={lines.length > 0} /> : null}
       {isPrep || technical ? null : <WhereItLives itemId={ingredient.id} itemName={ingredient.name} readOnly={offerEdit} />}

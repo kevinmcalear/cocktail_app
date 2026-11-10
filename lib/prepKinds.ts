@@ -45,6 +45,10 @@ export interface PrepDraftLine {
   note?: string;
   /** Made in-house too, one level down (make-anything-steps-2, step 8): its own recipe, saved as its own prep. */
   prep?: PrepDraft;
+  /** Added as a bottle (Add-parts, 1: "Add X as a bottle"): a new name saved as something you buy. */
+  bottle?: boolean;
+  /** Added by its name alone in a part's search (Add-parts, 2): not one of yours yet, so it's tagged To make. */
+  toMake?: boolean;
 }
 
 export interface PrepDraftStep {
