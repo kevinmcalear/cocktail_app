@@ -15,7 +15,7 @@ import { linesOnKeptHouseMades } from '@/hooks/specLineSave';
 import { useVenueIce } from '@/hooks/useVenueIce';
 import { suggestClassic } from '@/lib/classics';
 import { stepWaits } from '@/lib/sameName';
-import { plainDbMessage } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/dbError';
 import { canSave, choiceList, COMMON_GLASSES, COMMON_ICE, COMMON_METHODS, EMPTY_DRAFT, hasContent, savedNotice, sketchLook, withMethodIce, type WizardDraft } from '@/lib/drinkWizard';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { serveGuess } from '@/lib/specDefaults';
@@ -126,7 +126,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
           // House-mades the save left saved (a dropped connection): the lines use them now, so trying again isn't refused by their names.
           const on = linesOnKeptHouseMades(e, now);
           if (on) patch(place, on);
-          Alert.alert('Couldn’t save the drink', `${plainDbMessage(e) ?? e.message} Your draft is kept on this device.`);
+          Alert.alert('Couldn’t save the drink', `${saveErrorWords(e)} Your draft is kept on this device.`);
         },
       }
     );

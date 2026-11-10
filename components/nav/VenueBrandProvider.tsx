@@ -11,11 +11,12 @@ import { useMode } from '@/hooks/useMode';
  * yours, not a venue's, so it keeps the app's own accent. With `barId` (a
  * venue's own settings pages) it's that venue's colours, in either mode.
  */
-export function VenueBrandProvider({ barId, children }: { barId?: string; children: ReactNode }) {
+export function VenueBrandProvider({ barId, children }: { barId?: string | null; children: ReactNode }) {
   const { active: current, venues } = useActiveVenue();
   const mode = useMode().mode;
   const active = barId ? (venues.find((v) => v.id === barId) ?? null) : current;
-  const home = !barId && mode === 'home';
+  // null: your home bar, even in venue mode (a create page opened for home).
+  const home = barId === null || (!barId && mode === 'home');
   return (
     <BackbarTheme>
       <BrandProvider

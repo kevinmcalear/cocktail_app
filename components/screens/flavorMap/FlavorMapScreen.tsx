@@ -15,6 +15,7 @@ import { useTrackRecent } from '@/hooks/useTrackRecent';
 import { guessUnit, newLine } from '@/lib/drinkWizard';
 import { addPick, groupByRing, MAP_SIZE } from '@/lib/flavorMap';
 import { searchIngredients } from '@/lib/ingredientNames';
+import { HOME_BAR } from '@/lib/itemRoutes';
 import { shareOrCopy } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
 import { getPreferredUnit } from '@/store/useSettingsStore';
@@ -70,7 +71,7 @@ function FlavorMapPage() {
     const lines = kept[place]?.draft.lines ?? [];
     const fresh = picked.filter((id) => !lines.some((l) => l.id === id));
     patch(place, { lines: [...lines, ...fresh.map((id) => newLine({ id, name: nameOf(id) }, guessUnit(nameOf(id), getPreferredUnit())))] });
-    router.push((venue ? `/add-cocktail?barId=${venue.id}` : '/add-cocktail') as never);
+    router.push(`/add-cocktail?barId=${venue?.id ?? HOME_BAR}` as never);
   };
 
   return (

@@ -8,12 +8,13 @@ import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { useLogBatchNow } from '@/components/screens/prep/LogBatchButton';
 import { STATUS } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useCreateBar } from '@/hooks/useBringInPlace';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { takenPrepWords, useSameNamePrep } from '@/hooks/useSameNamePrep';
 import { PARTS_SAVED, savedTogether, useHouseMadeWaiting, useSaveHouseMade } from '@/hooks/useSaveHouseMade';
 import { readableAccent } from '@/lib/color';
-import { plainDbMessage } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/dbError';
 import { newDraftId } from '@/lib/drinkWizard';
 import { houseMadeBar, houseMadesAt, houseMadeSlot, isHouseMadeSlot } from '@/lib/houseMadeDraft';
 import { partsOf } from '@/lib/houseMadeParts';
@@ -23,6 +24,7 @@ import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
 
 import { PrepBuilder } from '../addDrink/prep/PrepBuilder';
 import { WizardDialog } from '../addDrink/WizardDialog';
+import { WizardWaiting } from '../addDrink/WizardWaiting';
 
 const hydrated = (cb: () => void) => useHouseMadeWizardStore.persist.onFinishHydration(cb);
 const isHydrated = () => useHouseMadeWizardStore.persist.hasHydrated();
@@ -39,15 +41,21 @@ const isHydrated = () => useHouseMadeWizardStore.persist.hasHydrated();
 export function MakeRecipeRoute() {
   // The kept draft loads from storage first, so nothing written is lost to it.
   const ready = useSyncExternalStore(hydrated, isHydrated, () => true);
-  return ready ? <MakeRecipe /> : null;
+  const { barId, shelf, slot } = useLocalSearchParams<{ barId?: string; shelf?: string; slot?: string }>();
+  // Where it's made: the bar in the link; your bar for the shelf's Make it in house; a picked-up draft's own place;
+  // else where you are now, once that's known (a cold link at a bar is the bar's).
+  const place = useCreateBar(barId || (shelf ? null : slot && isHouseMadeSlot(slot) ? houseMadeBar(slot) : undefined));
+  // A wide web window keeps the page under it showing until the dialog can open.
+  const desktop = useBreakpoint() === 'desktop';
+  if (!ready || !place.ready) return Platform.OS === 'web' && desktop ? null : <WizardWaiting />;
+  return <MakeRecipe barId={place.barId} />;
 }
 
-function MakeRecipe() {
+function MakeRecipe({ barId }: { barId: string | null }) {
   const router = useRouter();
   const ds = useDs();
   const toast = useToast();
-  const { barId: barParam, name: nameParam, shelf, slot: slotParam } = useLocalSearchParams<{ barId?: string; name?: string; shelf?: string; slot?: string }>();
-  const barId = barParam || null;
+  const { name: nameParam, shelf, slot: slotParam } = useLocalSearchParams<{ name?: string; shelf?: string; slot?: string }>();
   const venue = useActiveVenue().venues.find((v) => v.id === barId) ?? null;
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const save = useSaveHouseMade();
@@ -139,9 +147,8 @@ function MakeRecipe() {
         if (saving.current || waiting) return;
         saving.current = true;
         const queued = offline;
-        const keptAt = useHouseMadeWizardStore.getState().kept[slot]?.updatedAt;
         save.mutate(
-          { name: n, prep, barId, slot, keptAt, queued, shelf: !!shelf },
+          { name: n, prep, barId, slot, kept: useHouseMadeWizardStore.getState().kept[slot]?.draft, queued, shelf: !!shelf },
           {
             onSuccess: ({ id, name, warnings }) => {
               if (queued) return;
@@ -150,7 +157,7 @@ function MakeRecipe() {
             },
             onError: (e) => {
               saving.current = false;
-              if (!queued) Alert.alert('Couldn’t save it', `${plainDbMessage(e) ?? e.message} Your draft is kept.`);
+              if (!queued) Alert.alert('Couldn’t save it', `${saveErrorWords(e)} Your draft is kept.`);
             },
           }
         );

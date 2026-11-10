@@ -6,6 +6,7 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 
+import { saveErrorWords } from '@/lib/dbError';
 import { existingIngredientId } from '@/lib/ingredientNames';
 import { BAR_WRITE } from '@/lib/offlineWrites';
 import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
@@ -224,7 +225,7 @@ export const BAR_WRITES = {
       ),
     // Only one that waited for signal is said here; the screen says the rest.
     failed: async (e: Error, w: BottleWrite) => {
-      if (w.queued) Alert.alert(`Couldn’t save ${w.name}`, e.message);
+      if (w.queued) Alert.alert(`Couldn’t save ${w.name}`, saveErrorWords(e));
     },
   },
 } as const;
