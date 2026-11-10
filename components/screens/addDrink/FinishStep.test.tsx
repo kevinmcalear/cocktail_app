@@ -74,7 +74,7 @@ describe('FinishStep', () => {
     expect(line.prep.keepsHours).toBe(96);
   });
 
-  test('made from the search and backed out of with nothing written: no line is left', async () => {
+  test('made from the search, Back with nothing written asks; Don’t keep it leaves no line, Leave it for now a recipe to finish', async () => {
     const set = jest.fn();
     await renderWithProviders(<Stateful set={set} />);
     await fireEvent.changeText(screen.getByLabelText('Search for a garnish'), 'rvwa');
@@ -82,8 +82,16 @@ describe('FinishStep', () => {
     expect(finish(set)).toHaveLength(1);
     await partLaidOut();
     await fireEvent.press(screen.getByRole('button', { name: /^Back to Coconut Fat-Washed Daiquiri/ }));
-    expect(screen.queryByText('Leave it for now?')).toBeNull();
+    expect(screen.getByText('Leave it for now?')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Don’t keep it' }));
     expect(finish(set)).toEqual([]);
+
+    await fireEvent.changeText(screen.getByLabelText('Search for a garnish'), 'rvwa');
+    await fireEvent.press(screen.getByRole('button', { name: 'Make “Rvwa” in-house' }));
+    await partLaidOut();
+    await fireEvent.press(screen.getByRole('button', { name: /^Back to Coconut Fat-Washed Daiquiri/ }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Leave it for now' }));
+    expect(finish(set)).toEqual([expect.objectContaining({ name: 'Rvwa', prep: expect.objectContaining({ at: 'kind' }) })]);
   });
 
   test('a garnish the catalog lacks is added by its name, with making it in house under it', async () => {
