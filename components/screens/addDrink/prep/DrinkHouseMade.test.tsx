@@ -14,7 +14,8 @@ jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrep
 let mockConnected = true;
 jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: mockConnected }) }));
 const mockSame = jest.fn((): unknown => null);
-jest.mock('@/hooks/useSameNamePrep', () => ({ ...jest.requireActual('@/hooks/useSameNamePrep'), useSameNamePrep: () => ({ data: mockSame(), checking: false }) }));
+let mockChecking = false;
+jest.mock('@/hooks/useSameNamePrep', () => ({ ...jest.requireActual('@/hooks/useSameNamePrep'), useSameNamePrep: () => ({ data: mockSame(), checking: mockChecking }) }));
 
 const laidOut = () => fireEvent(screen.getByTestId('part-page'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
 
@@ -36,6 +37,7 @@ const props = (more: Partial<DrinkHouseMadeProps> = {}): DrinkHouseMadeProps => 
 
 afterEach(() => {
   mockConnected = true;
+  mockChecking = false;
   mockSame.mockReturnValue(null);
 });
 
@@ -115,4 +117,16 @@ test('empty, with a name that says nothing: all four rows say Add (Add-inside, E
   await laidOut();
   for (const row of ['What it is', 'Method', 'Makes', 'Keeps']) expect(screen.getByText(row)).toBeTruthy();
   expect(screen.getAllByText('Add')).toHaveLength(4);
+});
+
+test('Back while its name is still being checked asks too; Leave keeps the line a name to make, no recipe on it', async () => {
+  mockChecking = true;
+  const p = props({ initial: startPrep('syrup', 'Pine syrup') });
+  await renderWithProviders(<DrinkHouseMade {...p} />);
+  await laidOut();
+  await fireEvent(screen.getByTestId('part-page'), 'requestClose');
+  expect(screen.getByText('Leave it for now?')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Leave it for now' }));
+  expect(p.onKeep).not.toHaveBeenCalled();
+  expect(p.onClose).toHaveBeenCalledWith(true);
 });

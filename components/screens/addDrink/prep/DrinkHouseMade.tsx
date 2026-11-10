@@ -41,7 +41,7 @@ export interface DrinkHouseMadeProps {
   onKeep: (prep: PrepDraft, name: string, done: boolean) => void;
   /** Done: on the line, finished. */
   onDone: (prep: PrepDraft, name: string) => void;
-  /** Gone: left for now (what's kept stays on the line), or opened and nothing written. */
+  /** Gone: left for now (true: what the page showed is on the line), or one finished before closed with nothing changed (false). */
   onClose: (kept: boolean) => void;
   /** Its name is taken, Use yours: the line uses that one. */
   onUse: (id: string, name: string) => void;
@@ -71,9 +71,9 @@ export function DrinkHouseMade(p: DrinkHouseMadeProps) {
   const back = useRef<(() => void) | null>(null);
   const close = () => p.onClose(kept);
   // Back before it's done asks, even with nothing changed: what the page shows (a recipe read from its name, or
-  // nothing yet) goes on the line as Recipe to finish. One finished before just closes, its changes kept; a taken
-  // name with nothing kept leaves the line as it was.
-  const ask = (keep: PartKeep | null) => (p.finished || (!keep && !kept) ? close() : setAsking({ keep }));
+  // nothing yet) goes on the line as Recipe to finish (while its name is taken, the line stays a name to make).
+  // One finished before just closes, its changes kept.
+  const ask = (keep: PartKeep | null) => (p.finished ? close() : setAsking({ keep }));
   const leaveNow = () => {
     if (asking?.keep) p.onKeep(asking.keep.prep, asking.keep.name, asking.keep.done);
     p.onClose(true);
