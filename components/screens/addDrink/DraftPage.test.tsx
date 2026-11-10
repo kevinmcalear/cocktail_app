@@ -74,7 +74,7 @@ describe('the draft page', () => {
     await fireEvent.changeText(screen.getAllByLabelText('Add an ingredient').at(-1)!, 'Spruce tips');
     await fireEvent.press(screen.getByRole('button', { name: /^Add “Spruce tips”$/ }));
     await fireEvent.press(screen.getByRole('button', { name: /^Back to Pine Fizz/ }));
-    expect(screen.getByText('What you’ve done is kept. Pine Fizz shows it as Recipe to finish, and Drafts lists the drink with the way back.')).toBeTruthy();
+    expect(screen.getByText('What you’ve done is kept. Pine Fizz shows it as Recipe to finish, and New lists the drink under Pick up where you left off, with the way back.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Leave it for now' }));
     expect(screen.queryByTestId('part-page')).toBeNull();
     const kept = useDrinkWizardStore.getState().kept.home.draft.lines[0];
