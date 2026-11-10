@@ -10,6 +10,7 @@ import { useDictation } from '@/hooks/useDictation';
 import { addIntent, clipLine } from '@/lib/addIntent';
 import { UNREAD_CLIP } from '@/lib/clipboardPeek';
 import { isLink } from '@/lib/bringIn';
+import { HOME_BAR } from '@/lib/itemRoutes';
 
 import { NewDrafts } from './NewDrafts';
 import { useAddActions, useClipboardOffer } from './useAddActions';
@@ -137,8 +138,8 @@ function AddBody({ onClose, onMore, listen }: { onClose: () => void; onMore: () 
       <NewDrafts
         barId={add.place.barId}
         onOpen={(params) => go({ pathname: '/add-cocktail', params })}
-        onOpenKind={(kind) => go({ pathname: kind === 'beer' ? '/add-beer' : '/add-wine', params: add.place.barId ? { barId: add.place.barId } : {} })}
-        onOpenHouse={(slot) => go({ pathname: '/make-recipe', params: { slot, ...(add.place.barId ? { barId: add.place.barId } : {}) } })}
+        onOpenKind={(kind) => go({ pathname: kind === 'beer' ? '/add-beer' : '/add-wine', params: { barId: add.place.barId ?? HOME_BAR } })}
+        onOpenHouse={(slot) => go({ pathname: '/make-recipe', params: { slot, barId: add.place.barId ?? HOME_BAR } })}
         onImport={() => go('/bring-in' as Href)}
         onDrafts={() => go('/drafts' as Href)}
       />

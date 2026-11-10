@@ -224,7 +224,8 @@ export const BAR_WRITES = {
       ),
     // Only one that waited for signal is said here; the screen says the rest.
     failed: async (e: Error, w: BottleWrite) => {
-      if (w.queued) Alert.alert(`Couldn’t save ${w.name}`, e.message);
+      // Loaded here, not up top: this file is in every page's first load, the words are only needed on a failure.
+      if (w.queued) Alert.alert(`Couldn’t save ${w.name}`, await import('@/lib/saveErrorWords').then((m) => m.saveErrorWords(e), () => 'Something went wrong saving it. Try again.'));
     },
   },
 } as const;

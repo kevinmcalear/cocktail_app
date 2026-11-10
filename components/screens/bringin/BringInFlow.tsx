@@ -12,6 +12,7 @@ import { useBringInPlace } from '@/hooks/useBringInPlace';
 import { emptySummary, sourceLabel } from '@/lib/bringInBatch';
 import { startChoices } from '@/lib/bringInDraft';
 import { startReview } from '@/lib/importReview';
+import { HOME_BAR } from '@/lib/itemRoutes';
 import { listenBringIn, takeBringIn } from '@/lib/bringInHandoff';
 import { snapReadFiles, sourcesFromFiles } from '@/lib/readAnything';
 import { askToNudge } from '@/lib/readyNudge';
@@ -244,7 +245,7 @@ export function BringInFlow() {
         wizard.clear(wizardAt);
         wizard.begin(wizardAt, draft);
         useBringIn.getState().clear(true);
-        router.replace({ pathname: '/add-cocktail', params: { ...(job.barId ? { barId: job.barId } : {}), name, imported: '1' } });
+        router.replace({ pathname: '/add-cocktail', params: { barId: job.barId ?? HOME_BAR, name, imported: '1' } });
       }}
     />
   );

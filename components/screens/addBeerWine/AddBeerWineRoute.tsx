@@ -5,10 +5,13 @@ import { Platform } from 'react-native';
 import { useBreakpoint } from '@/components/ds';
 import { VenueBrandProvider } from '@/components/nav/VenueBrandProvider';
 import { BeerWineDraftEditScreen } from '@/components/screens/drink/edit/BeerWineEditScreen';
+import { useCreateBar } from '@/hooks/useBringInPlace';
 import type { DrinkKind } from '@/lib/drinkKinds';
+import { HOME_BAR } from '@/lib/itemRoutes';
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 
 import { WizardDialog } from '../addDrink/WizardDialog';
+import { WizardWaiting } from '../addDrink/WizardWaiting';
 import { AddBeerWineWizard } from './AddBeerWineWizard';
 
 export interface AddDrinkProps {
@@ -30,15 +33,21 @@ export function AddBeerWineRoute({ kind, ...props }: AddDrinkProps & { kind: Dri
   const params = useLocalSearchParams<{ barId?: string; draftId?: string; name?: string; menuSectionId?: string }>();
   const draftId = props.draftIdProp !== undefined ? props.draftIdProp : params.draftId;
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
-  const barId = (props.barIdProp !== undefined ? props.barIdProp : params.barId) || null;
+  const named = (props.barIdProp !== undefined ? props.barIdProp : params.barId) || undefined;
+  // No bar in the link: where you are now, once that's known (a cold link at a bar is the bar's beer, with its price).
+  const place = useCreateBar(named);
+  const barId = place.barId;
   const initialName = props.initialNameProp !== undefined ? props.initialNameProp : params.name;
   const desktop = useBreakpoint() === 'desktop';
   const dialog = Platform.OS === 'web' && desktop && !props.isInline;
   // The dialog's Escape and scrim close as the X does, through the wizard (Leave it for now).
   const closeRef = useRef<(() => void) | null>(null);
-  if (draftId) return <BeerWineDraftEditScreen kind={kind} draftId={draftId} barId={barId} initialName={initialName} onExit={props.onClose ?? goBack} />;
+  // A draft's link names its bar, or none for one at home.
+  if (draftId) return <BeerWineDraftEditScreen kind={kind} draftId={draftId} barId={named && named !== HOME_BAR ? named : null} initialName={initialName} onExit={props.onClose ?? goBack} />;
 
-  const wizard = (
+  const wizard = !place.ready ? (
+    <WizardWaiting />
+  ) : (
     <AddBeerWineWizard
       kind={kind}
       barId={barId}
@@ -57,7 +66,7 @@ export function AddBeerWineRoute({ kind, ...props }: AddDrinkProps & { kind: Dri
     />
   );
   if (props.isInline) return wizard;
-  return <VenueBrandProvider>{dialog ? (
+  return <VenueBrandProvider barId={place.ready ? barId : undefined}>{dialog ? (
         <WizardDialog label={`Add a ${kind}`} onClose={() => closeRef.current?.()}>
           {wizard}
         </WizardDialog>

@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { useAdoptNoteRecipe, type PrepCardData } from '@/hooks/usePrepCard';
 import { withAlpha } from '@/lib/color';
-import { plainDbMessage } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import type { NoteLine, NoteRecipe as Read } from '@/lib/noteRecipe';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 
@@ -112,7 +112,7 @@ export function NoteBar({ itemId, barId, read, lines, card, bottom, inline }: { 
   const ds = useDs();
   const router = useRouter();
   const adopt = useAdoptNoteRecipe(itemId, barId);
-  const save = () => adopt.mutate({ lines, steps: read.steps, card }, { onError: (e) => Alert.alert('Couldn’t use the lines', plainDbMessage(e) ?? e.message) });
+  const save = () => adopt.mutate({ lines, steps: read.steps, card }, { onError: (e) => Alert.alert('Couldn’t use the lines', saveErrorWords(e)) });
   return (
     <View style={inline ? styles.inline : [styles.bar, { paddingBottom: bottom + space.md, backgroundColor: ds.c.ground, borderTopColor: ds.c.line }]}>
       <Button label="Edit first" variant="secondary" size="lg" onPress={() => router.push(`/ingredient/${itemId}/edit` as never)} style={styles.grow} />

@@ -2,6 +2,8 @@
 // (/menus/create, /menus/create-template) go now. Bookmarks, recents saved on
 // a device and shared links still use them.
 
+import { HOME_BAR } from './itemRoutes';
+
 const ADD: Record<string, string> = {
   cocktail: '/add-cocktail',
   beer: '/add-beer',
@@ -21,7 +23,8 @@ const query = (params: Record<string, string | undefined>) => {
 export function editModeRedirect(p: { create?: string; barId?: string; name?: string; type?: string; id?: string }): string {
   if (p.create === 'menu') return '/menus/all?new=1';
   const add = p.create ? ADD[p.create] : undefined;
-  if (add) return add + query({ barId: p.barId === 'personal' ? undefined : p.barId, name: p.name });
+  // Your own ('personal') says so: with no bar a create page opens where you are now.
+  if (add) return add + query({ barId: p.barId === 'personal' ? HOME_BAR : p.barId, name: p.name });
   if (p.id) {
     if (p.type === 'published_menu') return `/menus/${encodeURIComponent(p.id)}`;
     if (p.type === 'published_ingredient') return `/ingredient/${encodeURIComponent(p.id)}`;

@@ -113,3 +113,18 @@ test("the account's beer or wine arrives in its own wizard, a drink in the drink
   expect(mockUpserts).toHaveLength(0);
   await unmount();
 });
+
+test('a wine saved while offline is taken out of the account when signal is back, even when the account is read first', async () => {
+  // Android walk, 9 Nov: the account had the draft from before signal went; the save waited, landed and cleared it here.
+  // Signal back also reads the account again, and that read still has it. It used to drop the clear unsent, and the
+  // draft came back under Pick up where you left off.
+  useBeerWineWizardStore.setState({ kept: {}, cleared: [{ place: 'wine:bar-1', at: 9 }] });
+  useDraftSyncStore.setState({ seen: ['wine:bar-1'] });
+  mockRows = [{ slot: 'wine:bar-1', draft_data: { draft: { ...EMPTY_BEER_WINE, name: 'Walk Barolo' }, step: 'price', updatedAt: 5 } }];
+  const { unmount } = await renderHook(() => useDraftSync(), { wrapper });
+  await waitFor(() => expect(mockDeletes).toEqual([{ user_id: 'u1', entity_type: 'drink_wizard', slot: 'wine:bar-1' }]));
+  expect(useBeerWineWizardStore.getState().kept['wine:bar-1']).toBeUndefined();
+  expect(useBeerWineWizardStore.getState().cleared).toEqual([]);
+  expect(useDraftSyncStore.getState().seen).toEqual([]);
+  await unmount();
+});

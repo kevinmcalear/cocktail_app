@@ -82,5 +82,7 @@ export function mergeDrafts<D extends object, S extends string>(
     }
   }
   for (const [slot, there] of Object.entries(account)) if (!(slot in device) && !gone(slot, there)) kept[slot] = there;
-  return { kept, push, seen: Object.entries(account).filter(([s, there]) => !gone(s, there)).map(([s]) => s) };
+  // Every slot the account has, cleared here or not: one cleared but still there must still be taken out. Left off the list,
+  // it read as never sent and its tombstone went with nothing deleted, so a save that waited for signal came back as a draft.
+  return { kept, push, seen: Object.keys(account) };
 }

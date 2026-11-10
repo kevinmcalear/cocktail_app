@@ -12,6 +12,7 @@ import { isCleanText, isLink, localReading, looksLikeMenu } from '@/lib/bringIn'
 import { lastTimeLine } from '@/lib/bringInBatch';
 import { peekClipboard, readClipboard, UNREAD_CLIP } from '@/lib/clipboardPeek';
 import { withAlpha } from '@/lib/color';
+import { HOME_BAR } from '@/lib/itemRoutes';
 import { pickReadFiles, snapReadFiles, sourcesFromFiles, type ReadFile } from '@/lib/readAnything';
 import { useBringIn } from '@/store/useBringIn';
 
@@ -139,7 +140,7 @@ export function BringInChooser({ onClose, menu, paste = false }: { onClose?: () 
       ) : null}
       {error ? <Caption tone="accent">{error}</Caption> : null}
       <View style={[styles.links, { borderTopColor: ds.c.line }]}>
-        <LinkRow label="Type a drink yourself" onPress={() => go(place.barId ? `/add-cocktail?barId=${place.barId}` : '/add-cocktail')} />
+        <LinkRow label="Type a drink yourself" onPress={() => go(place.loading ? '/add-cocktail' : `/add-cocktail?barId=${place.barId ?? HOME_BAR}`)} />
         {last ? <LinkRow label="Last time:" detail={lastTimeLine(last)} onPress={() => go(`/bring-in/done?batch=${last.id}`)} /> : null}
       </View>
       <Caption tone="muted">Photos, PDFs and most pasted text are read by AI. A clean spec or list is read on your phone. You check everything before it saves.</Caption>

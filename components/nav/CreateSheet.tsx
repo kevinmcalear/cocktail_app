@@ -9,6 +9,7 @@ import { font, radius, space } from '@/constants/tokens';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useMode } from '@/hooks/useMode';
 import { useSearchMine } from '@/hooks/useSearchMine';
+import { HOME_BAR } from '@/lib/itemRoutes';
 import { roleLabel } from '@/lib/roles';
 
 import { HomeMark } from './VenueMarks';
@@ -80,7 +81,8 @@ export function CreateSheet({ visible, onClose, onBack }: { visible: boolean; on
   const known = !venueId || caps !== undefined;
   const locked = known && !!venueId && !canAdd;
   const made = CREATE.filter((c) => !c.atVenue || canAdd);
-  const hrefOf = (c: (typeof CREATE)[number]) => (c.atVenue && venueId ? `${c.href}?barId=${venueId}` : c.href);
+  // The subtitle says where it's made, so the link names it: home too (with no bar a create page finds where you are).
+  const hrefOf = (c: (typeof CREATE)[number]) => (c.atVenue ? `${c.href}?barId=${venueId ?? HOME_BAR}` : c.href);
   const subtitle = !venueId ? 'In your home bar' : canAdd ? `Made at ${venueName}, for its drinks` : `Made at ${venueName}`;
   const go = (href: string) => {
     onClose();
@@ -89,7 +91,7 @@ export function CreateSheet({ visible, onClose, onBack }: { visible: boolean; on
   const makeAtHome = () => {
     onClose();
     setMode('home');
-    router.push('/add-cocktail');
+    router.push(`/add-cocktail?barId=${HOME_BAR}`);
   };
   return (
     <MenuSheet visible={visible} onClose={onClose} title="New" subtitle={subtitle} plain centred back={onBack ?? onClose}>

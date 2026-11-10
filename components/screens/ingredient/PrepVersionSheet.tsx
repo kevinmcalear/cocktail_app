@@ -6,7 +6,7 @@ import { Body, Button, Caption, PressableScale, useDs } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { radius, space } from '@/constants/tokens';
 import { useCopyPrep, useMakeVenueVersion, type PrepCopySource } from '@/hooks/usePrepCard';
-import { plainDbMessage } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { toastDone } from '@/lib/toast';
 
 interface PrepVersionSheetProps {
@@ -48,7 +48,7 @@ export function PrepVersionSheet({ visible, onClose, source, drinks, venue, reas
     // The edit is already in it: open its page, in place of the editor.
     router.replace(`/ingredient/${id}` as never);
   };
-  const failed = (e: Error) => Alert.alert('Couldn’t save your version', plainDbMessage(e) ?? e.message);
+  const failed = (e: Error) => Alert.alert('Couldn’t save your version', saveErrorWords(e));
   const save = () => {
     if (all && onEditAll) {
       onClose();

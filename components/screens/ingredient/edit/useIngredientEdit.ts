@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 
 import { useIngredientDraftEditor, useIngredientEditor, type IngredientEditor, type IngredientForm } from '@/hooks/useIngredientEditor';
 import { useItemPrep, useSaveItemPrep, type PrepCardData } from '@/hooks/usePrepCard';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { prepCardInput, prepFields, samePrepCard, type PrepFields } from '@/lib/prepCardForm';
 
 import type { PendingEdits } from '../../drink/edit/VenueSections';
@@ -61,7 +62,7 @@ function useEditState(editor: IngredientEditor, card: PrepCardData | undefined, 
         await savePrep.mutateAsync(input);
         setSavedPrep(prep);
       } catch (e) {
-        Alert.alert('Couldn’t save the method', e instanceof Error ? e.message : 'Try again.');
+        Alert.alert('Couldn’t save the method', saveErrorWords(e));
         return false;
       }
     }

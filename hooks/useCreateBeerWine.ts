@@ -8,6 +8,7 @@ import { track } from '@/lib/analytics';
 import { beerWinePlace, type BeerWineDraft } from '@/lib/beerWineDraft';
 import { beerWineSketch, fullDescription, type CatalogBottle } from '@/lib/beerWineWizard';
 import { plainDbMessage } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { likeExactly } from '@/lib/drinkWizard';
 import { formatPrice } from '@/lib/menus';
@@ -120,7 +121,7 @@ export function useCreateBeerWine() {
     },
     // The wizard says what went wrong itself and keeps the draft; a save that waited for signal lands after it closed, so that one is said here.
     onError: (e, { kind, draft, queued }) => {
-      if (queued) Alert.alert(`Couldn’t save ${capitalizeFirsts(draft.name) || `the ${kind}`}`, `${plainDbMessage(e) ?? e.message} It’s still in Add, under Pick up where you left off.`);
+      if (queued) Alert.alert(`Couldn’t save ${capitalizeFirsts(draft.name) || `the ${kind}`}`, `${saveErrorWords(e)} It’s still in Add, under Pick up where you left off.`);
     },
   });
 }

@@ -31,8 +31,8 @@ test('at a venue, what you make is the venue’s', async () => {
 
 test('at home, it is yours', async () => {
   mockMine = { venueId: null, canAdd: true, label: 'Your drinks' };
-  expect(await open('A bottle you buy')).toBe('/add-ingredient');
-  expect(await open('Something you make')).toBe('/make-recipe');
+  expect(await open('A bottle you buy')).toBe('/add-ingredient?barId=home');
+  expect(await open('Something you make')).toBe('/make-recipe?barId=home');
   expect(screen.getByText('In your home bar')).toBeTruthy();
   expect(screen.getByText('For your shelf, or to pour from')).toBeTruthy();
 });
@@ -46,7 +46,7 @@ test('without the right to add at the venue, drinks lock with the role that open
   expect(screen.getByRole('link', { name: /^Menu\./ })).toBeTruthy();
   await fireEvent.press(screen.getByRole('link', { name: 'Make your own drink in your home bar' }));
   expect(mockSetMode).toHaveBeenLastCalledWith('home');
-  expect(mockPush).toHaveBeenLastCalledWith('/add-cocktail');
+  expect(mockPush).toHaveBeenLastCalledWith('/add-cocktail?barId=home');
 });
 
 // Review of #1181: on Android a row (or the scrim) went back to Add, which opened over the page it had just pushed.

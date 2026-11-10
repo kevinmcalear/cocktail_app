@@ -12,7 +12,7 @@ import { useSameNameDrink } from '@/hooks/useSameNameDrink';
 import { beerWinePlace, EMPTY_BEER_WINE, filledBeerWine, type BeerWineDraft, type BeerWineStep } from '@/lib/beerWineDraft';
 import { BEER_WINE_COPY, drawnSoFar, fullDescription, stepEyebrow, stepsFor, takenWords } from '@/lib/beerWineWizard';
 import { readableAccent } from '@/lib/color';
-import { plainDbMessage } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { DRINK_KINDS, type DrinkKind } from '@/lib/drinkKinds';
 import { nameKey, sameName } from '@/lib/sameName';
 import { useBeerWineWizardStore } from '@/store/useBeerWineWizardStore';
@@ -138,7 +138,7 @@ function Wizard({ kind, barId = null, initialName, embedded, onClose, onSaved, c
           if (warnings.length) Alert.alert('Saved, with one thing to fix', warnings.join('\n\n'));
           onSaved(id);
         },
-        onError: (e) => Alert.alert(`Couldn’t save the ${config.label.toLowerCase()}`, `${plainDbMessage(e) ?? e.message} Your draft is kept on this device.`),
+        onError: (e) => Alert.alert(`Couldn’t save the ${config.label.toLowerCase()}`, `${saveErrorWords(e)} Your draft is kept on this device.`),
       }
     );
     if (queued) {

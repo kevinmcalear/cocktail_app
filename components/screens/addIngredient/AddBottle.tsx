@@ -10,7 +10,7 @@ import { useReadLabel } from '@/hooks/useReadLabel';
 import { useBottleHere, useBottleStrengths, useSaveBottle } from '@/hooks/useSaveBottle';
 import { abvError, abvNumber, bottleMatches, kindHelp, notABottleWords, ownBottle, savedDetail, takenWords, type BottleRow } from '@/lib/addBottle';
 import { readableAccent } from '@/lib/color';
-import { plainDbMessage } from '@/lib/dbError';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { confirmDiscardChanges } from '@/lib/dialogs';
 import { newDraftId, type WizardPick } from '@/lib/drinkWizard';
 import { sameBottle } from '@/lib/ingredientNames';
@@ -159,7 +159,7 @@ export function AddBottle({ barId = null, initialName, embedded, onClose, onSave
         toast.show({ title: 'Bottle saved', detail: savedDetail(!!barId, shared ? kindOf(shared) : (kindPick?.name ?? null)) });
         onSaved({ id, name: shared?.name ?? write.name }, write.existing || !!shared);
       },
-      onError: (e) => Alert.alert('Couldn’t save the bottle', plainDbMessage(e) ?? e.message),
+      onError: (e) => Alert.alert('Couldn’t save the bottle', saveErrorWords(e)),
     });
     // Offline it waits for signal (hooks/barWrites.ts), on this phone even if the app closes.
     if (queued) {
