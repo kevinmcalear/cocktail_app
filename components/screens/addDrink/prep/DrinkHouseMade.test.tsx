@@ -62,16 +62,25 @@ test('offline it says the drink’s draft keeps it on this phone', async () => {
   expect(screen.queryByText('Saves with the drink. It shows on House-made too.')).toBeNull();
 });
 
-test('Back with nothing written just closes; one finished before closes with its changes kept, no asking', async () => {
+test('Back before it’s done asks, even with nothing written; one finished before closes with its changes kept, no asking', async () => {
   // A name that says no kind starts with no lines.
   const p = props({ name: 'Rvwa' });
   await renderWithProviders(<DrinkHouseMade {...p} />);
   await laidOut();
-  // Nothing in it yet (Add-inside, Empty).
+  // Nothing in it yet (Add-inside, Empty): come back to it, the drink shows Recipe to finish.
   expect(screen.getByText('Nothing in it yet. Add what goes in, or come back to it: the drink shows Recipe to finish.')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: /^Back to Pine Fizz/ }));
+  expect(screen.getByText('Leave it for now?')).toBeTruthy();
+  expect(p.onClose).not.toHaveBeenCalled();
+  // Keep going, then Escape (the web) or Android's back on the page: the same card.
+  await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
   expect(screen.queryByText('Leave it for now?')).toBeNull();
-  expect(p.onClose).toHaveBeenCalledWith(false);
+  await fireEvent(screen.getByTestId('part-page'), 'requestClose');
+  expect(screen.getByText('Leave it for now?')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Leave it for now' }));
+  // What the page shows goes on the line (nothing yet), and it's left as kept.
+  expect(p.onKeep).toHaveBeenCalledWith(expect.objectContaining({ lines: [] }), 'Rvwa', false);
+  expect(p.onClose).toHaveBeenCalledWith(true);
 
   const again = props({ initial: startPrep('syrup', 'Pine syrup'), finished: true });
   await renderWithProviders(<DrinkHouseMade {...again} />);

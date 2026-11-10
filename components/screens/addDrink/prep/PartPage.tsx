@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useState, type ReactNode, type RefObject } from 'react';
 import { BackHandler, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,6 +21,13 @@ import { PrepRecipeStep } from './PrepRecipeStep';
 import { PrepRows } from './PrepRows';
 import { useInside } from './useInside';
 import { usePrepDraft } from './usePrepDraft';
+
+/** What the page shows, as onKeep takes it: kept on its line when it's left for now. */
+export interface PartKeep {
+  prep: PrepDraft;
+  name: string;
+  done: boolean;
+}
 
 export interface PartPageProps {
   /** The part's name, as its line says it ("Honey-ginger syrup"). */
@@ -48,8 +55,8 @@ export interface PartPageProps {
   onDone: (prep: PrepDraft, name: string) => void;
   /** Gone, as it was left: what's done stays on its line (Back comes here). */
   onClose: () => void;
-  /** Back, when it asks first (Add-inside: "Leave it for now?"); otherwise Back is onClose. */
-  onBack?: () => void;
+  /** Back, when it asks first (Add-inside: "Leave it for now?"); otherwise Back is onClose. It gets what the page shows, to keep on leaving (null while its name is taken). */
+  onBack?: (keep: PartKeep | null) => void;
   /** The drink's check (Add-inside, Saving with the drink): the top check saves the drink with it, "Saving…" while it does. */
   save?: { onSave: (prep: PrepDraft, name: string) => void; saving: boolean; canSave: boolean };
   /** In a native Modal, Android's back goes to the Modal: it calls this, the level showing's Back. */
@@ -95,9 +102,17 @@ export function PartPage(p: PartPageProps) {
   const taken = same.data;
   // A line that isn't one of yours yet: added by its name alone, or it sounds made (Add-parts, 2: "To make").
   const toMake = last ? undefined : draft.lines.find((l) => !l.id && !l.prep && !l.slot && !l.bottle && l.name.trim() && (l.toMake || looksMadeInHouse(l.name)));
-  const canDone = named && !slotsOpen && !!shown.trim() && !taken;
+  // It could be added as it is (onKeep's `done`); Done also waits while its name is taken.
+  const could = named && !slotsOpen && !!shown.trim();
+  const canDone = could && !taken;
   const done = () => p.onDone(withFacts(draft), shown);
-  const back = p.onBack ?? p.onClose;
+  // What's written goes on its line, and leaving keeps it. Not while its name is taken (or still being checked): Back
+  // then leaves the line as it was, and the save can't fail on it later.
+  const free = !taken && !same.checking;
+  // Board Add-inside, Back before it's done: it asks first, and leaving keeps what the page shows (a recipe read from
+  // its name too, not only what was changed).
+  const { onBack, onClose } = p;
+  const back = useCallback(() => (onBack ? onBack(free ? { prep: withFacts(draft), name: shown, done: could } : null) : onClose()), [onBack, onClose, free, draft, shown, could]);
   const trail = trailInto(p.above, back, shown);
 
   // Android's back: the level showing goes back, one at a time. In a Modal it goes to the Modal, which asks backRef.
@@ -112,11 +127,9 @@ export function PartPage(p: PartPageProps) {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => (back(), true));
     return () => sub.remove();
   }, [back, backRef, p.inPlace, nested]);
-  // What's written goes on its line as it's written, so leaving the whole house-made keeps it. Not while its name is
-  // taken (or still being checked): Back then leaves the line as it was, and the save can't fail on it later.
-  const free = !taken && !same.checking;
+  // Each change goes on its line as it's made, so leaving the whole house-made keeps it.
   useEffect(() => {
-    if (free && (changed() || name !== p.name)) p.onKeep(withFacts(draft), shown, named && !slotsOpen && !!shown.trim());
+    if (free && (changed() || name !== p.name)) p.onKeep(withFacts(draft), shown, could);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- kept when what it keeps changes
   }, [draft, name, free]);
   const words = taken ? takenPartWords(taken, p.bar?.name ?? null) : null;

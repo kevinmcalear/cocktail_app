@@ -13,7 +13,7 @@ import { Prompt } from '../Prompt';
 import type { TrailItem } from '../Trail';
 import { IntoSidePanel } from './IntoSidePanel';
 import { LeaveCard } from './LeaveCard';
-import { PartPage } from './PartPage';
+import { PartPage, type PartKeep } from './PartPage';
 import { SIDE_PANEL_ID, SidePanelContext } from './sidePanel';
 
 export interface DrinkHouseMadeProps {
@@ -56,18 +56,28 @@ export interface DrinkHouseMadeProps {
  * b2's part page at the top level, over the drink on a phone and beside it
  * on the web's desktop page. It has no save of its own: each change goes on
  * the drink's line, and it saves with the drink. Back before it's done asks
- * "Leave it for now?": the drink shows it as Recipe to finish.
+ * "Leave it for now?", by the back arrow, the trail, Android's back or
+ * Escape: leaving keeps what the page shows, and the drink shows it as Recipe
+ * to finish.
  */
 export function DrinkHouseMade(p: DrinkHouseMadeProps) {
   const ds = useDs();
   const panel = use(SidePanelContext);
   const offline = useNetInfo().isConnected === false;
-  // Something written here (a change kept on the line): leaving asks first, and says it's kept.
+  // A change kept on the line already (the drink's draft has it).
   const [kept, setKept] = useState(false);
-  const [asking, setAsking] = useState(false);
+  // Leave it for now? showing, with what the page shows to keep (null while its name is taken).
+  const [asking, setAsking] = useState<{ keep: PartKeep | null } | null>(null);
   const back = useRef<(() => void) | null>(null);
   const close = () => p.onClose(kept);
-  const ask = () => (kept && !p.finished ? setAsking(true) : close());
+  // Back before it's done asks, even with nothing changed: what the page shows (a recipe read from its name, or
+  // nothing yet) goes on the line as Recipe to finish. One finished before just closes, its changes kept; a taken
+  // name with nothing kept leaves the line as it was.
+  const ask = (keep: PartKeep | null) => (p.finished || (!keep && !kept) ? close() : setAsking({ keep }));
+  const leaveNow = () => {
+    if (asking?.keep) p.onKeep(asking.keep.prep, asking.keep.name, asking.keep.done);
+    p.onClose(true);
+  };
   const drink = p.drinkName || 'The drink';
   const note = offline ? (
     <Prompt warn icon="exclamationmark.triangle" title="You’re offline." body={`It’s kept in the ${p.forDrink ? 'drink' : 'recipe'}’s draft on this phone; nothing is lost.`} />
@@ -111,8 +121,8 @@ export function DrinkHouseMade(p: DrinkHouseMadeProps) {
     <LeaveCard
       drink={drink}
       body={`What you’ve done is kept. ${drink} shows it as Recipe to finish${p.drafts ? ', and New lists the drink under Pick up where you left off, with the way back' : ''}.`}
-      onLeave={close}
-      onStay={() => setAsking(false)}
+      onLeave={leaveNow}
+      onStay={() => setAsking(null)}
       onDrop={p.onDrop}
     />
   ) : null;
@@ -128,7 +138,7 @@ export function DrinkHouseMade(p: DrinkHouseMadeProps) {
     );
   }
   return (
-    <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={() => (asking ? setAsking(false) : back.current?.())}>
+    <Modal visible animationType="slide" presentationStyle="fullScreen" onRequestClose={() => (asking ? setAsking(null) : back.current?.())}>
       {/* Android: gestures in a Modal need their own root (the lines drag). */}
       <GestureHandlerRootView style={[styles.flex, { backgroundColor: ds.c.ground }]}>
         {page}
