@@ -42,7 +42,7 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
   const [all, setAll] = useState(false);
   const [swapKey, setSwapKey] = useState<string | null>(null);
   // A house-made being written inside the drink (board Add-inside): its line in the finish (its key).
-  // `fresh`: added from the search, so backing out with nothing written takes it out. `finished`: its recipe done before, and a change keeps it so.
+  // `fresh`: added from the search, so Don't keep it (or backing out with nothing kept) takes it out. `finished`: its recipe done before, and a change keeps it so.
   const [making, setMaking] = useState<{ name: string; key: string; fresh?: boolean; finished?: boolean } | null>(null);
   const lines = draft.garnishes;
   const search = { ingredients, aliases, coreIds, loading };
@@ -137,6 +137,15 @@ export function FinishStep({ draft, set, ingredients, loading, aliases = [], cor
             if (making.fresh && !kept && !makingLine.prep) set({ garnishes: lines.filter((l) => l.key !== making.key) });
             setMaking(null);
           }}
+          // Don't keep it, on Leave it for now?: a garnish added from the search goes again.
+          onDrop={
+            making.fresh
+              ? () => {
+                  set({ garnishes: lines.filter((l) => l.key !== making.key) });
+                  setMaking(null);
+                }
+              : undefined
+          }
           onUse={(id, name) => {
             change(making.key, { id, name, prep: undefined, technique: undefined, later: undefined });
             setMaking(null);
