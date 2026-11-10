@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore, type ComponentProps } from 'react';
 import { Alert, Platform } from 'react-native';
 
 import { useBreakpoint } from '@/components/ds';
@@ -29,6 +29,7 @@ import { useLineStock } from './StockToggle';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { RoundStrip } from '@/components/screens/firstRound/RoundElsewhere';
 import { useFirstRound } from '@/hooks/useFirstRound';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 export interface AddDrinkWizardProps {
   /** The venue it's added at; null or missing for a drink at home. */
@@ -52,7 +53,7 @@ const hydrated = (cb: () => void) => useDrinkWizardStore.persist.onFinishHydrati
 const isHydrated = () => useDrinkWizardStore.persist.hasHydrated();
 
 /** Adding a drink: the draft page in pencil (DraftPage), or DrinkDesk on a desktop browser. Kept on the device as it's written, saved once, with Save. */
-export function AddDrinkWizard(props: AddDrinkWizardProps) {
+function AddDrinkWizardBody(props: AddDrinkWizardProps) {
   // The kept draft loads from storage first, so nothing typed is lost to it.
   const ready = useSyncExternalStore(hydrated, isHydrated, () => true);
   return ready ? <Wizard {...props} /> : null;
@@ -174,4 +175,13 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   if (desk) return <DrinkDesk {...page} />;
   // The first round's strip, with its Skip, over the name.
   return <DraftPage {...page} lead={firstRound ? <RoundStrip scratch={!startFrom} onSkip={onClose} /> : null} />;
+}
+
+/** AddDrinkWizard, once the technique library is in (lib/techniques). */
+export function AddDrinkWizard(props: ComponentProps<typeof AddDrinkWizardBody>) {
+  return (
+    <TechniquesGate>
+      <AddDrinkWizardBody {...props} />
+    </TechniquesGate>
+  );
 }

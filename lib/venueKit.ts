@@ -2,7 +2,7 @@
 // 20261110100000_kit_and_ice.sql): the ice it pours (item_ice), the tools it
 // has (bar_kit). What its suppliers bring is in lib/suppliers.ts.
 
-import { equipmentById } from './techniques/equipment';
+import { equipmentById } from './techniques';
 
 /** The ice kinds the drawings know, less 'none'. */
 export const ICE_KINDS = ['cubes', 'large', 'spear', 'crushed', 'pebble', 'shaved', 'sphere'] as const;

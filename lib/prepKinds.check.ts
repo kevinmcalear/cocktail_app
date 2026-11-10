@@ -1,6 +1,8 @@
 // Checks for lib/prepKinds.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
+import './techniques/testing';
+
 import { recipesToFinish, stepToFinish, toFinishSummary, flavourWords, guessKind, keepLines, keepsText, KIND_TILES, KIND_WAYS, kindOfTechnique, MOST_MADE_KINDS, shownKinds, leadText, openSlots, partsText, PREP_KINDS, prepAmounts, prepFromCatalog, prepFromTechnique, prepPhrase, prepSummary, prepYield, recipeEyebrow, sameStart, slotMessage, sourceSite, startPrep, tileOf, wayOf, waysByKit, withFacts, withMethod } from './prepKinds';
 import { techniqueById } from './techniques';
 import { prepCardFor } from './techniques/makeIt';

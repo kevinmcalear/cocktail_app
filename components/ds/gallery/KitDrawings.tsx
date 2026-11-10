@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { radius, space } from '@/constants/tokens';
 import { kitArt } from '@/lib/sketch/kit';
-import { EQUIPMENT } from '@/lib/techniques/equipment';
+import { allEquipment, useTechniques } from '@/lib/techniques';
 
 import { EquipmentDrawing } from '../EquipmentDrawing';
 import { EquipmentThumb } from '../EquipmentThumb';
@@ -10,9 +10,11 @@ import { Caption } from '../Text';
 
 /** Every piece of bar kit, drawn at tile size (full detail) and as a 44 px thumb, with the drawing it maps to. */
 export function KitDrawings() {
+  // The kit list is in the technique library, a lazy chunk on the web (lib/techniques).
+  if (!useTechniques()) return null;
   return (
     <View style={styles.wrap}>
-      {EQUIPMENT.map((e) => {
+      {allEquipment().map((e) => {
         const art = kitArt(e.id);
         return (
           <View key={e.id} style={styles.tile}>

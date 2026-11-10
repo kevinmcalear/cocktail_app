@@ -1,6 +1,8 @@
 // Checks for lib/specPaste.ts and readHouse in lib/makeItHouse.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
+import './techniques/testing';
+
 import { readHouse } from './makeItHouse';
 import { readSpec } from './specPaste';
 

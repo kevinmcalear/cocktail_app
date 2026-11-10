@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 
+import './techniques/testing';
+
 import { houseIce, iceDrawKind, iceMm, kitCount, kitHasTool, kitLine, ICE_KINDS, isVenueIce, kitIceRow, iceLooksLine, iceName, kitSourceLine, toolLabel, toolName, venueIceKinds, venueIceNames } from './venueKit';
 import { supplierLine } from './suppliers';
 

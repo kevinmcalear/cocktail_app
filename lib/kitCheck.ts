@@ -9,7 +9,7 @@ import { iceKind, iceNameOf, type IceName } from './iceBuild';
 import { glassOf } from './kitFromDrinks';
 import { andList } from './makers';
 import type { SketchGlass } from './sketch/types';
-import { equipmentById } from './techniques/equipment';
+import { equipmentById } from './techniques';
 import { GLASS_TYPE_LABEL } from './glassware';
 import { houseIce, iceDrawKind, inTheGlass, venueIceKinds, type IceKind } from './venueKit';
 

@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 
+import './techniques/testing';
+
 import { glassOf, kitFromDrinks } from './kitFromDrinks';
 
 const drinks = [

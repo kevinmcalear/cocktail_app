@@ -5,7 +5,7 @@ import { heroPicture, type ItemImageLink } from '@/lib/itemImages';
 import { supabase } from '@/lib/supabase';
 import { actionFor } from '@/lib/techniques/makeIt';
 import { madeWith } from '@/lib/techniques/projects';
-import type { Technique } from '@/lib/techniques';
+import { loadTechniques, type Technique } from '@/lib/techniques';
 
 export interface TechniqueDrink {
   id: string;
@@ -39,6 +39,7 @@ export function useTechniqueDrinks(techniques: readonly Technique[], enabled = t
     enabled: enabled && made.length > 0,
     staleTime: 24 * 60 * 60 * 1000,
     queryFn: async (): Promise<Record<string, TechniqueDrink[]>> => {
+      await loadTechniques(); // madeWith reads the library (lib/techniques)
       const { data: cards, error } = await supabase.from('item_prep').select('item_id, actions').overlaps('actions', actions).limit(3000);
       if (error) throw error;
       const tags = new Map(((cards ?? []) as { item_id: string; actions: string[] }[]).map((c) => [c.item_id, c.actions]));

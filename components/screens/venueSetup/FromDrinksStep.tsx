@@ -12,7 +12,7 @@ import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useKitFromDrinks } from '@/hooks/useKitFromDrinks';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
 import type { FromDrinks } from '@/lib/kitFromDrinks';
-import { equipmentById } from '@/lib/techniques/equipment';
+import { equipmentById } from '@/lib/techniques';
 
 type Open =
   | { kind: 'glass'; row: FromDrinks['glasses'][number] }

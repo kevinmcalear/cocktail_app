@@ -11,7 +11,7 @@ import { cardFit, type ShelfSection } from '@/lib/myBarRows';
 import { PANTRY, PANTRY_WATER } from '@/lib/pantry';
 import { equipmentById } from '@/lib/techniques';
 
-import { KIT_SUGGESTIONS } from './BarSections';
+import { kitSuggestions } from './BarSections';
 
 const TILE = 56;
 const GAP = space.sm + 2;
@@ -148,7 +148,7 @@ export function useSectionCards({ on, bottles, pantry, fridge, lab, preps, owned
     const id = ids.get(p.name);
     return id && !onShelf.has(id) ? [{ key: id, name: p.label, picture: <IngredientThumb id={id} name={p.name} size={TILE} />, onPress: () => onAddIds(water && !onShelf.has(water) ? [id, water] : [id]) }] : [];
   });
-  const kitIdeas = KIT_SUGGESTIONS.filter((id) => !owned.includes(id)).flatMap((id) => {
+  const kitIdeas = kitSuggestions().filter((id) => !owned.includes(id)).flatMap((id) => {
     const e = equipmentById(id);
     return e ? [{ key: e.id, name: e.name, picture: <EquipmentThumb id={e.id} name={e.name} size={TILE} />, onPress: () => onToggleKit(e.id) }] : [];
   });

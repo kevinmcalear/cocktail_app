@@ -32,6 +32,7 @@ import { ReadingScreen } from './ReadingScreen';
 import { RecipeCheck } from './RecipeCheck';
 import { ResumeCard } from './ResumeCard';
 import { useStartBringIn } from './useStartBringIn';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 /** "From a photo", "From a PDF", "From pasted text", "From a link". */
 function fromWords(job: BringInJob): string {
@@ -50,7 +51,7 @@ const reviewName = (job: BringInJob) => job.source.name ?? job.source.files.find
  * given yet it's the ways in, as a page; things handed over by other screens
  * (onboarding, a menu's "finish in Bring in", a drop) start reading here.
  */
-export function BringInFlow() {
+function BringInFlowBody() {
   const ds = useDs();
   const router = useRouter();
   // Opened from the owner's first menu: its "Set up Little Rye · Tonight's menu" line, kept over the ways in.
@@ -255,3 +256,12 @@ const styles = StyleSheet.create({
   page: { width: '100%', maxWidth: 640, alignSelf: 'center', gap: space.lg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });
+
+/** BringInFlow, once the technique library is in (lib/techniques). */
+export function BringInFlow() {
+  return (
+    <TechniquesGate>
+      <BringInFlowBody />
+    </TechniquesGate>
+  );
+}
