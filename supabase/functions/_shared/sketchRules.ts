@@ -4,9 +4,11 @@
  * drizzle, bubbles and garnish. The rules only: the AI fill is in sketch.ts.
  *
  * Pure TypeScript importing only sketchKinds.ts (the kinds and name rules),
- * like flavor.ts, so three places run the
- * same rules: the flavor-worker (through sketch.ts), the app (the live sketch
- * while a drink is being added, lib/sketch/draft.ts), and the checks in node.
+ * like flavor.ts, so three places run the same rules: the flavor-worker
+ * (through sketch.ts), the app (the live sketch while a drink is being added,
+ * lib/sketch/draft.ts), and the checks in node. App code that needs only the
+ * kinds or the glass and ice names imports sketchKinds.ts, which every page
+ * loads; this file stays with the screens that draw a spec.
  *
  * Every field comes from the drink's own data first (its glassware, ice and
  * methods), then from rules over its spec, name and description, then from
