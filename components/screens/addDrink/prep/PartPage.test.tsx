@@ -22,7 +22,7 @@ const batch = () => ({ ...startPrep('batch', 'Penicillin batch'), lines: [{ key:
 describe('Made in parts', () => {
   test('Make X here leads the search, opens one flat page, and its own part goes one more level in, three at most', async () => {
     const onKeep = jest.fn();
-    await renderWithProviders(<PrepBuilder page name="Penicillin batch" initial={batch()} startAt="recipe" drinkName="" above={[]} ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={onKeep} onDone={jest.fn()} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="Penicillin batch" initial={batch()} startAt="recipe" ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={onKeep} onDone={jest.fn()} onClose={jest.fn()} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Honey-ginger syrup');
     const rows = screen.getAllByRole('button').map((b) => String(b.props.accessibilityLabel ?? '')).filter((l) => /Honey-ginger syrup/.test(l));
@@ -62,7 +62,7 @@ describe('Made in parts', () => {
 
   test('a part whose name says nothing about how it’s made starts empty; Add “X” leaves a line To make, and its card makes it one more level in', async () => {
     const onKeep = jest.fn();
-    await renderWithProviders(<PrepBuilder page name="Penicillin batch" initial={batch()} startAt="recipe" drinkName="" above={[]} ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={onKeep} onDone={jest.fn()} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="Penicillin batch" initial={batch()} startAt="recipe" ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={onKeep} onDone={jest.fn()} onClose={jest.fn()} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Rvwa batch');
     await fireEvent.press(screen.getByRole('button', { name: /^Make “Rvwa batch” here/ }));
@@ -93,7 +93,7 @@ describe('Made in parts', () => {
   test('a part named like one you have: Use yours first, and the line uses it', async () => {
     mockSame.mockReturnValue({ id: 'gj', name: 'Fresh ginger juice', here: true, drinks: 2, made: '2026-10-03T12:00:00Z' });
     const onKeep = jest.fn();
-    await renderWithProviders(<PrepBuilder page name="Penicillin batch" initial={batch()} startAt="recipe" drinkName="" above={[]} ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={onKeep} onDone={jest.fn()} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder name="Penicillin batch" initial={batch()} startAt="recipe" ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={onKeep} onDone={jest.fn()} onClose={jest.fn()} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Fresh ginger juice');
     await fireEvent.press(screen.getByRole('button', { name: /^Make “Fresh ginger juice” here/ }));
@@ -111,7 +111,7 @@ describe('Made in parts', () => {
   });
 
   test('on the web’s dialog the part opens under its line, and Close the part puts it back', async () => {
-    await renderWithProviders(<PrepBuilder page embedded name="Penicillin batch" initial={batch()} startAt="recipe" drinkName="" above={[]} ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={jest.fn()} onDone={jest.fn()} onClose={jest.fn()} />);
+    await renderWithProviders(<PrepBuilder embedded name="Penicillin batch" initial={batch()} startAt="recipe" ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={jest.fn()} onDone={jest.fn()} onClose={jest.fn()} />);
     await laidOut();
     await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Honey-ginger syrup');
     await fireEvent.press(screen.getByRole('button', { name: /^Make “Honey-ginger syrup” here/ }));

@@ -525,7 +525,11 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
                     : hadParts.current
                       ? { methodParts: methodIds.map(() => 1), parts: [] }
                       : undefined
-            );
+            ).catch(async (e: unknown) => {
+                // The house-mades written inside it saved first: they go again, and their lines are as they were (all or none).
+                setRecipeItems(await spec.undo());
+                throw e;
+            });
             // The words on its steps, by the steps it has now: a step gone takes its words with it.
             // A Float step gone because its lines moved into a part hands its words to that part's step.
             const steps = draftSteps(ordered, parted, null);

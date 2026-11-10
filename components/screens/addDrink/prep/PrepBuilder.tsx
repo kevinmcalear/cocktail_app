@@ -1,22 +1,19 @@
-import { useEffect, useRef, useState, type ComponentRef, type ReactNode, type RefObject } from 'react';
-import { Modal, StyleSheet, TextInput, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Field, IngredientDrawing } from '@/components/ds';
+import { Field } from '@/components/ds';
 import { ListNote } from '@/components/ds/ListGroup';
 import { space } from '@/constants/tokens';
-import { guessKind, RECIPE_STEPS, recipeEyebrow, withFacts, type PrepDraft, type PrepPick, type RecipeStep } from '@/lib/prepKinds';
+import { guessKind, RECIPE_STEPS, withFacts, type PrepDraft, type RecipeStep } from '@/lib/prepKinds';
 import { savesTogether } from '@/lib/houseMadeParts';
 import type { IngredientAlias } from '@/lib/ingredientNames';
 
 import { BeerWineBand } from '../../addBeerWine/BeerWineBand';
 import type { CatalogIngredient } from '../IngredientSearch';
-import { PaperBand } from '../PaperBand';
 import { Prompt } from '../Prompt';
 import { trailInto, type TrailItem } from '../Trail';
 import { WizardFooter } from '../WizardChrome';
 import { WizardFrame } from '../WizardFrame';
-import type { InDrinkPour } from './InDrink';
 import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
 import { PrepRecipeStep, RecipeView } from './PrepRecipeStep';
@@ -30,90 +27,59 @@ type Step = RecipeStep;
 const TITLES: Record<Step, string> = { kind: 'What are you making?', recipe: 'What goes in?', method: 'How it’s made' };
 
 export interface PrepBuilderProps {
-  /** The prep's name ("Pineapple chili shrub"); null when closed. */
+  /** The house-made's name ("Pineapple chili shrub") as it starts; null when closed. */
   name: string | null;
-  /** The drink it's for, for the way back. */
-  drinkName: string;
-  /** Editing one already in the drink: opens on its recipe. */
+  /** Picked up again: what was written. */
   initial?: PrepDraft | null;
-  /** Opens on What is it even with a recipe: two lines just combined, or a typed line to check. */
-  first?: boolean;
-  /** Two lines just combined ("Tempus Fugit", "Red miso"): a kind picked keeps them. */
-  combinedFrom?: string[];
-  /** What the drink pours of it (22.5 ml), for "In Salty Boy" and how many a bottle makes. */
-  inDrink?: InDrinkPour;
-  /** Make it house from a line: the bottle it changes, and the "with what" if known. */
-  picked?: { base?: PrepPick | null; adjunct?: PrepPick | null };
-  /** Make it house: the technique picked for the line, so it opens on its recipe. */
-  technique?: string | null;
+  /** Picked up again at the step it was left at. */
+  startAt?: RecipeStep;
   ingredients: readonly CatalogIngredient[];
   aliases?: readonly IngredientAlias[];
-  /** Its recipe, and its name as typed on What is it. */
+  /** The last step's button: its recipe, and its name as typed. */
   onDone: (draft: PrepDraft, name: string) => void;
-  /**
-   * Leave it for now (make-anything-steps-3, step 9): what's done so far, with
-   * the step it was left at, goes on the line as a recipe to finish. Without
-   * it (a finished recipe opened again) leaving keeps it as it was, and the
-   * first step's Skip goes on to the recipe.
-   */
-  onLater?: (draft: PrepDraft, name: string) => void;
-  /** A recipe to finish picks up at the step it was left at. */
-  startAt?: RecipeStep;
-  /** Back out: the drink keeps going without it. */
+  /** Gone, with what's written kept (Leave it for now). */
   onClose: () => void;
-  /** The venue the drink is for, whose Kit How? is checked against; null at home. */
+  /** The venue it's for, whose Kit How? is checked against; null at home. */
   bar?: { id: string; name: string } | null;
-  /** Where it's made, from the menu down to the drink (make-anything-overview, rule 3); its own name is added below them. */
+  /** Where it's made: a part's trail starts here, its own name added below. */
   above?: readonly TrailItem[];
-  /** Its own page (New › Something you make, board Add-house), not over a drink: no Modal, the main button alone in the footer. */
-  page?: boolean;
-  /** Its own page: each change, to keep the draft (Leave it for now keeps it). */
+  /** Each change, to keep the draft (Leave it for now keeps it). */
   onKeep?: (draft: PrepDraft, name: string, step: RecipeStep) => void;
-  /** Its own page: Don't keep it, or closed with nothing written. */
+  /** Don't keep it, or closed with nothing written. */
   onDrop?: () => void;
-  /** Its own page: the name is taken here (Add-house, Name taken): a card under the name, Open it or Rename this one, and Next waits. */
+  /** The name is taken here (Add-house, Name taken): a card under the name, Open it or Rename this one, and Next waits. */
   taken?: { title: string; body: string; onOpen: () => void; openLabel: string } | null;
-  /** Its own page: the name is still being checked; Next waits on the first step. */
+  /** The name is still being checked; Next waits on the first step. */
   checking?: boolean;
-  /** Its own page: the name as it's typed, for that check. */
+  /** The name as it's typed, for that check. */
   onName?: (name: string) => void;
-  /** Its own page: the last step's button ("Save it", "Save on this phone") and a note above it. */
+  /** The last step's button ("Save it", "Save on this phone") and a note above it. */
   saveLabel?: string;
   saving?: boolean;
   notice?: ReactNode;
-  /** Inside the web's dialog: no safe-area padding. */
+  /** Inside the web's dialog: no safe-area padding, and a part opens under its line. */
   embedded?: boolean;
   /** The web's dialog closes through it (Escape, its scrim), as the X does. */
   closeRef?: { current: (() => void) | null };
 }
 
 /**
- * A house prep, made in the middle of adding a drink: what it is and how,
- * what goes in, then the method, keeps and lead time, all filled in from
- * the kind (make-anything-steps-1 and 2, steps 4 to 6). The one recipe flow:
- * from the search, two lines combined, or a line's recipe opened again. It
- * lies over the drink wizard as one screen (never a sheet on a sheet) and
- * hands the prep back to the drink's line.
+ * Something you make, on its own page (New › Something you make, board
+ * Add-house): what it is and how, what goes in, then the method, keeps and
+ * lead time, filled in from the kind. A line made in-house too opens as a
+ * part, one flat page (Add-parts). A house-made written inside a drink is
+ * that flat page too (DrinkHouseMade, Add-inside), not these steps.
  */
 export function PrepBuilder(props: PrepBuilderProps) {
-  // Android's back goes to the Modal, not the steps: it goes back on the level showing, one level at a time.
-  const back = useRef(props.onClose);
-  if (props.page) return props.name === null ? null : <Builder {...props} name={props.name} backRef={back} />;
-  return (
-    <Modal visible={!!props.name} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => back.current()}>
-      {/* A native Modal is its own root: the method step's drag needs gestures inside it. */}
-      <GestureHandlerRootView style={styles.root}>{props.name ? <Builder {...props} name={props.name} backRef={back} /> : null}</GestureHandlerRootView>
-    </Modal>
-  );
+  return props.name === null ? null : <Builder {...props} name={props.name} />;
 }
 
-function Builder({ name: started, drinkName, initial, first, combinedFrom, inDrink, picked, technique, ingredients, aliases, onDone, onLater, onClose, bar = null, above, backRef, startAt, page, onKeep, onDrop, taken, checking, onName, saveLabel, saving = false, notice, embedded, closeRef }: PrepBuilderProps & { name: string; backRef: RefObject<() => void> }) {
-  const [step, setStep] = useState<Step>(startAt ?? (!first && (initial || technique) ? 'recipe' : 'kind'));
+function Builder({ name: started, initial, ingredients, aliases, onDone, onClose, bar = null, above, startAt, onKeep, onDrop, taken, checking, onName, saveLabel, saving = false, notice, embedded, closeRef }: PrepBuilderProps & { name: string }) {
+  const [step, setStep] = useState<Step>(startAt ?? (initial ? 'recipe' : 'kind'));
   const [direction, setDirection] = useState<1 | -1>(1);
   const [name, setName] = useState(started);
   const nameField = useRef<ComponentRef<typeof TextInput>>(null);
-  const combined = !!combinedFrom?.length;
-  const { draft, current, changed, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, picked, technique, combined, bar, measured: page }, () => {
+  const { draft, changed, setDraft, view, setView, fromCatalog, pickKind, pickTechnique, phrase, named, slotsOpen } = usePrepDraft({ name: started, nameNow: name, initial, bar, measured: true }, () => {
     if (step === 'kind') setStep('recipe');
   });
   const at = STEPS.indexOf(step);
@@ -122,43 +88,37 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
     setStep(to);
   };
   const shown = name.trim() || started;
-  const drink = drinkName || 'your drink';
-  // Leaving keeps what's done on the line, a recipe to finish; lines just combined go back to two, and a finished recipe stays as it was.
-  const keep = onLater && !combined ? () => onLater({ ...withFacts(current()), at: step }, shown) : null;
-  // A finished recipe opened again keeps a change made below it (a recipe inside it, picked up and left); otherwise it stays as it was.
-  // On its own page (Kevin, 8 Nov: "Later on close") what's written is already kept: closing asks first, and with nothing written just goes. Written: typed or picked here, or picked up from before. A name passed in and nothing else is not.
+  // What's written is already kept (Kevin, 8 Nov: "Later on close"): closing asks first, and with nothing written just goes.
+  // Written: typed or picked here, or picked up from before. A name passed in and nothing else is not.
   const [typed, setTyped] = useState(false);
   const filled = typed || changed() || !!initial;
-  const leave = page ? (filled ? onClose : (onDrop ?? onClose)) : (keep ?? (() => (changed() ? onDone(withFacts(current()), shown) : onClose())));
+  const leave = filled ? onClose : (onDrop ?? onClose);
   const [asking, setAsking] = useState(false);
   const ask = () => {
     // Escape on the web dialog comes here again: it answers Keep going.
     if (asking) return setAsking(false);
-    if (page ? filled : keep) setAsking(true);
+    if (filled) setAsking(true);
     else leave();
   };
   // A kind is picked: tapped, said by the name, or there from the start (Kevin, 8 Nov: the kit question waits for one).
-  const [tapped, setTapped] = useState(!!(initial || technique || combined || !page));
+  const [tapped, setTapped] = useState(!!initial);
   const [byName, setByName] = useState(!!guessKind(started));
   const chosen = tapped || byName;
-  // Its own page keeps each change as it's made, with the step it's on.
+  // Each change is kept as it's made, with the step it's on.
   useEffect(() => {
-    if (page && onKeep && (typed || changed())) onKeep(withFacts(draft), name.trim(), step);
+    if (onKeep && (typed || changed())) onKeep(withFacts(draft), name.trim(), step);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- kept when what it keeps changes
   }, [draft, name, step]);
   const back = () => (at > 0 ? go(STEPS[at - 1]) : ask());
   const next = () => (step === 'method' ? onDone(withFacts(draft), shown) : go(STEPS[at + 1]));
   // The kind step goes on with no lines yet (Something else starts with none); the later steps need one named.
-  const ready = (step === 'kind' || (named && !slotsOpen)) && !(page && (taken || (step === 'kind' && checking)));
-  const trail = trailInto(above ?? [{ label: drinkName || 'Your drink' }], leave, shown);
-  // A line of this recipe being made in-house too, one level down (make-anything-steps-2, step 8).
-  const inside = useInside(draft, setDraft, name.trim() || started);
-  // The level showing takes Android's back: this one, unless a level below it is open.
+  const ready = (step === 'kind' || (named && !slotsOpen)) && !(taken || (step === 'kind' && checking));
+  const trail = trailInto(above ?? [], leave, shown);
+  // A line of this recipe made in-house too, one level down (Add-parts).
+  const inside = useInside(draft, setDraft);
+  // The web dialog's Escape and scrim: the level showing asks.
   useEffect(() => {
-    if (inside.props) return;
-    backRef.current = back;
-    // The web dialog's Escape and scrim: the level showing asks.
-    if (closeRef) closeRef.current = ask;
+    if (!inside.props && closeRef) closeRef.current = ask;
   });
 
   // The name says a kind ("…syrup"): it's picked as it's typed, until one is tapped.
@@ -189,96 +149,71 @@ function Builder({ name: started, drinkName, initial, first, combinedFrom, inDri
   ) : null;
 
   const intro = 'Start from a step or write your own. A time you write becomes a timer when you make it.';
-  // Its own page (Add-parts): a part opens as one flat page, or under its line on the web's dialog; over a drink, the steps again one level down.
+  // A part opens as one flat page, or under its line on the web's dialog (Add-parts).
   const part = (inPlace: boolean) =>
     inside.props && inside.line ? <PartPage key={inside.line.key} name={inside.props.name} initial={inside.props.initial} parent={shown} top={shown} above={trail} level={2} bar={bar} ingredients={ingredients} aliases={aliases} inPlace={inPlace} onKeep={inside.keep} onDone={inside.props.onDone} onClose={inside.props.onClose} onUse={inside.use} /> : null;
-  if (inside.props && page && !embedded) return part(false);
-  if (inside.props && !page) return <Builder key={inside.line!.key} {...inside.props} ingredients={ingredients} aliases={aliases} bar={bar} above={trail} backRef={backRef} embedded={embedded} closeRef={closeRef} />;
-  const together = page && step !== 'kind' ? savesTogether(shown, draft) : null;
-  const from = combinedFrom?.length ? `From ${combinedFrom.slice(0, -1).join(', ')} and ${combinedFrom.at(-1)}` : null;
+  if (inside.props && !embedded) return part(false);
+  const together = step !== 'kind' ? savesTogether(shown, draft) : null;
   return (
     <View style={styles.root}>
-    <WizardFrame
-      testID="add-prep"
-      overNav
-      pageTitle={`House-made: ${shown || 'something you make'}`}
-      embedded={embedded}
-      band={(place) => page ? (
+      <WizardFrame
+        testID="add-prep"
+        overNav
+        pageTitle={`House-made: ${shown || 'something you make'}`}
+        embedded={embedded}
         // Board Add-house: the X and "Something you make", a back arrow after the first step (as Add-beer, Kevin 8 Nov).
-        <BeerWineBand place={place} title="Something you make" onClose={ask} onBack={at > 0 ? back : undefined} />
-      ) : (
-        <PaperBand
-          progress={{ now: at + 1, of: STEPS.length, label: `${at + 1} of ${STEPS.length}` }}
-          trail={trail}
-          first={at === 0}
-          backTo={page ? 'Your recipes' : drink}
-          onBack={back}
-          art={<IngredientDrawing name={shown} />}
-          artKey={shown}
-          artLabel={`Drawing of ${shown}`}
-          tag="House-made"
-          note={page ? 'Your recipes' : `For ${drinkName || 'your drink'}`}
-          {...place}
-        />
-      )}
-      stepKey={step}
-      direction={direction}
-      eyebrow={page ? `${step === 'kind' ? 'House-made' : shown} · ${at + 1} of ${STEPS.length}` : (step === 'kind' && from) || (step === 'recipe' && recipeEyebrow(draft)) || shown}
-      title={TITLES[step]}
-      intro={step === 'method' ? intro : step === 'recipe' ? fromCatalog : undefined}
-      aside={step === 'recipe' ? <RecipeView value={view} onChange={setView} /> : null}
-      onHardwareBack={() => {
-        if (asking) setAsking(false);
-        else back();
-        return true;
-      }}
-      footer={
-        <WizardFooter
-          nextLabel={step === 'kind' ? 'Next: what goes in' : step === 'recipe' ? 'Next: how it’s made' : page ? (saveLabel ?? 'Save it') : `Add it to ${drinkName || 'the drink'}`}
-          // Its own page: the main button alone (Kevin, 8 Nov: "Later on close").
-          optional={step === 'kind' && !page}
-          skipLabel={keep ? 'Later' : 'Skip'}
-          canNext={ready && !!name.trim()}
-          saving={saving}
-          notice={page && taken && step !== 'kind' ? takenCard : step === 'method' && notice ? notice : together ? <ListNote icon="info.circle" text={together} /> : undefined}
-          onSkip={keep ?? (() => go('recipe'))}
-          onNext={next}
-        />
-      }
-    >
-      {step === 'kind' ? (
-        <View style={styles.stack}>
-          <Field ref={nameField} label="Name" value={name} onChangeText={typeName} placeholder="e.g. Honey-ginger syrup, Fat-washed rye" maxLength={80} returnKeyType="done" />
-          {page && taken ? (
-            takenCard
-          ) : (
-            <PrepKindStep
-              name={shown}
-              draft={draft}
-              combined={combined}
-              chosen={chosen}
-              onKind={(k, w) => {
-                setTapped(true);
-                pickKind(k, w);
-              }}
-              onTechnique={(id) => {
-                setTapped(true);
-                pickTechnique(id);
-              }}
-              bar={bar}
-            />
-          )}
-        </View>
-      ) : step === 'recipe' ? (
-        <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} inDrink={inDrink} onMake={inside.open} parts={page} openKey={page && embedded ? inside.line?.key : null} below={page && embedded ? (l) => (l.key === inside.line?.key ? part(true) : null) : undefined} />
-      ) : (
-        <PrepMethodStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} />
-      )}
-    </WizardFrame>
-      {asking && keep ? (
-        // A new one opened by mistake can go; one picked up again can only be left or carried on with.
-        <LeaveCard where={shown} step={`${at + 1} of ${STEPS.length}`} drink={drinkName || 'The drink'} onLeave={keep} onStay={() => setAsking(false)} onDrop={initial ? undefined : onClose} />
-      ) : asking && page ? (
+        band={(place) => <BeerWineBand place={place} title="Something you make" onClose={ask} onBack={at > 0 ? back : undefined} />}
+        stepKey={step}
+        direction={direction}
+        eyebrow={`${step === 'kind' ? 'House-made' : shown} · ${at + 1} of ${STEPS.length}`}
+        title={TITLES[step]}
+        intro={step === 'method' ? intro : step === 'recipe' ? fromCatalog : undefined}
+        aside={step === 'recipe' ? <RecipeView value={view} onChange={setView} /> : null}
+        onHardwareBack={() => {
+          if (asking) setAsking(false);
+          else back();
+          return true;
+        }}
+        footer={
+          <WizardFooter
+            nextLabel={step === 'kind' ? 'Next: what goes in' : step === 'recipe' ? 'Next: how it’s made' : (saveLabel ?? 'Save it')}
+            // The main button alone (Kevin, 8 Nov: "Later on close").
+            canNext={ready && !!name.trim()}
+            saving={saving}
+            notice={taken && step !== 'kind' ? takenCard : step === 'method' && notice ? notice : together ? <ListNote icon="info.circle" text={together} /> : undefined}
+            onNext={next}
+          />
+        }
+      >
+        {step === 'kind' ? (
+          <View style={styles.stack}>
+            <Field ref={nameField} label="Name" value={name} onChangeText={typeName} placeholder="e.g. Honey-ginger syrup, Fat-washed rye" maxLength={80} returnKeyType="done" />
+            {taken ? (
+              takenCard
+            ) : (
+              <PrepKindStep
+                name={shown}
+                draft={draft}
+                chosen={chosen}
+                onKind={(k, w) => {
+                  setTapped(true);
+                  pickKind(k, w);
+                }}
+                onTechnique={(id) => {
+                  setTapped(true);
+                  pickTechnique(id);
+                }}
+                bar={bar}
+              />
+            )}
+          </View>
+        ) : step === 'recipe' ? (
+          <PrepRecipeStep draft={draft} view={view} set={(c) => setDraft({ ...draft, ...c })} ingredients={ingredients} aliases={aliases} onMake={inside.open} parts openKey={embedded ? inside.line?.key : null} below={embedded ? (l) => (l.key === inside.line?.key ? part(true) : null) : undefined} />
+        ) : (
+          <PrepMethodStep draft={draft} set={(c) => setDraft({ ...draft, ...c })} phrase={phrase} />
+        )}
+      </WizardFrame>
+      {asking ? (
         <LeaveCard
           where={shown || 'Something you make'}
           step={`${at + 1} of ${STEPS.length}`}

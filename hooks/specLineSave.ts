@@ -1,6 +1,7 @@
 import { savePrepCard, savePrepRecipe } from '@/hooks/usePrepCard';
 import { saveNewBottles } from '@/hooks/useDrinkDesk';
 import { linePrep } from '@/lib/batchLines';
+import { houseMadesPayload } from '@/lib/houseMadeParts';
 import { plainDbMessage } from '@/lib/dbError';
 import { COMMON_METHODS, likeExactly, type WizardLine, type WizardPick } from '@/lib/drinkWizard';
 import { kindColumns } from '@/lib/glassware';
@@ -12,6 +13,7 @@ import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { techniqueById } from '@/lib/techniques';
 import { prepCardFor } from '@/lib/techniques/makeIt';
 import { supabase } from '@/lib/supabase';
+import type { Json } from '@/types/db';
 
 export type ItemType = 'ingredient' | 'method' | 'glassware' | 'ice';
 
@@ -31,8 +33,11 @@ export async function liveIds(ids: readonly (string | null | undefined)[]): Prom
  * editors do it: a picked row as it is, a typed name found under any
  * spelling or added once, and anything made in-house a row of its own whose
  * recipe, technique card or bottle details are saved after the spec
- * (`saveOwnPreps`, `saveCards`, `saveBottles`). `live` is what `liveIds`
- * found of the picked rows.
+ * (`saveOwnPreps`, `saveCards`, `saveBottles`). A house-made written inside
+ * the drink (board Add-inside) is saved first, with its parts, in one call
+ * (`houseMades`); if the drink then can't be saved, `dropHouseMades` takes
+ * them out again, so it saves with the drink or not at all. `live` is what
+ * `liveIds` found of the picked rows.
  */
 export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
   const warnings: string[] = [];
@@ -119,8 +124,43 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
   // New bottles with what they are and how the venue buys them (the desktop page's card).
   const bottles: { itemId: string; name: string; bottle: NonNullable<WizardLine['bottle']>; isNew: boolean }[] = [];
 
+  // House-mades written inside the drink, by their line: saved before the drink, in one call.
+  const houseIds = new Map<WizardLine, string>();
+  const houseMadeIds: string[] = [];
+  /** Every house-made these lines wrote (a recipe of their own, not yet a row), with its parts: all of them or none. */
+  const houseMades = async (lines: readonly WizardLine[]) => {
+    const own = lines.filter((l) => l.prep && l.name.trim() && !(l.id && live.has(l.id)));
+    if (!own.length) return;
+    const { payload, at } = houseMadesPayload(own.map((l) => ({ name: l.name, prep: l.prep! })));
+    // A line picked before can be gone by now (merged into another): it goes by its name.
+    const alive = await liveIds(payload.flatMap((p) => p.lines.flatMap((x) => ('id' in x ? [x.id] : []))));
+    const sent = payload.map((p) => ({ ...p, lines: p.lines.map((x) => ('id' in x && !alive.has(x.id) ? { name: x.name ?? '', amount: x.amount, unit: x.unit, note: x.note } : x)) }));
+    // p_bar is null at home: the function takes it (generated types call every argument required).
+    const { data, error } = await supabase.rpc('save_house_mades', { p_bar: barId as string, p_preps: sent as unknown as Json });
+    if (error) throw error;
+    const ids = data as string[];
+    houseMadeIds.push(...ids);
+    newIngredients.push(...ids);
+    own.forEach((l, i) => {
+      houseIds.set(l, ids[at[i]]);
+      created.push({ id: ids[at[i]], name: capitalizeFirst(l.name.trim()) });
+      // Recipes left to finish, in it and inside it: what's done is saved, and the notice says what's left.
+      later.push(...recipesToFinish([l]).map((r) => capitalize(r.name)));
+    });
+  };
+  /** The drink couldn't be saved: the house-mades saved for it go too (best effort; a retry saves them again). */
+  const dropHouseMades = async () => {
+    if (!houseMadeIds.length) return;
+    // ponytail: a dropped connection here leaves them saved, and the retry is refused by name; the page's name-taken card then offers Use yours. A function saving the drink and its house-mades together would close it (gated: a new migration).
+    const ids = houseMadeIds.splice(0);
+    houseIds.clear();
+    await supabase.from('items').delete().in('id', ids);
+  };
+
   /** The row a line saves as. */
   const line = async (l: WizardLine): Promise<string> => {
+    const house = houseIds.get(l);
+    if (house) return house;
     const madeBefore = newIngredients.length;
     // Its recipe, or a batch read from a file as a house prep of the kind Batch: the bottle's recipe.
     const prep = linePrep(l);
@@ -177,7 +217,7 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
     if (barId) warnings.push(...(await saveNewBottles(barId, bottles)));
   };
 
-  return { ensure, line, saveOwnPreps, saveCards, saveBottles, warnings, created, later, newIngredients, newSpecs: () => newSpecs };
+  return { ensure, line, houseMades, dropHouseMades, madeHere: (l: WizardLine) => houseIds.has(l), saveOwnPreps, saveCards, saveBottles, warnings, created, later, newIngredients, newSpecs: () => newSpecs };
 }
 
 /** A line that saves as it is: a picked row and nothing made with it. */
@@ -193,6 +233,7 @@ export const plainLine = (l: WizardLine) => !!l.id && !l.prep && !l.later && !l.
 export async function resolveEditItems(items: readonly SortableRecipeItem[], barId: string | null) {
   const lines = items.map(toLine);
   const saver = specLineSaver(barId, await liveIds(lines.filter((l) => !plainLine(l)).map((l) => l.id)));
+  await saver.houseMades(lines);
   const out: SortableRecipeItem[] = [];
   for (const [i, l] of lines.entries()) {
     if (plainLine(l)) out.push(items[i]);
@@ -204,7 +245,17 @@ export async function resolveEditItems(items: readonly SortableRecipeItem[], bar
   await saver.saveOwnPreps();
   await saver.saveCards();
   await saver.saveBottles();
-  return { items: out, warnings: saver.warnings, created: saver.newIngredients };
+  const houseMade = new Set(lines.flatMap((l, i) => (saver.madeHere(l) ? [i] : [])));
+  return {
+    items: out,
+    warnings: saver.warnings,
+    created: saver.newIngredients,
+    /** The spec couldn't be saved: the house-mades written inside it go, and their lines are as they were, recipes and all (board Add-inside: all or none). */
+    undo: async (): Promise<SortableRecipeItem[]> => {
+      await saver.dropHouseMades();
+      return out.map((item, i) => (houseMade.has(i) ? items[i] : item));
+    },
+  };
 }
 
 /** A new row's name: an ingredient's first letter up, a method the wizard offers as the wizard spells it ("Whip (whisk or frother)"), anything else in title case. */

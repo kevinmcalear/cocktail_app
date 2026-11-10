@@ -65,8 +65,8 @@ interface IngredientsStepProps extends StepProps {
   placeholder?: string;
   /** The desktop page: "Add “X”, a bottle you buy" adds the line with its card open under it (this line's key). */
   onNewBottle?: (key: string) => void;
-  /** The desktop page: a house prep is written under its own line, not over the page. */
-  inlinePrep?: { venueName: string | null; onOpen?: (making: string | null) => void; page?: boolean };
+  /** A new drink, kept as a draft (the draft page, the desktop page): a house-made left for now is listed with it under Drafts. */
+  inlinePrep?: { venueName: string | null; onOpen?: (making: string | null) => void };
   /** The venue the drink is for, whose Kit a recipe's ways are checked against; null at home. */
   bar?: { id: string; name: string } | null;
   /** Where the drink is, from the menu down to it, for a recipe's trail. */
@@ -112,10 +112,10 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   };
   // What the drink's name says about one of its bottles ("Coconut Fat-Washed Daiquiri").
   const nameNudge = forDrink && !nudgeOff ? houseNudge(draft.name, draft.lines.map((l) => ({ ...l, styleName: generic(l.id) }))) : null;
-  // A bottle made in house by a technique; `ask` opens on What is it, to check how first.
-  const makeHouse = (line: WizardLine, t: Technique, adjunct: string | null, ask?: boolean) => {
+  // A bottle made in house by a technique: its page opens with What it is as a row to check.
+  const makeHouse = (line: WizardLine, t: Technique, adjunct: string | null) => {
     typed.drop(line.key);
-    prep.house(line, nameFor(t, { base: line.name, adjunct }), t.id, ask);
+    prep.house(line, nameFor(t, { base: line.name, adjunct }), t.id);
   };
 
   // A pour typed with the name ("30 pommeau") is the line's, else it starts at a likely one; "1 oz lemon" makes oz yours, as a unit picked on a line does.
@@ -145,7 +145,7 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
     setRemoved({ line, at: draft.lines.indexOf(line) });
     set({ lines: draft.lines.filter((x) => x.key !== line.key) });
   };
-  const prep = useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change, bar, trail });
+  const prep = useMakePrep({ draft, set, ingredients, aliases, inlinePrep, add, change, bar, trail, forDrink });
   // Lines typed or pasted as made house ask first, then the drink's name does.
   const typed = useTypedHouse({ draft, set, lineFor, add: (pick, pour) => add(pick, undefined, false, pour), makeHouse });
   const nudge = typed.next ?? nameNudge;
@@ -240,21 +240,20 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
                         <>
                           {lineBelow?.(l)}
                           {forDrink ? <SalineHint line={l} ingredients={ingredients} onChange={(c) => change(l.key, c)} away={draft.putAway} onAway={putAway} /> : null}
-                          {/* A line that matched nothing asks what it is, until its recipe opens under it (step 10). */}
-                          {prep.card(l.key) ??
-                            (forDrink && unmatched(l) ? (
-                              <LineChoices
-                                line={l}
-                                venueName={bar?.name ?? null}
-                                onMake={(name) => make(name, l.key)}
-                                onBottle={() => {
-                                  change(l.key, { bottle: bottleFor(l.name) });
-                                  onNewBottle?.(l.key);
-                                }}
-                                // As the search's "Just add the name": one that sounds made here is a recipe to write later.
-                                onName={() => change(l.key, houseWord(l.name) || looksMadeInHouse(l.name) ? { later: true } : { named: true })}
-                              />
-                            ) : null)}
+                          {/* A line that matched nothing asks what it is, until it is one (step 10). */}
+                          {forDrink && unmatched(l) ? (
+                            <LineChoices
+                              line={l}
+                              venueName={bar?.name ?? null}
+                              onMake={(name) => make(name, l.key)}
+                              onBottle={() => {
+                                change(l.key, { bottle: bottleFor(l.name) });
+                                onNewBottle?.(l.key);
+                              }}
+                              // As the search's "Just add the name": one that sounds made here is a recipe to write later.
+                              onName={() => change(l.key, houseWord(l.name) || looksMadeInHouse(l.name) ? { later: true } : { named: true })}
+                            />
+                          ) : null}
                         </>
                       }
                       stock={stock?.toggle(l)}

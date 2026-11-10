@@ -413,7 +413,11 @@ export function useCocktailDraftEditor({
                 .select()
                 .single();
 
-            if (cocktailError || !cocktail) throw cocktailError;
+            if (cocktailError || !cocktail) {
+                // The house-mades written inside it saved first: they go again (all or none).
+                setRecipeItems(await spec.undo());
+                throw cocktailError;
+            }
             const cocktailId = cocktail.id;
 
             // Every write throws, and a half-made drink is removed again, so a
@@ -446,6 +450,7 @@ export function useCocktailDraftEditor({
                 if (notes.trim()) await saveItemNotes(cocktailId, notes);
             } catch (e) {
                 await supabase.from("items").delete().eq("id", cocktailId);
+                setRecipeItems(await spec.undo());
                 throw e;
             }
             if (spec.warnings.length) showMessage("Saved", spec.warnings.join("\n\n"));

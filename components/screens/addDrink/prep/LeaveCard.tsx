@@ -13,7 +13,7 @@ import { radius, space } from '@/constants/tokens';
  * focus to the card's first button, Tab stays in the card and Enter never
  * reaches the step behind it; Escape is Keep going.
  */
-export function LeaveCard({ where, step, drink, body, onLeave, onStay, onDrop }: { where: string; step: string; drink: string; /** Where it's kept, said for something that isn't inside a drink (a beer, a wine). */ body?: string; onLeave: () => void; onStay: () => void; onDrop?: () => void }) {
+export function LeaveCard({ where, step, drink, body, onLeave, onStay, onDrop }: { /** Where it was left, over the title ('Penicillin batch · 2 of 3'); none on a flat page (Add-inside). */ where?: string; step?: string; drink: string; /** Where it's kept, said for something that isn't inside a drink (a beer, a wine). */ body?: string; onLeave: () => void; onStay: () => void; onDrop?: () => void }) {
   const ds = useDs();
   const card = (
     <Appear kind="fade" duration={200} style={[styles.overlay, { backgroundColor: ds.c.scrim }]}>
@@ -24,7 +24,7 @@ export function LeaveCard({ where, step, drink, body, onLeave, onStay, onDrop }:
         <Pressable accessibilityLabel="Keep going" style={StyleSheet.absoluteFill} onPress={onStay} />
       )}
       <View role="alertdialog" aria-modal aria-label="Leave it for now?" style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.lineStrong }]}>
-        <Caption tone="muted">{`${where} · ${step}`.toUpperCase()}</Caption>
+        {where && step ? <Caption tone="muted">{`${where} · ${step}`.toUpperCase()}</Caption> : null}
         <Headline role="heading">Leave it for now?</Headline>
         <Body tone="muted">{body ?? `What you’ve done is kept. ${drink} shows it as Recipe to finish, and New lists ${drink} under Drafts, with the way back.`}</Body>
         <View style={styles.buttons}>

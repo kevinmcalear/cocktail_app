@@ -90,12 +90,12 @@ interface FooterProps {
   /** "Next: method", or the save on the last step. */
   nextLabel: string;
   /** An optional step offers Skip beside Next. */
-  optional: boolean;
+  optional?: boolean;
   /** What Skip says ("Later": leave the recipe for later). */
   skipLabel?: string;
   canNext: boolean;
   saving: boolean;
-  onSkip: () => void;
+  onSkip?: () => void;
   onNext: () => void;
   /** Just above the buttons: a short note with Undo ("Del Maguey Vida is on Little Rye's back bar"). */
   notice?: ReactNode;

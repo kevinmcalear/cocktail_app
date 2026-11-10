@@ -40,8 +40,8 @@ export function savesTogether(name: string, prep: PrepDraft): string | null {
   return `Saves ${names.length} house-mades together: ${namesList(names)}. If one can’t save, none do.`;
 }
 
-/** One line as save_house_mades takes it: a part (its index), an ingredient, or a name to find or add. */
-export type PayloadLine = ({ part: number } | { id: string } | { name: string; bottle?: boolean }) & { amount: number | null; unit: string | null; note: string | null };
+/** One line as save_house_mades takes it: a part (its index), an ingredient (its name too, in case it's gone since), or a name to find or add. */
+export type PayloadLine = ({ part: number } | { id: string; name?: string } | { name: string; bottle?: boolean }) & { amount: number | null; unit: string | null; note: string | null };
 
 export interface PayloadPrep {
   name: string;
@@ -79,10 +79,27 @@ export function houseMadePayload(name: string, prep: PrepDraft): PayloadPrep[] {
       const how = { amount, unit: line.unit || null, note: line.note?.trim() || null };
       if (line.key === p.baseKey) entry.base = entry.lines.length;
       // A part is added after the line that points at it is written, so its index is the next one.
-      entry.lines.push(line.prep ? { part: add(line.name, line.prep), ...how } : line.id ? { id: line.id, ...how } : { name: capitalizeFirst(line.name.trim()), ...(line.bottle ? { bottle: true } : null), ...how });
+      entry.lines.push(line.prep ? { part: add(line.name, line.prep), ...how } : line.id ? { id: line.id, name: line.name.trim(), ...how } : { name: capitalizeFirst(line.name.trim()), ...(line.bottle ? { bottle: true } : null), ...how });
     }
     return at;
   };
   add(name, prep);
   return out;
+}
+
+/**
+ * Several house-mades, each with its parts, as one save_house_mades call
+ * (board Add-inside: the drink's house-mades save with it, all or none):
+ * their payloads one after another, each part's index moved along with it.
+ * `at` is where each one starts, its id's place in what the call returns.
+ */
+export function houseMadesPayload(made: readonly { name: string; prep: PrepDraft }[]): { payload: PayloadPrep[]; at: number[] } {
+  const payload: PayloadPrep[] = [];
+  const at: number[] = [];
+  for (const m of made) {
+    const from = payload.length;
+    at.push(from);
+    payload.push(...houseMadePayload(m.name, m.prep).map((p) => ({ ...p, lines: p.lines.map((l) => ('part' in l ? { ...l, part: l.part + from } : l)) })));
+  }
+  return { payload, at };
 }

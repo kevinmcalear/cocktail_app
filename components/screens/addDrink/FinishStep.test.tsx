@@ -1,4 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react-native';
+import { useState } from 'react';
 
 import { renderWithProviders } from '@/jest.setup';
 import { EMPTY_DRAFT, type WizardDraft } from '@/lib/drinkWizard';
@@ -11,9 +12,11 @@ jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [], u
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrepCard'), useCatalogRecipe: () => ({ data: null }) }));
+jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: true }) }));
+jest.mock('@/hooks/useSameNamePrep', () => ({ ...jest.requireActual('@/hooks/useSameNamePrep'), useSameNamePrep: () => ({ data: null, checking: false }) }));
 
 // The prep builder draws after its first layout, as the wizard does on iOS.
-const laidOut = () => fireEvent(screen.getByTestId('add-prep'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
+const partLaidOut = () => fireEvent(screen.getAllByTestId('part-page').at(-1)!, 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
 
 const SHELF = [
   { id: 'agrumato', name: 'Agrumato Mint Oil' },
@@ -22,6 +25,20 @@ const SHELF = [
 ];
 const daiquiri: WizardDraft = { ...EMPTY_DRAFT, name: 'Coconut Fat-Washed Daiquiri' };
 const finish = (set: jest.Mock) => set.mock.calls.at(-1)[0].garnishes;
+// The draft as the wizard keeps it: the house-made's page opens once its line is there.
+function Stateful({ set }: { set: jest.Mock }) {
+  const [draft, setDraft] = useState(daiquiri);
+  return (
+    <FinishStep
+      draft={draft}
+      set={(c) => {
+        set(c);
+        setDraft((d) => ({ ...d, ...c }));
+      }}
+      ingredients={SHELF}
+    />
+  );
+}
 
 describe('FinishStep', () => {
   test('drops of oil: the chip asks which, and the line starts at 3 drops', async () => {
@@ -33,25 +50,27 @@ describe('FinishStep', () => {
     expect(finish(set).map((l: { id: string; amount: string; unit: string }) => [l.id, l.amount, l.unit])).toEqual([['agrumato', '3', 'drop']]);
   });
 
-  test('mint oil made in house from the finish: the herb oil, kept 4 days cold, on as 3 drops', async () => {
+  test('mint oil made in house from the finish: its line first, then its page inside the drink, on as 3 drops', async () => {
     const set = jest.fn();
-    await renderWithProviders(<FinishStep draft={daiquiri} set={set} ingredients={SHELF} />);
+    await renderWithProviders(<Stateful set={set} />);
     await fireEvent.changeText(screen.getByLabelText('Search for a garnish'), 'mint oil');
     // Made first, before the bottle that only shares the words.
     const rows = screen.getAllByRole('button').map((b) => b.props.accessibilityLabel ?? b.props['aria-label']);
     expect(rows.indexOf('Make “Mint oil” in-house')).toBeLessThan(rows.indexOf('Agrumato Mint Oil'));
 
     await fireEvent.press(screen.getByRole('button', { name: 'Make “Mint oil” in-house' }));
-    await laidOut();
-    expect(screen.getByRole('radio', { name: /^Herb, chile and garlic oils/, checked: true })).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: how it’s made' }));
-    expect(screen.getByText('About 4 days')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Add it to Coconut Fat-Washed Daiquiri' }));
-
+    // The line is there before anything is written (board Add-inside: the drink keeps it, a recipe to finish).
+    expect(finish(set)).toEqual([expect.objectContaining({ id: null, name: 'Mint oil', unit: 'drop', amount: '3', later: true })]);
+    await partLaidOut();
+    expect(screen.getByText('HOUSE-MADE · DRAFT, INSIDE THE DRINK')).toBeTruthy();
+    expect(screen.getByText('Saves with the drink. It shows on House-made too.')).toBeTruthy();
+    // Done: on its line, finished, at 3 drops.
+    await fireEvent.press(screen.getByRole('button', { name: 'Done: Mint oil goes in Coconut Fat-Washed Daiquiri' }));
+    expect(screen.queryByTestId('part-page')).toBeNull();
     const [line] = finish(set);
     expect(line).toMatchObject({ id: null, name: 'Mint oil', unit: 'drop', amount: '3', technique: 'infused-oil' });
-    expect(line.prep.technique).toBe('infused-oil');
+    expect(line.later).toBeUndefined();
+    expect(line.prep.at).toBeUndefined();
     expect(line.prep.keepsHours).toBe(96);
   });
 
@@ -66,7 +85,7 @@ describe('FinishStep', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Add “Apricot leaves”' }));
     expect(finish(set)).toEqual([expect.objectContaining({ id: null, name: 'Apricot leaves', unit: 'each', amount: '1' })]);
     expect(finish(set)[0].prep).toBeUndefined();
-    expect(screen.queryByTestId('add-prep')).toBeNull();
+    expect(screen.queryByTestId('part-page')).toBeNull();
   });
 
   test('Garnish leads with the basics, then what the drink points to, over Drops, mist, rinse', async () => {

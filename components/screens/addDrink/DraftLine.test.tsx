@@ -3,6 +3,7 @@ import { Text } from 'react-native';
 
 import { renderWithProviders } from '@/jest.setup';
 import { newLine } from '@/lib/drinkWizard';
+import { startPrep } from '@/lib/prepKinds';
 
 import { DraftLine } from './DraftLine';
 
@@ -22,14 +23,19 @@ test('no amount is an amber "?" with Add amount', async () => {
   expect(screen.getByText('Add amount')).toBeTruthy();
 });
 
-test('a house-made still to write says New and offers to write it here', async () => {
+test('a house-made still to write says New and offers to make it here, with no Later (Kevin, 8 Nov)', async () => {
   const write = jest.fn();
-  await renderWithProviders(<DraftLine line={line('Pine syrup', '', { id: null, later: true })} row={<Text>editor</Text>} write={write} />);
+  await renderWithProviders(<DraftLine line={line('Pine syrup', '20', { id: null, later: true })} row={<Text>editor</Text>} write={write} />);
   expect(screen.getByText('Pine syrup isn’t one of yours yet.')).toBeTruthy();
-  await fireEvent.press(screen.getByRole('button', { name: 'Write it now' }));
+  expect(screen.getByText('New')).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Later' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Make Pine syrup here' }));
   expect(write).toHaveBeenCalled();
-  await fireEvent.press(screen.getByRole('button', { name: 'Later' }));
-  expect(screen.queryByText('Pine syrup isn’t one of yours yet.')).toBeNull();
+});
+
+test('one left part-way says Recipe to finish', async () => {
+  await renderWithProviders(<DraftLine line={line('Pine syrup', '20', { id: null, prep: { ...startPrep('syrup', 'Pine syrup'), at: 'recipe' } })} row={<Text>editor</Text>} write={jest.fn()} />);
+  expect(screen.getByText('Recipe to finish')).toBeTruthy();
 });
 
 test('closed, a held line shows its grip, its fold and what letting go does', async () => {

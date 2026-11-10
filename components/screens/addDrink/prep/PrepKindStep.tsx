@@ -23,6 +23,8 @@ interface PrepKindStepProps {
   bar?: { id: string; name: string } | null;
   /** A kind is picked (tapped, or the name says one): until then nothing is selected and the ways wait. */
   chosen?: boolean;
+  /** One half (board Add-inside, a row's sheet): What it is's kinds, or Method's ways, your kit first. */
+  only?: 'kind' | 'ways';
 }
 
 /**
@@ -36,7 +38,7 @@ interface PrepKindStepProps {
  * grades and no amounts here (Kevin, 9 Nov: "Build as drawn"): what goes in
  * is the next step.
  */
-export function PrepKindStep({ name, draft, combined, onKind, onTechnique, bar = null, chosen = true }: PrepKindStepProps) {
+export function PrepKindStep({ name, draft, combined, onKind, onTechnique, bar = null, chosen = true, only }: PrepKindStepProps) {
   const { kit, where, add } = useMakingKit(bar);
   const guess = guessKind(name);
   const named = guess ? tileOf(guess) : null;
@@ -65,37 +67,43 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, bar =
   const shown = PREP_KINDS.find((k) => k.id === draft.kind) ?? kindName(picked);
   const hint = !chosen ? 'Pick what it is, or name it and we’ll suggest one.' : combined ? null : `${shown.name}: ${shown.ratio.charAt(0).toLowerCase()}${shown.ratio.slice(1)}.${picked === named ? ' Picked from the name; tap another to change it.' : ''}`;
 
+  const kinds = only !== 'ways';
+  const ways = only !== 'kind';
   return (
     <View style={styles.stack}>
-      <View style={styles.label}>
-        <Eyebrow>What it is</Eyebrow>
-        {chosen && named && picked === named ? <Caption tone="accent">From the name</Caption> : null}
-      </View>
-      {/* Five kinds and More (Kevin, 8 Nov: "Five + More"); the one picked and the one the name says always show. */}
-      <View role="radiogroup" accessibilityLabel="What it is" style={styles.chips}>
-        {shownKinds(chosen ? picked : null, named, more).map((id) => {
-          const k = kindName(id);
-          return (
-            <WizardChip
-              key={id}
-              label={k.name}
-              selected={chosen && id === picked}
-              // A name that says another kind marks it, so "Naming it changes the suggestion; you pick" holds.
-              suggested={id === named && !(chosen && id === picked)}
-              onPress={() => {
-                setEvery(false);
-                onKind(id);
-              }}
-            />
-          );
-        })}
-        {more ? null : <WizardChip label="More" kind="button" dashed onPress={() => setMore(true)} />}
-      </View>
-      {hint ? <Caption tone="muted">{hint}</Caption> : null}
+      {kinds ? (
+        <>
+          <View style={styles.label}>
+            <Eyebrow>What it is</Eyebrow>
+            {chosen && named && picked === named ? <Caption tone="accent">From the name</Caption> : null}
+          </View>
+          {/* Five kinds and More (Kevin, 8 Nov: "Five + More"); the one picked and the one the name says always show. */}
+          <View role="radiogroup" accessibilityLabel="What it is" style={styles.chips}>
+            {shownKinds(chosen ? picked : null, named, more).map((id) => {
+              const k = kindName(id);
+              return (
+                <WizardChip
+                  key={id}
+                  label={k.name}
+                  selected={chosen && id === picked}
+                  // A name that says another kind marks it, so "Naming it changes the suggestion; you pick" holds.
+                  suggested={id === named && !(chosen && id === picked)}
+                  onPress={() => {
+                    setEvery(false);
+                    onKind(id);
+                  }}
+                />
+              );
+            })}
+            {more ? null : <WizardChip label="More" kind="button" dashed onPress={() => setMore(true)} />}
+          </View>
+          {hint ? <Caption tone="muted">{hint}</Caption> : null}
+        </>
+      ) : null}
       {/* The kit question waits for a kind (Kevin, 8 Nov). */}
-      {chosen ? null : <ListNote icon="flask" text="Ways to make it show once you pick what it is, your kit first." />}
+      {chosen || !ways ? null : <ListNote icon="flask" text="Ways to make it show once you pick what it is, your kit first." />}
 
-      {chosen && kindWays && picked !== 'other' ? (
+      {ways && chosen && kindWays && picked !== 'other' ? (
         <View style={styles.stack}>
           <Eyebrow>{byKit ? 'How? Your kit first' : 'How?'}</Eyebrow>
           <View role="radiogroup" accessibilityLabel="Way to make it" style={styles.stack}>
@@ -123,13 +131,13 @@ export function PrepKindStep({ name, draft, combined, onKind, onTechnique, bar =
           ) : null}
         </View>
       ) : null}
-      {chosen && all ? (
+      {ways && chosen && all ? (
         <View style={styles.stack}>
           <Caption tone="muted">{picked === 'other' ? 'Something else: every technique' : 'Every technique'}</Caption>
           <EveryTechnique name={name} selected={draft.technique ?? null} kit={kit} onPick={onTechnique} onAdd={add} onWrite={() => onKind('other')} />
         </View>
       ) : null}
-      {combined ? <Caption tone="muted">Dropping two lines together starts as Batch. Naming it changes the suggestion; you pick.</Caption> : null}
+      {combined && kinds ? <Caption tone="muted">Dropping two lines together starts as Batch. Naming it changes the suggestion; you pick.</Caption> : null}
     </View>
   );
 }

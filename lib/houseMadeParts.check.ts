@@ -1,7 +1,7 @@
 // Checks for lib/houseMadeParts.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
-import { hasPart, houseMadePayload, partsOf, savesTogether } from './houseMadeParts';
+import { hasPart, houseMadePayload, houseMadesPayload, partsOf, savesTogether } from './houseMadeParts';
 import { startPrep, type PrepDraft, type PrepDraftLine } from './prepKinds';
 
 const line = (key: string, name: string, amount: string, unit: string, more: Partial<PrepDraftLine> = {}): PrepDraftLine => ({ key, id: null, name, parts: null, unit, amount, ...more });
@@ -29,7 +29,7 @@ assert.deepEqual(payload.map((p) => p.name), ['Penicillin batch', 'Honey-ginger 
 assert.deepEqual(payload[0].lines, [
   { name: 'Blended scotch', bottle: true, amount: 500, unit: 'ml', note: null },
   { part: 1, amount: 200, unit: 'ml', note: null },
-  { id: 'laphroaig', amount: 25, unit: 'ml', note: null },
+  { id: 'laphroaig', name: 'Laphroaig 10', amount: 25, unit: 'ml', note: null },
 ]);
 assert.equal(payload[0].base, 0, 'the base line is the first saved');
 assert.deepEqual(payload[1].lines.at(-1), { part: 2, amount: 100, unit: 'ml', note: null });
@@ -40,5 +40,13 @@ assert.deepEqual(payload[1].allergens, []);
 assert.equal(payload[0].allergens, null);
 // Every part points at an entry that is there, after its own.
 payload.forEach((p, i) => p.lines.forEach((l) => 'part' in l && assert.ok(l.part > i && l.part < payload.length)));
+
+// A drink's house-mades in one call (board Add-inside): each starts where `at` says, its parts' indexes moved along with it.
+const many = houseMadesPayload([{ name: 'Pine syrup', prep: juice }, { name: 'penicillin batch', prep: batch }]);
+assert.deepEqual(many.at, [0, 1]);
+assert.deepEqual(many.payload.map((p) => p.name), ['Pine syrup', 'Penicillin batch', 'Honey-ginger syrup', 'Fresh ginger juice']);
+assert.equal((many.payload[1].lines[1] as { part: number }).part, 2);
+assert.equal((many.payload[2].lines.at(-1) as { part: number }).part, 3);
+many.payload.forEach((p, i) => p.lines.forEach((l) => 'part' in l && assert.ok(l.part > i && l.part < many.payload.length)));
 
 console.log('houseMadeParts checks passed');

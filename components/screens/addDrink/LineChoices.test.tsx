@@ -16,6 +16,8 @@ jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: []
 jest.mock('@/hooks/useKit', () => ({ useKit: () => ({ owned: [], kit: new Set(), toggle: jest.fn() }) }));
 jest.mock('@/hooks/useBarKit', () => ({ useMakingKit: () => ({ kit: new Set(), where: 'My Bar', add: jest.fn() }) }));
 jest.mock('@/hooks/usePrepCard', () => ({ ...jest.requireActual('@/hooks/usePrepCard'), useCatalogRecipe: () => ({ data: null }) }));
+jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: true }) }));
+jest.mock('@/hooks/useSameNamePrep', () => ({ ...jest.requireActual('@/hooks/useSameNamePrep'), useSameNamePrep: () => ({ data: null, checking: false }) }));
 
 const MEZCAL = { id: 'mezcal', name: 'Mezcal' };
 const draftWith = (...names: (string | { id: string; name: string })[]) => ({
@@ -37,13 +39,13 @@ describe('A line that matched nothing (owner-setup-path, step 10)', () => {
     expect(screen.queryByLabelText('What Mezcal is')).toBeNull();
 
     await fireEvent.press(within(group).getByRole('button', { name: 'Make Miso banana liqueur in-house' }));
-    await fireEvent(screen.getByTestId('add-prep'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
-    expect(screen.getByLabelText('Name').props.value).toBe('Miso banana liqueur');
-    // Its flavours from the name, a line each (PR #837), one level down from Salty Boy.
-    await fireEvent.press(screen.getByRole('button', { name: 'Next: what goes in' }));
+    await fireEvent(screen.getByTestId('part-page'), 'layout', { persist: () => {}, nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 800 } } });
+    // One flat page inside Salty Boy (board Add-inside), by its name without "house".
+    expect(screen.getByText('HOUSE-MADE · DRAFT, INSIDE THE DRINK')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Done: Miso banana liqueur goes in Salty Boy' })).toBeTruthy();
+    // Its flavours from the name, a line each (PR #837).
     expect(screen.getByLabelText('Add a note to Miso')).toBeTruthy();
     expect(screen.getByLabelText('Add a note to Banana')).toBeTruthy();
-    expect(screen.getByText('For Salty Boy')).toBeTruthy();
   });
 
   test('says nothing about house: A bottle we buy first, and it marks the line a bottle', async () => {

@@ -146,7 +146,7 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
                       {...venue.lines}
                       bar={barId ? { id: barId, name: p.venueName } : null}
                       classicShown={!!p.classic}
-                      inlinePrep={{ venueName: barId ? p.venueName : null, page: true }}
+                      inlinePrep={{ venueName: barId ? p.venueName : null }}
                       renderLine={(line, row, parts) => <DraftLine {...parts} line={line} row={row} hint={p.stock?.toggle(line) ? p.stock.hint : null} />}
                     />
                   </TakeoverProvider>
