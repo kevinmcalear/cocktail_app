@@ -474,7 +474,9 @@ export async function createPrep(qc: QueryClient, { name, prep, barId }: CreateP
   };
   const top = await prepRow(name);
   if (!top.isNew) throw new Error(`${capitalizeFirst(name.trim())} is already ${barId ? 'here' : 'yours'}. Search for it instead.`);
-  const ensure = (pick: { id: string | null; name: string }) => ensureIngredient(pick, barId, made);
+  // Ingredients this save adds for names typed on a line: they go again with the prep if it fails (review of #1183).
+  const created: string[] = [];
+  const ensure = (pick: { id: string | null; name: string }) => ensureIngredient(pick, barId, made, created);
   const own = async (pick: { id: string | null; name: string }) => {
     const r = await prepRow(pick.name);
     if (!r.isNew) warnings.push(`${capitalizeFirst(pick.name)} is already here, so it uses that one. Change its recipe on its page.`);
@@ -483,7 +485,7 @@ export async function createPrep(qc: QueryClient, { name, prep, barId }: CreateP
   try {
     await savePrepRecipe(top.id, prep, ensure, barId, { own, warn: (m) => warnings.push(m) });
   } catch (e) {
-    await supabase.from('items').delete().in('id', rows);
+    await supabase.from('items').delete().in('id', [...rows, ...created]);
     throw e;
   }
   useRecentActivityStore.getState().push(recentEntry('ingredient', top.id, top.name, { barId }));

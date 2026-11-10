@@ -18,7 +18,7 @@ jest.mock('@/hooks/useCapabilities', () => ({ useCapabilities: () => ({ data: []
 jest.mock('@/hooks/useActiveVenue', () => ({ useActiveVenue: () => ({ venues: [], active: null }) }));
 jest.mock('@/hooks/useDropdowns', () => ({ useDropdowns: () => ({ data: { ingredients: [{ id: 'gin', name: 'Gin' }], methods: [], glassware: [], iceTypes: [] } }) }));
 jest.mock('@/hooks/useMyProfile', () => ({ useMyProfile: () => ({ data: { id: 'p-me', displayName: 'Jo', isPublic: false, isModerated: false } }) }));
-jest.mock('@/hooks/useDiscover', () => ({ useDrinkLists: () => ({ data: [] }) }));
+jest.mock('@/hooks/useDiscover', () => ({ useDebounced: <T,>(v: T) => v, useDrinkLists: () => ({ data: [] }) }));
 jest.mock('@/lib/toast', () => ({ toastDone: jest.fn() }));
 jest.mock('@/hooks/usePairings', () => ({ usePairings: () => ({ data: [] }) }));
 jest.mock('@/hooks/useBarGlassware', () => ({ useBarGlassware: () => ({ data: [] }) }));

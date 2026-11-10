@@ -228,7 +228,4 @@ function Builder({ name: started, initial, ingredients, aliases, onDone, onClose
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  stack: { gap: space.lg },
-});
+const styles = StyleSheet.create({ root: { flex: 1 }, stack: { gap: space.lg } });
