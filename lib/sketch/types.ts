@@ -1,8 +1,8 @@
 // A drink's drawing inputs, as the flavor-worker stores them in item_sketches
 // and as the add-drink wizard works them out live (lib/sketch/draft.ts). The
-// lists come from the rules both run (supabase/functions/_shared/sketchRules.ts).
+// lists come from the rules both run (supabase/functions/_shared/sketchKinds.ts).
 import { SKETCH_CLEAR_TINT } from '../../constants/sketch';
-import { FOAMS, GARNISHES, GLASSES, ICES, METHODS, readIceLook, sketchBuild, type IceLook, type SketchLayer } from '../../supabase/functions/_shared/sketchRules';
+import { FOAMS, GARNISHES, GLASSES, ICES, METHODS, readIceLook, sketchBuild, type IceLook, type SketchLayer } from '../../supabase/functions/_shared/sketchKinds';
 import { readOutline, type GlassOutline } from './outline';
 
 export type { IceLook, SketchLayer };

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { SKETCH, SKETCH_CLEAR_TINT, SKETCH_TINT_FAMILIES, SKETCH_TINTS } from '../../constants/sketch';
-import { DRINK_COLORS } from '../../supabase/functions/_shared/sketchRules';
+import { DRINK_COLORS } from '../../supabase/functions/_shared/sketchKinds';
 import { paintSketch } from './paint';
 import { mixHex } from './random';
 import type { SceneEl } from './scene';

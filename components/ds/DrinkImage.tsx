@@ -4,7 +4,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { radius as radii } from '@/constants/tokens';
 import { isPng } from '@/lib/itemImages';
-import { bareGlassSketch } from '@/lib/sketch/draft';
+import { bareGlassSketch } from '@/lib/sketch/bareGlass';
 import type { SketchInputs } from '@/lib/sketch/types';
 import { copyToTry, markNoCopy } from '@/lib/thumbnails';
 

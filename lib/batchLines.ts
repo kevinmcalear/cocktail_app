@@ -9,7 +9,7 @@
 import { convertPour, type WizardLine } from './drinkWizard';
 import type { PrepDraft } from './prepKinds';
 import { prepAmounts, prepYield, withFacts } from './prepMath';
-import { tidyAmount } from './specDefaults';
+import { tidyAmount } from './units';
 
 /** The bottle a batch starts as, in ml. */
 export const DEFAULT_BOTTLE = 750;

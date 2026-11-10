@@ -3,8 +3,9 @@
 // ice by its drawing kind, tools from blended drinks and the venue's own ice
 // recipes' steps.
 
+import { itemGlass } from '../supabase/functions/_shared/sketchKinds';
+
 import { iceKind, iceNameOf, type IceName } from './iceBuild';
-import { draftSketchInputs } from './sketch/draft';
 import type { SketchGlass } from './sketch/types';
 import { equipmentById } from './techniques/equipment';
 import { venueIceKinds, type IceKind } from './venueKit';
@@ -37,8 +38,8 @@ export interface FromDrinks {
 
 /** The shape a glass is drawn as, its kind before its name; null for a name the drawings don't know ("Custom") and no kind. */
 export function glassOf(name: string, kind?: string | null): SketchGlass | null {
-  const inputs = draftSketchInputs({ name: '', lines: [], glass: name, glassKind: kind });
-  return inputs.from.glass === 'data' ? inputs.glass : null;
+  // What the flavour rules take as the drink's own glass (from.glass 'data'), without loading them.
+  return itemGlass({ name, kind: kind ?? null });
 }
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 

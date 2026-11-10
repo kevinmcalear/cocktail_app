@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { radius, space } from '@/constants/tokens';
 import { GLASS_SEARCH_LIMIT, glassModelMaterial, glassModelSize, useGlassModelSearch, type GlassModel } from '@/hooks/useGlassModels';
 import { GLASS_TYPE_LABEL } from '@/lib/glassware';
-import { draftSketchInputs } from '@/lib/sketch/draft';
+import { EMPTY_DRINK } from '@/lib/sketch/bareGlass';
 import type { GlassOutline } from '@/lib/sketch/outline';
 import type { SketchGlass } from '@/lib/sketch/types';
 
@@ -15,13 +15,10 @@ import type { SketchGlass } from '@/lib/sketch/types';
 export const FIRST_TYPES: SketchGlass[] = ['coupe', 'nick', 'martini', 'rocks', 'highball', 'collins', 'flute'];
 export const MORE_TYPES: SketchGlass[] = ['fizz', 'spritz', 'snifter', 'shot', 'cordial', 'julep', 'tiki', 'mug'];
 
-// An empty glass, sketched (as the glass form draws it).
-const EMPTY = draftSketchInputs({ name: '', lines: [] });
-
 /** A glass drawn on paper, small: in its own traced shape when it has one (Draw my glass). */
 export function GlassThumb({ glass, variant, outline, size = 48 }: { glass: SketchGlass; variant: string | null; outline?: GlassOutline | null; size?: number }) {
   const ds = useDs();
-  const inputs = useMemo(() => ({ ...EMPTY, glass, variant, ...(outline ? { outline } : {}) }), [glass, variant, outline]);
+  const inputs = useMemo(() => ({ ...EMPTY_DRINK, glass, variant, ...(outline ? { outline } : {}) }), [glass, variant, outline]);
   return (
     <View style={[styles.paper, { width: size, height: size, backgroundColor: ds.c.paper }]} aria-hidden>
       <SketchDrawing inputs={inputs} seed="bar-glass" detail="thumb" />

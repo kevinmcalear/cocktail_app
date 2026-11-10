@@ -1,5 +1,5 @@
 diff --git a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
-index 2e3ff4b..d1eb140 100644
+index 2e3ff4b..9254f1e 100644
 --- a/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 +++ b/node_modules/@expo/metro-config/build/serializer/chunking/createLegacyChunkingStrategy.js
 @@ -8,6 +8,18 @@ Object.defineProperty(exports, "createLegacyChunkingStrategy", {
@@ -29,7 +29,7 @@ index 2e3ff4b..d1eb140 100644
                  removeEmptyChunks(chunks);
                  if (commonChunk) {
                      (0, _chunkingStrategy.createRuntimeChunk)(entryChunk, chunks, strategy);
-@@ -118,25 +131,62 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
+@@ -118,25 +131,65 @@ function removeEntryDepsFromAsyncChunks(entryChunk, chunks) {
          }
      }
  }
@@ -48,13 +48,16 @@ index 2e3ff4b..d1eb140 100644
 +// is a shared chunk per group of routes (Expo's granular chunking) instead of a list.
 +// The last three are what useHomeBar pulls in: 20 routes reached them until the menu page
 +// stopped importing useMyBar, and the 19th copied them into 30 chunks (+225 KB).
++// venueKit left the root layout's reach when the bare-glass drawing stopped loading the
++// flavour rules (lib/sketch/bareGlass.ts); 18 chunks use it, so it would copy 18 times (+73 KB).
 +const ALWAYS_COMMON = [
 +    'lib/techniques/index.ts',
 +    'lib/techniques/data/',
 +    'components/search/NearPicks.tsx',
 +    'lib/techniques/labNames.ts',
 +    'lib/barSections.ts',
-+    'hooks/useCreateIngredient.ts'
++    'hooks/useCreateIngredient.ts',
++    'lib/venueKit.ts'
 +];
  function extractCommonChunk(chunks, graph, options, strategy) {
 -    const toCompare = [
@@ -107,7 +110,7 @@ index 2e3ff4b..d1eb140 100644
      // If common dependencies were found, extract them to the shared chunk.
      if (commonDependencies.size) {
          return new _Chunk.Chunk('/__common.js', commonDependencies, graph, options, strategy, false, true);
-@@ -156,6 +206,44 @@ function deduplicateAgainstKnownChunks(chunks, entryChunk, commonChunk) {
+@@ -156,6 +209,44 @@ function deduplicateAgainstKnownChunks(chunks, entryChunk, commonChunk) {
          }
      }
  }

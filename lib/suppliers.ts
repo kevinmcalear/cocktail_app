@@ -132,3 +132,22 @@ export function venueParts(barId: string | null, caps: readonly string[] | undef
   const canCost = !!barId && !!caps?.includes('costs');
   return { canCost, canBuy: canCost || (!!barId && !!caps?.includes('prep')) };
 }
+
+// What a supplier brings, in the Add sheet's words: SUPPLIES, the list profiles and suppliers both check.
+export const SUPPLY_LABEL: Record<Supplies, string> = {
+  bottles: 'Bottles',
+  ice: 'Ice',
+  produce: 'Produce',
+  garnish: 'Garnish',
+  glassware: 'Glassware',
+  barware: 'Barware',
+  equipment: 'Equipment',
+};
+
+/** "Bottles and glassware · Order by Tue 2 pm", leaving out what isn't said. */
+export function supplierLine(s: { supplies: readonly string[]; order_by: string | null; delivers: string | null }): string {
+  const words = SUPPLIES.filter((k) => s.supplies.includes(k)).map((k, i) => (i ? SUPPLY_LABEL[k].toLowerCase() : SUPPLY_LABEL[k]));
+  return [words.length ? andList(words) : null, s.order_by ? `Order by ${s.order_by}` : null, s.delivers ? `Delivers ${s.delivers}` : null]
+    .filter(Boolean)
+    .join(' · ');
+}

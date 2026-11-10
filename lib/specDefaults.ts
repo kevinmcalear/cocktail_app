@@ -9,6 +9,7 @@ import { ruleFor } from '../supabase/functions/_shared/flavor';
 import { shakenBy } from '../supabase/functions/_shared/sketchRules';
 
 import { draftSketchInputs } from './sketch/draft';
+import { roundAmount } from './units';
 
 export interface AmountLine {
   name: string;
@@ -62,7 +63,6 @@ function guessMl(line: AmountLine, others: readonly AmountLine[]): number | null
 
 const OZ = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3];
 const nearest = (n: number, ladder: readonly number[]) => ladder.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) ? b : a));
-const fmt = (n: number) => String(Math.round(n * 100) / 100);
 
 /**
  * The amount a new line starts at, in its unit: "22.5" ml of lime, "0.75" oz,
@@ -75,28 +75,11 @@ export function suggestAmount(line: AmountLine, unit: string, others: readonly A
   if (unit === 'each') return '1';
   const ml = guessMl(line, others);
   if (ml === null) return '';
-  if (unit === 'ml') return fmt(ml);
-  if (unit === 'cl') return fmt(ml / 10);
-  if (unit === 'oz') return fmt(nearest(ml / 30, OZ));
-  if (unit === 'bsp') return fmt(Math.max(1, Math.round(ml / 5)));
+  if (unit === 'ml') return roundAmount(ml);
+  if (unit === 'cl') return roundAmount(ml / 10);
+  if (unit === 'oz') return roundAmount(nearest(ml / 30, OZ));
+  if (unit === 'bsp') return roundAmount(Math.max(1, Math.round(ml / 5)));
   return '';
-}
-
-const FRACTIONS: Record<string, number> = { '¼': 0.25, '½': 0.5, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3, '⅛': 0.125 };
-
-/**
- * An amount as typed, tidied to a plain number: "3/4" is "0.75", "1 1/2" and
- * "1½" are "1.5", "22,5" is "22.5". Anything else is left as it was typed.
- */
-export function tidyAmount(text: string): string {
-  const t = text.trim().replace(',', '.');
-  if (!t) return '';
-  const m = /^(\d+(?:\.\d+)?)?\s*(?:(\d+)\s*\/\s*(\d+)|([¼½¾⅓⅔⅛]))?$/.exec(t);
-  if (!m || (!m[1] && !m[2] && !m[4])) return text.trim();
-  let n = m[1] ? parseFloat(m[1]) : 0;
-  if (m[2] && m[3] && +m[3] > 0) n += +m[2] / +m[3];
-  if (m[4]) n += FRACTIONS[m[4]];
-  return fmt(n);
 }
 
 // The sketch rules' names for each choice, as the wizard's chips call them.

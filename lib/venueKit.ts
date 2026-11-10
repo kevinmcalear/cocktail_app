@@ -1,9 +1,7 @@
 // Kit and Buying in a venue's settings (supabase/migrations/20261019000000_venue_kit.sql,
 // 20261110100000_kit_and_ice.sql): the ice it pours (item_ice), the tools it
-// has (bar_kit), and what its suppliers bring.
+// has (bar_kit). What its suppliers bring is in lib/suppliers.ts.
 
-import { andList } from './makers';
-import { SUPPLIES, type Supplies } from './suppliers';
 import { equipmentById } from './techniques/equipment';
 
 /** The ice kinds the drawings know, less 'none'. */
@@ -141,25 +139,6 @@ export const isVenueIce = (names: readonly string[], name: string) => names.some
 /** The venue's ice in the glass by a wizard pick's name ("spear" is "Spear"), or null. */
 export const kitIceRow = <T extends { name: string; shape: string }>(rows: readonly T[], name: string): T | null =>
   rows.find((r) => inTheGlass(r) && isVenueIce([r.name], name)) ?? null;
-
-// What a supplier brings uses lib/suppliers.ts's SUPPLIES, the list profiles and suppliers both check.
-export const SUPPLY_LABEL: Record<Supplies, string> = {
-  bottles: 'Bottles',
-  ice: 'Ice',
-  produce: 'Produce',
-  garnish: 'Garnish',
-  glassware: 'Glassware',
-  barware: 'Barware',
-  equipment: 'Equipment',
-};
-
-/** "Bottles and glassware · Order by Tue 2 pm", leaving out what isn't said. */
-export function supplierLine(s: { supplies: readonly string[]; order_by: string | null; delivers: string | null }): string {
-  const words = SUPPLIES.filter((k) => s.supplies.includes(k)).map((k, i) => (i ? SUPPLY_LABEL[k].toLowerCase() : SUPPLY_LABEL[k]));
-  return [words.length ? andList(words) : null, s.order_by ? `Order by ${s.order_by}` : null, s.delivers ? `Delivers ${s.delivers}` : null]
-    .filter(Boolean)
-    .join(' · ');
-}
 
 const MADE: Record<string, string> = { made: 'Made here', machine: 'Our machine', ours: 'Already ours' };
 

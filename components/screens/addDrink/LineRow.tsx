@@ -7,7 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import { convertPour, FINISH_UNITS, QUICK_UNITS, stepAmount, type WizardLine } from '@/lib/drinkWizard';
 import { prepSummary, toFinishSummary } from '@/lib/prepKinds';
-import { tidyAmount } from '@/lib/specDefaults';
+import { tidyAmount } from '@/lib/units';
 import { techniqueById } from '@/lib/techniques';
 import { rememberLineUnit } from '@/store/rememberLineUnit';
 
