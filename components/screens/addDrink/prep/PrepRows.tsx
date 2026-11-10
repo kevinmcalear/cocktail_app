@@ -82,5 +82,5 @@ export function PrepRows({ name, draft, set, version, phrase, onKind, onTechniqu
 }
 
 const styles = StyleSheet.create({
-  body: { gap: space.lg, paddingBottom: space.xl },
+  body: { gap: space.lg, padding: space.xl, paddingTop: space.sm, paddingBottom: space.xxxl },
 });
