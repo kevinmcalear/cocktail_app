@@ -8,6 +8,7 @@ import { useKit } from '@/hooks/useKit';
 import { useVenueIce } from '@/hooks/useVenueIce';
 import { kitCheck, type CheckDrink, type CheckKit, type KitCheck } from '@/lib/kitCheck';
 import { supabase } from '@/lib/supabase';
+import { useTechniques } from '@/lib/techniques';
 
 // The kit check's data (lib/kitCheck.ts): a drink's glass and ice (drink_glass,
 // drink_ice) by name and kind (items.glass, items.ice_kind), its methods by name, and the venue's Kit with the recipes of the ice it makes. Recipes are
@@ -112,32 +113,38 @@ function useIceRecipes(barId: string | null | undefined, ids: readonly string[])
   });
 }
 
-/** The venue's Kit as the check reads it; null while it loads, or with no venue. */
+/**
+ * The venue's Kit as the check reads it; null while it loads, or with no
+ * venue. The check names tools from the technique library, so it waits for
+ * that too (lib/techniques).
+ */
 export function useVenueKit(barId: string | null | undefined): CheckKit | null {
+  const library = useTechniques();
   const glasses = useBarGlassware(barId).data;
   const ice = useVenueIce(barId).data;
   const tools = useBarKit(barId).data;
   const made = (ice ?? []).filter((i) => i.source === 'made').map((i) => i.id);
   const recipes = useIceRecipes(barId, made).data;
   return useMemo(() => {
-    if (!barId || !glasses || !ice || !tools) return null;
+    if (!library || !barId || !glasses || !ice || !tools) return null;
     return {
       glasses,
       ice,
       tools: tools.flatMap((t) => (t.key ? [t.key] : [])),
       recipes: new Map((recipes ?? []).map((r) => [r.id, { tools: r.tools, from: r.from }])),
     };
-  }, [barId, glasses, ice, tools, recipes]);
+  }, [library, barId, glasses, ice, tools, recipes]);
 }
 
 const NO_RECIPES: CheckKit['recipes'] = new Map();
 
-/** My Bar's kit as the check reads it (Kit and ice, step 13); null while it loads. Ice at home has no recipe, so its tools aren't followed. */
+/** My Bar's kit as the check reads it (Kit and ice, step 13); null while it or the technique library loads. Ice at home has no recipe, so its tools aren't followed. */
 function useHomeCheckKit(): CheckKit | null {
+  const library = useTechniques();
   const glasses = useHomeGlassware().data;
   const ice = useHomeIce().data;
   const tools = useKit().owned;
-  return useMemo(() => (glasses && ice ? { glasses, ice, tools, recipes: NO_RECIPES } : null), [glasses, ice, tools]);
+  return useMemo(() => (library && glasses && ice ? { glasses, ice, tools, recipes: NO_RECIPES } : null), [library, glasses, ice, tools]);
 }
 
 /** Can you make this drink with My Bar's kit; null while it loads. */

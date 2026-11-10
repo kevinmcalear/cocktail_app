@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { useRouter, type Href } from 'expo-router';
 
 import { SetupChromeProvider } from '@/components/screens/onboarding/SetupPage';
@@ -6,13 +7,14 @@ import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 
 import { SetupChecklist } from './SetupChecklist';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 /**
  * "Set up <bar>" as a page: from the top of Library on a phone, the first
  * row of the sidebar on a desktop, and Venue settings. Back goes where it
  * came from.
  */
-export function SetupChecklistScreen({ barId }: { barId: string }) {
+function SetupChecklistScreenBody({ barId }: { barId: string }) {
   const router = useRouter();
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const name = venue?.name ?? 'your bar';
@@ -26,5 +28,14 @@ export function SetupChecklistScreen({ barId }: { barId: string }) {
       </WebHead>
       <SetupChecklist barId={barId} name={name} onBack={wide ? undefined : back} />
     </SetupChromeProvider>
+  );
+}
+
+/** SetupChecklistScreen, once the technique library is in (lib/techniques). */
+export function SetupChecklistScreen(props: ComponentProps<typeof SetupChecklistScreenBody>) {
+  return (
+    <TechniquesGate>
+      <SetupChecklistScreenBody {...props} />
+    </TechniquesGate>
   );
 }

@@ -1,11 +1,14 @@
 // Checks for lib/techniques. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
+import './testing';
+
 import { PREP_ACTIONS } from '../scale';
 import { baseHasFat, pickFoam } from './foamPicker';
 import {
-  canMake, EQUIPMENT, equipmentMatches, formatDose, groupForAction, GROUPS, scaleParts, searchTechniques, techniqueById, TECHNIQUES, unlocks,
+  canMake, equipmentMatches, formatDose, groupForAction, GROUPS, scaleParts, searchTechniques, techniqueById, unlocks,
 } from './index';
+import { EQUIPMENT, TECHNIQUES } from './library';
 import { technicalIngredientFor, TECHNICAL_INGREDIENTS } from './ingredients';
 import { isLabName, labIdFor } from './labNames';
 import { sourceOf } from './sourceBook';

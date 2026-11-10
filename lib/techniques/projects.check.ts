@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { TECHNIQUES } from './index';
+import './testing';
+import { TECHNIQUES } from './library';
 import { labFromNames, labNeeds, madeWith, projectsFor } from './projects';
 
 const byId = (id: string) => TECHNIQUES.find((t) => t.id === id)!;

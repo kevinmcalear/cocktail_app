@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 
 import { PREP_ACTIONS } from '../scale';
 import { needsFoamer } from './foamPicker';
-import { techniqueById, TECHNIQUES } from './index';
+import './testing';
+import { techniqueById } from './index';
+import { TECHNIQUES } from './library';
 import { actionFor, isBoughtName, looksMadeInHouse, prepCardFor, waysToMake } from './makeIt';
 
 const ids = (name: string) => waysToMake(name).map((t) => t.id);

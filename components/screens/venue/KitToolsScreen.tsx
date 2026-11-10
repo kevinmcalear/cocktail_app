@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Caption, EquipmentThumb, useDs } from '@/components/ds';
@@ -11,8 +11,9 @@ import { radius } from '@/constants/tokens';
 import { useBarKit, useRemoveTool, type KitRow } from '@/hooks/useBarKit';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
-import { equipmentById } from '@/lib/techniques/equipment';
+import { equipmentById } from '@/lib/techniques';
 import { kitLine, kitSourceLine, TOOL_LOCATION_LABEL, toolName } from '@/lib/venueKit';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 const where = (t: KitRow) => (t.location === 'bar' || t.location === 'prep' ? TOOL_LOCATION_LABEL[t.location] : null);
 
@@ -24,7 +25,7 @@ const toolLine = (t: KitRow) => kitLine([where(t), t.count ? String(t.count) : n
  * prep kitchen, as a list with Add: ours by key or the venue's own by name,
  * where each is and where it came from. Anyone with Prep changes it.
  */
-export function KitToolsScreen({ barId, openId }: { barId: string; openId?: string | null }) {
+function KitToolsScreenBody({ barId, openId }: { barId: string; openId?: string | null }) {
   const canEdit = (useCapabilities(barId).data ?? []).includes('prep');
   const { data: tools = [], isLoading, error } = useBarKit(barId);
   const open = useOpenKitItem(barId, 'tools', openId);
@@ -105,3 +106,12 @@ function ToolPage({ barId, tool, canEdit, onChange }: { barId: string; tool: Kit
 const styles = StyleSheet.create({
   own: { borderRadius: radius.control, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
 });
+
+/** KitToolsScreen, once the technique library is in (lib/techniques). */
+export function KitToolsScreen(props: ComponentProps<typeof KitToolsScreenBody>) {
+  return (
+    <TechniquesGate>
+      <KitToolsScreenBody {...props} />
+    </TechniquesGate>
+  );
+}

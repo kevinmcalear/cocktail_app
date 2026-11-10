@@ -1,5 +1,7 @@
 // First, so gesture-handler's mocks are in place before anything imports it.
 import 'react-native-gesture-handler/jestSetup';
+// The technique library is a lazy chunk in the app (lib/techniques); tests have it from the start.
+import '@/lib/techniques/testing';
 import { render } from '@testing-library/react-native';
 import type { ReactElement, ReactNode } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';

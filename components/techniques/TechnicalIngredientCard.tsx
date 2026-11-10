@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -9,6 +10,7 @@ import { technicalIngredientFor } from '@/lib/techniques/ingredients';
 
 import { BuyList, GradeTag } from './bits';
 import { useVenueFeature } from '@/hooks/useVenueFeatures';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 /**
  * On a technical ingredient's page (xanthan, agar, lecithin...): what it does,
@@ -16,7 +18,7 @@ import { useVenueFeature } from '@/hooks/useVenueFeatures';
  * techniques that use it. It sits straight under the title; Where to buy is
  * its own section after it. Nothing shows for an ordinary ingredient.
  */
-export function TechnicalIngredientCard({ name }: { name: string }) {
+function TechnicalIngredientCardBody({ name }: { name: string }) {
   const ds = useDs();
   const router = useRouter();
   // Its kit and technique pages are the Techniques switch's (lib/venueFeatures.ts).
@@ -102,3 +104,12 @@ const styles = StyleSheet.create({
   // Room for a whole word (Suspension) beside the dose: a long dose wraps instead.
   flex: { flex: 1, minWidth: space.xxxl * 2 },
 });
+
+/** TechnicalIngredientCard, once the technique library is in (lib/techniques). */
+export function TechnicalIngredientCard(props: ComponentProps<typeof TechnicalIngredientCardBody>) {
+  return (
+    <TechniquesGate>
+      <TechnicalIngredientCardBody {...props} />
+    </TechniquesGate>
+  );
+}

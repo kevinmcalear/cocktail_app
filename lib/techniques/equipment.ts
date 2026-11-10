@@ -1,15 +1,6 @@
-import type { Equipment, EquipmentKind } from './types';
-
-export const EQUIPMENT_KINDS: { id: EquipmentKind; name: string }[] = [
-  { id: 'bar', name: 'Bar tools' },
-  { id: 'kitchen', name: 'Kitchen' },
-  { id: 'measure', name: 'Measure' },
-  { id: 'mix', name: 'Blend and whip' },
-  { id: 'pressure', name: 'Gas and vacuum' },
-  { id: 'temperature', name: 'Heat and cold' },
-  { id: 'separate', name: 'Strain and spin' },
-  { id: 'specialist', name: 'Specialist' },
-];
+// The equipment list: data only, in the technique library's lazy chunk
+// (lib/techniques/library.ts). Read it through lib/techniques.
+import type { Equipment } from './types';
 
 /**
  * The kit techniques call for. Pots, jars, fine strainers, coffee filters, a
@@ -82,25 +73,3 @@ export const EQUIPMENT: Equipment[] = [
   { id: 'oak-barrel', name: 'Small oak barrel', aka: ['cask', 'barrel-aged'], kind: 'specialist', tier: '$$', price: 'About $140 to $150 for 750 ml to 5 L', what: 'Barrel-aged Negronis and Manhattans in weeks, not years.', swap: 'Toasted oak chips in a jar.', note: 'Swell it with hot water for a day or two first. Smaller ages faster.', buy: [{ name: 'The Oak Bottle 750 ml, The Oak Bottle', url: 'https://oakbottle.com/shop/the-oak-bottle/', audience: 'home' }, { name: 'American white oak barrel 5 L, medium toast, MoreBeer', url: 'https://morebeer.com/products/american-white-oak-barrel-medium-toast-5l-132-gal', audience: 'bar' }, { name: 'American oak chips, medium toast, MoreBeer', url: 'https://morebeer.com/products/american-medium-toast-oak-chips' }] },
   { id: 'slush-machine', name: 'Slush machine', aka: ['frozen drink machine', 'granita', 'slushie'], kind: 'specialist', tier: '$$$', price: 'About $300 for a home one; $2,000 and up commercial', what: 'Frozen Margaritas, Daiquiris and granitas held at serving texture all night.', swap: 'A blender and ice, one round at a time.', note: 'Batches need 13 to 15 °Brix and under about 10% alcohol to freeze right.', buy: [{ name: 'Ninja SLUSHi FS301, SharkNinja', url: 'https://www.sharkninja.com/ninja-slushi-professional-frozen-drink-maker/FS301.html', audience: 'home' }, { name: 'Ultra-2 HP, BUNN', url: 'https://commercial.bunn.com/34000.6079', audience: 'bar' }, { name: 'First Class, Elmeco', url: 'https://elmeco.com/en/equipment/first-class/', audience: 'bar' }] },
 ];
-
-/** A tier in words: only `price` is sourced, so tiers stay rough. */
-export const TIER_LABEL: Record<Equipment['tier'], string> = { $: 'Under about $50', $$: 'About $50 to $500', $$$: 'Over about $500' };
-
-const BY_ID = new Map(EQUIPMENT.map((e) => [e.id, e]));
-
-export function equipmentById(id: string): Equipment | undefined {
-  return BY_ID.get(id);
-}
-
-/**
- * A search of the kit list: every word in its name, what it's for, its other
- * names or a product it names ("hydrosonic homogenizer" finds the ultrasonic
- * probe; "Klaris", "Hoshizaki"). A buy link's shop, after its last comma, is
- * left out, or "pan" would find everything Modernist Pantry sells.
- */
-export function equipmentMatches(e: Equipment, search: string): boolean {
-  const words = search.toLowerCase().split(/\s+/).filter(Boolean);
-  const products = (e.buy ?? []).map((b) => (b.name.includes(', ') ? b.name.slice(0, b.name.lastIndexOf(', ')) : b.name));
-  const text = [e.name, e.what, ...(e.aka ?? []), ...products].join(' ').toLowerCase();
-  return words.every((w) => text.includes(w));
-}

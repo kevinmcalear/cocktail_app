@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline, Surface, useDs } from '@/components/ds';
@@ -23,6 +23,7 @@ import { IceMadeStep, madeReady, type IceMade } from './IceMadeStep';
 import { StartsFromSheet } from './StartsFromSheet';
 import { StepToolsSheet } from './StepToolsSheet';
 import { useIceRecipeEdit } from './useIceRecipeEdit';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 /**
  * Kit › Ice › an ice › How it's made (Kit and ice, step 7): the house-prep
@@ -31,7 +32,7 @@ import { useIceRecipeEdit } from './useIceRecipeEdit';
  * kit, and Makes and Keeps. With no steps yet it asks how it's made and writes
  * a starting recipe in our words. Anyone with Prep at the venue changes it.
  */
-export function IceRecipeScreen({ barId, iceId }: { barId: string; iceId: string }) {
+function IceRecipeScreenBody({ barId, iceId }: { barId: string; iceId: string }) {
   const ds = useDs();
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const canEdit = (useCapabilities(barId).data ?? []).includes('prep');
@@ -132,3 +133,12 @@ const styles = StyleSheet.create({
   note: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.md, borderRadius: radius.control },
   flex: { flex: 1, minWidth: 0 },
 });
+
+/** IceRecipeScreen, once the technique library is in (lib/techniques). */
+export function IceRecipeScreen(props: ComponentProps<typeof IceRecipeScreenBody>) {
+  return (
+    <TechniquesGate>
+      <IceRecipeScreenBody {...props} />
+    </TechniquesGate>
+  );
+}

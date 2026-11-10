@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 
-import { EQUIPMENT } from './equipment';
-import { GROUPS, TECHNIQUES } from './index';
+import './testing';
+import { GROUPS } from './index';
+import { EQUIPMENT, TECHNIQUES } from './library';
 import { kitPicks, pairLine, pickOfDay, stepParts } from './learn';
 
 // Steps as Kept-learn draws them: the first sentence is the name.

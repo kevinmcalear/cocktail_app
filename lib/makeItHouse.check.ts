@@ -1,6 +1,8 @@
 // Checks for lib/makeItHouse.ts. Run: npm run test:unit
 import assert from 'node:assert/strict';
 
+import './techniques/testing';
+
 import { houseName, houseNudge, houseWord } from './makeItHouse';
 import { nameFor } from './techniques/template';
 

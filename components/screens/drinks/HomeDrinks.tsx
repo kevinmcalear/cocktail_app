@@ -18,11 +18,13 @@ import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { homeReach, needLine } from '@/lib/shelfReach';
 import { HOME_CAPSULES, HOME_CHIPS, homeCapsule, homeRows, type HomeCapsule, type HomeChip } from '@/lib/drinksTab';
 import { ingredientLine, sentenceLine } from '@/lib/menus';
+import { loadTechniques } from '@/lib/techniques';
 
 import { DrinkListRow, DrinksHead, DrinksLoading } from './DrinksParts';
 
-// The shelf (My Bar) and the menus each load when their capsule is picked.
-const Shelf = lazy(() => import('./HomeMenus').then((m) => ({ default: m.MyBarScreen })));
+// The shelf (My Bar) and the menus each load when their capsule is picked. The shelf reads the technique library
+// (its kit, projects and what to make), so it waits for that too (lib/techniques).
+const Shelf = lazy(() => Promise.all([import('./HomeMenus'), loadTechniques()]).then(([m]) => ({ default: m.MyBarScreen })));
 const Menus = lazy(() => import('./HomeMenus').then((m) => ({ default: m.HomeMenus })));
 
 /** What each chip says with nothing in it, and where it sends you. */

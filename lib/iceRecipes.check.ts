@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 
 import { downstreamIce, ICE_EXTRA_STEPS, ICE_WAY_KEYS, ICE_WAYS, iceWaySteps } from './iceRecipes';
-import { equipmentById } from './techniques/equipment';
+import './techniques/testing';
+import { equipmentById } from './techniques';
 
 // Kevin's twelve ways: six common first, six behind "More ways", ending with our own.
 assert.deepEqual(ICE_WAYS.map((w) => w.key), [...ICE_WAY_KEYS]);

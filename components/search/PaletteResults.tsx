@@ -15,7 +15,7 @@ import { learnTitle, madeFirst, usedFor } from '@/lib/paletteRows';
 import { drinkFacts, ingredientFacts, menuFacts } from '@/lib/searchCaptions';
 import { groupCatalog } from '@/lib/searchScope';
 import { capitalize } from '@/lib/stringUtils';
-import { searchTechniques } from '@/lib/techniques';
+import { searchTechniques, useTechniques } from '@/lib/techniques';
 import type { SearchItem } from '@/types/search';
 
 import { MineResults, useMineCatalog } from './MineResults';
@@ -117,9 +117,10 @@ export function PaletteResults({ query: typed, mine, onEverywhere }: { query: st
   // The house-mades its drinks use, shared ones too, as the Library's Preps shelf has them.
   const preps = useMemo(() => facts.prepItems.filter((p) => foldName(p.name).includes(foldName(q))), [facts.prepItems, q]);
   const ingredients = [...preps, ...groups.ingredients.filter((i) => !preps.some((p) => p.id === i.id))];
-  // Techniques, at a venue that switched them on (lib/venueFeatures.ts).
+  // Techniques, at a venue that switched them on (lib/venueFeatures.ts), once the library is in (lib/techniques).
   const techniques = useVenueFeature('techniques');
-  const learn = useMemo(() => (techniques ? searchTechniques(q).slice(0, LEARN) : []), [q, techniques]);
+  const library = useTechniques();
+  const learn = useMemo(() => (techniques && library ? searchTechniques(q).slice(0, LEARN) : []), [q, techniques, library]);
   const open = (item: SearchItem) => openSearchItem(item, (href) => router.push(href as never));
   const made = madeFirst({ drinks: groups.drinks, ingredients }, q);
   const batch = mine.canPrep ? (preps[0] ?? null) : null;

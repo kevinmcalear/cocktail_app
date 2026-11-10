@@ -1,5 +1,5 @@
 import { useNetInfo } from '@react-native-community/netinfo';
-import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef, type ComponentProps } from 'react';
 import { Alert, Platform, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Caption, IngredientDrawing, useDs, useToast } from '@/components/ds';
@@ -26,6 +26,7 @@ import { WizardFrame } from '../addDrink/WizardFrame';
 import { FindSheet } from '../ingredient/IngredientEditSheets';
 import { BottleFields } from './BottleFields';
 import { BottleName, MakeLink, SnapCard } from './BottleName';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 export interface AddBottleProps {
   /** The venue it's added at; null or missing for one on your own shelf. */
@@ -54,7 +55,7 @@ type KindFrom = 'label' | 'you';
  * what it's a kind of; one already on the back bar (or your shelf) says so.
  * One button saves it, on this phone when there's no signal.
  */
-export function AddBottle({ barId = null, initialName, embedded, onClose, onSaved, onMake, closeRef }: AddBottleProps) {
+function AddBottleBody({ barId = null, initialName, embedded, onClose, onSaved, onMake, closeRef }: AddBottleProps) {
   const ds = useDs();
   const toast = useToast();
   const [name, setName] = useState(capitalizeFirsts(initialName?.trim() ?? ''));
@@ -260,3 +261,12 @@ export function AddBottle({ barId = null, initialName, embedded, onClose, onSave
 const styles = StyleSheet.create({
   flex: { flex: 1 },
 });
+
+/** AddBottle, once the technique library is in (lib/techniques). */
+export function AddBottle(props: ComponentProps<typeof AddBottleBody>) {
+  return (
+    <TechniquesGate>
+      <AddBottleBody {...props} />
+    </TechniquesGate>
+  );
+}

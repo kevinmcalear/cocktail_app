@@ -24,6 +24,7 @@ import { SetupRail } from './SetupRail';
 import { setupCopy } from './setupCopy';
 import { VisibilityStep } from './VisibilityStep';
 import { WhereWhenStep } from './WhereWhenStep';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 const BRANDED: VenueScreen[] = ['look', 'visibility', 'done'];
 
@@ -38,7 +39,7 @@ const BRANDED: VenueScreen[] = ['look', 'visibility', 'done'];
  * under the checklist (Eddie E32), which opens the claim methods here with
  * &step=claim, and they come back to it.
  */
-export function VenueSetupScreen() {
+function VenueSetupScreenBody() {
   const params = useLocalSearchParams<{ bar?: string; claim?: string; step?: string }>();
   const router = useRouter();
   const wide = useIsWideWeb();
@@ -260,5 +261,14 @@ export function VenueSetupScreen() {
     >
       {steps}
     </BrandProvider>
+  );
+}
+
+/** VenueSetupScreen, once the technique library is in (lib/techniques). */
+export function VenueSetupScreen() {
+  return (
+    <TechniquesGate>
+      <VenueSetupScreenBody />
+    </TechniquesGate>
   );
 }

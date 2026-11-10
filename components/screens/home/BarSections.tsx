@@ -12,7 +12,7 @@ import { madeLine, type BarSection } from '@/lib/barSections';
 import { SECTIONS } from '@/lib/barSectionWords';
 import { FILL_LABEL, prepUseBy } from '@/lib/myBarText';
 import { itemHref } from '@/lib/itemRoutes';
-import { EQUIPMENT, EQUIPMENT_KINDS, equipmentById } from '@/lib/techniques';
+import { allEquipment, EQUIPMENT_KINDS, equipmentById } from '@/lib/techniques';
 
 import { AddTile, BarTile, TileGrid } from './BarTile';
 import { HomeKitLinks } from './HomeKitLinks';
@@ -168,7 +168,7 @@ export function PrepsSection({ items, keeps, cols, editing, onEdit, onAdd, onRem
 }
 
 /** Kit suggested to someone who has little: the bar tools, cheapest first, as faded tiles to tap. */
-export const KIT_SUGGESTIONS = EQUIPMENT.filter((e) => e.kind === 'bar' && e.tier === '$').map((e) => e.id);
+export const kitSuggestions = () => allEquipment().filter((e) => e.kind === 'bar' && e.tier === '$').map((e) => e.id);
 const kindName = (kind: string) => EQUIPMENT_KINDS.find((k) => k.id === kind)?.name ?? null;
 
 /**
@@ -180,7 +180,7 @@ export function KitSection({ owned, opens, cols, editing, onEdit, onToggle, onAd
   const kit = owned.flatMap((id) => equipmentById(id) ?? []);
   // Enough faded suggestions to finish the row (after the Add tile), and never more than one row.
   const room = editing ? 0 : (cols - ((kit.length + 1) % cols)) % cols;
-  const ideas = KIT_SUGGESTIONS.filter((id) => !owned.includes(id)).slice(0, room).flatMap((id) => equipmentById(id) ?? []);
+  const ideas = kitSuggestions().filter((id) => !owned.includes(id)).slice(0, room).flatMap((id) => equipmentById(id) ?? []);
   return (
     <View style={[styles.section, style]}>
       <SectionHead section="kit">
