@@ -37,7 +37,7 @@ const onConnectionChange = (l: () => void) => onlineManager.subscribe(l);
 export function TechniquesFailed({ compact }: { compact?: boolean }) {
   const tryAgain = () => {
     loadTechniques().catch((e: unknown) => {
-      if (Platform.OS === 'web' && navigator.onLine && looksLikeMissingChunk(e instanceof Error ? e : null)) window.location.reload();
+      if (Platform.OS === 'web' && onlineManager.isOnline() && looksLikeMissingChunk(e instanceof Error ? e : null)) window.location.reload();
     });
   };
   const offline = !useSyncExternalStore(onConnectionChange, isOnline, () => true);

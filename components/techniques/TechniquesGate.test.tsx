@@ -14,7 +14,10 @@ const { TechniquesGate }: typeof import('./TechniquesGate') = require('./Techniq
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 beforeEach(() => jest.useFakeTimers());
-afterEach(() => jest.useRealTimers());
+afterEach(() => {
+  jest.useRealTimers();
+  onlineManager.setOnline(true);
+});
 
 const failedTitle = 'Couldn’t load the technique library.';
 
