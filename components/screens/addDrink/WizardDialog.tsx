@@ -10,6 +10,8 @@ import { Sheet } from '@/components/ds';
  * over the whole window; its route is see-through (app/_layout.tsx) and the
  * tab under it keeps showing (MountOnFocus). Escape, the backdrop and a drag
  * close it as its X does, through the wizard (Leave it for now, Discard changes).
+ * Before the wizard opens (a cold link still loading the bar) nothing is typed,
+ * so the routes pass a close that just goes back.
  */
 export function WizardDialog({ label, onClose, width = 600, children }: { label: string; onClose: () => void; /** Something you make is 640 (Add-house, Web). */ width?: number; children: ReactNode }) {
   return (
