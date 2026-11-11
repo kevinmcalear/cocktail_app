@@ -13,6 +13,12 @@ insert into public.bars (id, name, slug, primary_color, secondary_color) values
   ('00000000-0000-4000-a000-000000000002', 'Pale Moth', 'pale-moth', '#B9A8F5', '#241F3D')
 on conflict (id) do nothing;
 
+-- Little Rye has "More drink filters" on, so local checks see the Bottles tab on
+-- Drinks; Pale Moth keeps the default (no extras). Adds the switch only if missing.
+update public.bars set enabled_features = array_append(enabled_features, 'libraryExtras')
+where id = '00000000-0000-4000-a000-000000000001'
+  and not ('libraryExtras' = any(enabled_features));
+
 -- Shared catalogue glassware (no venue). icon_key matches components/ui/CustomIcons.
 insert into public.items (id, name, item_type, icon_key) values
   ('00000000-0000-4000-b000-000000000001', 'Coupe', 'glassware', 'Coupe'),
