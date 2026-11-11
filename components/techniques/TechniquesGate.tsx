@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { onlineManager } from '@tanstack/react-query';
+import { type ReactNode, useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 
 import { PencilState } from '@/components/ds';
@@ -25,10 +26,13 @@ export function TechniquesGate({ children, fallback = null, onFailure = 'full' }
   return <TechniquesFailed compact={onFailure === 'compact'} />;
 }
 
+const isOnline = () => onlineManager.isOnline();
+const onConnectionChange = (l: () => void) => onlineManager.subscribe(l);
+
 /**
  * The failed message and its Try again, for a gate or for a sheet that opens
  * first and gates its own content (ToolSheet), so a sheet is never swallowed
- * by a gate above it.
+ * by a gate above it. The wording follows the connection as it changes.
  */
 export function TechniquesFailed({ compact }: { compact?: boolean }) {
   const tryAgain = () => {
@@ -36,7 +40,7 @@ export function TechniquesFailed({ compact }: { compact?: boolean }) {
       if (Platform.OS === 'web' && navigator.onLine && looksLikeMissingChunk(e instanceof Error ? e : null)) window.location.reload();
     });
   };
-  const offline = Platform.OS === 'web' ? !navigator.onLine : false;
+  const offline = !useSyncExternalStore(onConnectionChange, isOnline, () => true);
   return (
     <PencilState
       kind="error"
