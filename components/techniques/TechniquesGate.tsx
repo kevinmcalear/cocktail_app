@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Platform } from 'react-native';
 
 import { PencilState } from '@/components/ds';
-import { looksLikeMissingChunk, retryTechniques, useTechniques, useTechniquesFailure } from '@/lib/techniques';
+import { loadTechniques, looksLikeMissingChunk, useTechniques, useTechniquesFailure } from '@/lib/techniques';
 
 /**
  * Renders its children once the technique library (lib/techniques, a lazy
@@ -12,7 +12,8 @@ import { looksLikeMissingChunk, retryTechniques, useTechniques, useTechniquesFai
  * root layout starts the load once the first screen's data is in, so a tap
  * through the app rarely waits; a deep link waits on one small fetch. If the
  * load fails (offline, or a deploy swapped the chunk) it says so, with Try
- * again; a missing chunk on the web reloads the page.
+ * again. On the web, a second failure while online that looks like a missing
+ * chunk reloads the page, the only way to get the new file names.
  */
 export function TechniquesGate({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
   const ready = useTechniques();
@@ -20,8 +21,9 @@ export function TechniquesGate({ children, fallback = null }: { children: ReactN
   if (ready) return children;
   if (!failure) return fallback;
   const tryAgain = () => {
-    if (Platform.OS === 'web' && looksLikeMissingChunk(failure)) window.location.reload();
-    else void retryTechniques().catch(() => {});
+    loadTechniques().catch((e: unknown) => {
+      if (Platform.OS === 'web' && navigator.onLine && looksLikeMissingChunk(e instanceof Error ? e : null)) window.location.reload();
+    });
   };
   return <PencilState kind="error" title="Couldn’t load the technique library." detail="Check your connection." action={{ label: 'Try again', onPress: tryAgain }} />;
 }
