@@ -14,7 +14,7 @@
  * venues can't write their own yet. Upgrade path: a `techniques` table
  * seeded from this data, once venues need house techniques.
  */
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import type { IconName } from '@/components/ds';
 
@@ -49,14 +49,24 @@ export function installTechniques(lib: Library) {
 }
 
 /** Loads the library once; a failed load (offline, an old deploy) is tried again on the next call. */
-export function loadTechniques(): Promise<void> {
+export const loadTechniques = (): Promise<void> => loadTechniquesFrom(() => import('./library'));
+
+/** loadTechniques with its own source: the lazy import above, or a stand-in in lib/techniques/failure.check.ts. */
+export function loadTechniquesFrom(importer: () => Promise<Library>): Promise<void> {
   if (loaded) return Promise.resolve();
-  loading ??= import('./library').then(installTechniques, (e: unknown) => {
+  loading ??= importer().then(installTechniques, (e: unknown) => {
     loading = null;
     throw e;
   });
   return loading;
 }
+
+/**
+ * A missing chunk (a deploy swapped the file names) only comes back with a reload,
+ * but the browser words it the way it words a dropped connection, so a reload is for
+ * a tapped retry that fails again while online, never automatic.
+ */
+export const looksLikeMissingChunk = (e: Error | null) => !!e && /chunk|loading module|dynamically imported|importing a module/i.test(e.message);
 
 export const techniquesLoaded = () => loaded !== null;
 
@@ -69,26 +79,36 @@ const subscribe = (l: () => void) => {
 };
 
 /**
- * True once the library is in. Starts the load when `want` (a screen that
- * may never need it passes false), and while it's mounted keeps trying a
- * failed one (offline), every few seconds, longer each time.
+ * The library's state for one mounted screen: `ready` once it's in; `failed`
+ * (the last error) once this mount's second try in a row has failed, so a
+ * one-off hiccup that the next try fixes never shows. Starts the load when
+ * `want` (a screen that may never need it passes false), and while mounted
+ * keeps trying a failed one (offline), every few seconds, longer each time.
+ * Failure is per mount, never shared, so a screen opened after an earlier
+ * failure starts from the fallback.
  */
-export function useTechniques(want = true): boolean {
+export function useTechniquesState(want = true): { ready: boolean; failed: Error | null } {
   const ready = useSyncExternalStore(subscribe, techniquesLoaded, notOnServer);
+  const [failed, setFailed] = useState<Error | null>(null);
   useEffect(() => {
     if (ready || !want) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let wait = 2000;
+    let misses = 0;
     const tryLoad = () =>
-      loadTechniques().catch(() => {
+      loadTechniques().catch((e: unknown) => {
+        if (++misses >= 2) setFailed(e instanceof Error ? e : new Error(String(e)));
         timer = setTimeout(tryLoad, wait);
         wait = Math.min(wait * 2, 30_000);
       });
     void tryLoad();
     return () => clearTimeout(timer);
   }, [ready, want]);
-  return ready;
+  return { ready, failed: ready ? null : failed };
 }
+
+/** True once the library is in; see useTechniquesState. */
+export const useTechniques = (want = true): boolean => useTechniquesState(want).ready;
 
 /** Every technique; empty until the library is in. */
 export const allTechniques = (): readonly Technique[] => loaded?.techniques ?? [];

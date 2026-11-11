@@ -1,16 +1,16 @@
 import { useDeferredValue, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Chip, EquipmentThumb, Field } from '@/components/ds';
+import { Chip, EquipmentThumb, Field, Sheet } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useBarKit, useSaveTool, type KitRow, type ToolChange } from '@/hooks/useBarKit';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
-import { allEquipment, equipmentById, equipmentMatches } from '@/lib/techniques';
+import { allEquipment, equipmentById, equipmentMatches, useTechniquesState } from '@/lib/techniques';
 import { kitCount, TOOL_LOCATION_LABEL } from '@/lib/venueKit';
 
 import { KitAddSheet, KitChipGroup, useOpenKey, type KitQuestion } from './KitAddSheet';
 import { SourceQuestion, trimmed, type KitSource } from './SourceQuestion';
-import { TechniquesGate } from '@/components/techniques/TechniquesGate';
+import { TechniquesFailed } from '@/components/techniques/TechniquesGate';
 
 const FAILED = 'Couldn’t save that. Check your connection and try again.';
 const LOCATIONS = ['bar', 'prep'] as const;
@@ -160,13 +160,20 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
 const styles = StyleSheet.create({
   stack: { gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  failed: { padding: space.lg, minHeight: space.xxxl * 2 },
 });
 
-/** ToolSheet, once the technique library is in (lib/techniques). */
+/**
+ * ToolSheet. It always opens: until the technique library is in (lib/techniques)
+ * the sheet shows nothing, and after two failed loads its compact error with
+ * Try again, so a gate above never swallows it and the page behind shows nothing.
+ */
 export function ToolSheet(props: ToolSheetProps) {
+  const { ready, failed } = useTechniquesState();
+  if (ready) return <ToolSheetKeyed {...props} />;
   return (
-    <TechniquesGate>
-      <ToolSheetKeyed {...props} />
-    </TechniquesGate>
+    <Sheet visible={props.visible} onClose={props.onClose} accessibilityLabel={props.tool ? 'Change the tool' : 'Add tools'}>
+      <View style={styles.failed}>{failed ? <TechniquesFailed compact /> : null}</View>
+    </Sheet>
   );
 }

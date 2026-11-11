@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
+import { Platform } from 'react-native';
 
-import { useTechniques } from '@/lib/techniques';
+import { PencilState } from '@/components/ds';
+import { loadTechniques, looksLikeMissingChunk, useTechniquesState } from '@/lib/techniques';
 
 /**
  * Renders its children once the technique library (lib/techniques, a lazy
@@ -9,7 +11,39 @@ import { useTechniques } from '@/lib/techniques';
  * from the empty library, so a reader must not render before the load. The
  * root layout starts the load once the first screen's data is in, so a tap
  * through the app rarely waits; a deep link waits on one small fetch.
+ *
+ * If the load has failed twice in a row (offline, or a deploy swapped the
+ * chunk) it says so, with Try again: `onFailure` picks the size ('full' for a
+ * screen, 'compact' for a sheet body, 'none' for a card that can go without).
+ * On the web, a tapped retry that fails again while online with a missing-
+ * chunk error reloads the page, the only way to get the new file names.
  */
-export function TechniquesGate({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
-  return useTechniques() ? children : fallback;
+export function TechniquesGate({ children, fallback = null, onFailure = 'full' }: { children: ReactNode; fallback?: ReactNode; onFailure?: 'full' | 'compact' | 'none' }) {
+  const { ready, failed } = useTechniquesState();
+  if (ready) return children;
+  if (!failed || onFailure === 'none') return fallback;
+  return <TechniquesFailed compact={onFailure === 'compact'} />;
+}
+
+/**
+ * The failed message and its Try again, for a gate or for a sheet that opens
+ * first and gates its own content (ToolSheet), so a sheet is never swallowed
+ * by a gate above it.
+ */
+export function TechniquesFailed({ compact }: { compact?: boolean }) {
+  const tryAgain = () => {
+    loadTechniques().catch((e: unknown) => {
+      if (Platform.OS === 'web' && navigator.onLine && looksLikeMissingChunk(e instanceof Error ? e : null)) window.location.reload();
+    });
+  };
+  const offline = Platform.OS === 'web' ? !navigator.onLine : false;
+  return (
+    <PencilState
+      kind="error"
+      compact={compact}
+      title="Couldn’t load the technique library."
+      detail={offline ? 'Check your connection and try again.' : 'Try again, or reload if it keeps happening.'}
+      action={{ label: 'Try again', onPress: tryAgain }}
+    />
+  );
 }
