@@ -22,6 +22,15 @@ export function TechniquesGate({ children, fallback = null, onFailure = 'full' }
   const { ready, failed } = useTechniquesState();
   if (ready) return children;
   if (!failed || onFailure === 'none') return fallback;
+  return <TechniquesFailed compact={onFailure === 'compact'} />;
+}
+
+/**
+ * The failed message and its Try again, for a gate or for a sheet that opens
+ * first and gates its own content (ToolSheet), so a sheet is never swallowed
+ * by a gate above it.
+ */
+export function TechniquesFailed({ compact }: { compact?: boolean }) {
   const tryAgain = () => {
     loadTechniques().catch((e: unknown) => {
       if (Platform.OS === 'web' && navigator.onLine && looksLikeMissingChunk(e instanceof Error ? e : null)) window.location.reload();
@@ -31,7 +40,7 @@ export function TechniquesGate({ children, fallback = null, onFailure = 'full' }
   return (
     <PencilState
       kind="error"
-      compact={onFailure === 'compact'}
+      compact={compact}
       title="Couldn’t load the technique library."
       detail={offline ? 'Check your connection and try again.' : 'Try again, or reload if it keeps happening.'}
       action={{ label: 'Try again', onPress: tryAgain }}
