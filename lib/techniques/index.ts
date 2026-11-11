@@ -34,6 +34,7 @@ type Loaded = {
 
 let loaded: Loaded | null = null;
 let loading: Promise<void> | null = null;
+let failure: Error | null = null;
 const listeners = new Set<() => void>();
 
 /** Puts the data in: loadTechniques() on the app, lib/techniques/testing.ts in checks and tests. */
@@ -49,13 +50,34 @@ export function installTechniques(lib: Library) {
 }
 
 /** Loads the library once; a failed load (offline, an old deploy) is tried again on the next call. */
-export function loadTechniques(): Promise<void> {
+export function loadTechniques(importer: () => Promise<Library> = () => import('./library')): Promise<void> {
   if (loaded) return Promise.resolve();
-  loading ??= import('./library').then(installTechniques, (e: unknown) => {
+  loading ??= importer().then(installTechniques, (e: unknown) => {
     loading = null;
+    failure = e instanceof Error ? e : new Error(String(e));
+    for (const l of listeners) l();
     throw e;
   });
   return loading;
+}
+
+/** Try again from the failed message: the message goes, and comes back if the load fails again. */
+export function retryTechniques(importer?: () => Promise<Library>): Promise<void> {
+  if (failure) {
+    failure = null;
+    for (const l of listeners) l();
+  }
+  return loadTechniques(importer);
+}
+
+/** A missing chunk (a deploy swapped the file names) only comes back with a reload; a dropped connection doesn't need one. */
+export const looksLikeMissingChunk = (e: Error | null) => !!e && /chunk|loading module|dynamically imported|importing a module/i.test(e.message);
+
+/** The error from the last failed load, until it succeeds or is retried; null before then and on the server. */
+export const techniquesFailure = () => failure;
+
+export function useTechniquesFailure(): Error | null {
+  return useSyncExternalStore(subscribe, techniquesFailure, () => null);
 }
 
 export const techniquesLoaded = () => loaded !== null;
