@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
 /** ToolSheet, once the technique library is in (lib/techniques). */
 export function ToolSheet(props: ToolSheetProps) {
   return (
-    <TechniquesGate>
+    <TechniquesGate onFailure="compact">
       <ToolSheetKeyed {...props} />
     </TechniquesGate>
   );

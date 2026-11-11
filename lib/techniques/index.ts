@@ -14,7 +14,7 @@
  * venues can't write their own yet. Upgrade path: a `techniques` table
  * seeded from this data, once venues need house techniques.
  */
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 import type { IconName } from '@/components/ds';
 
@@ -34,7 +34,6 @@ type Loaded = {
 
 let loaded: Loaded | null = null;
 let loading: Promise<void> | null = null;
-let failure: Error | null = null;
 const listeners = new Set<() => void>();
 
 /** Puts the data in: loadTechniques() on the app, lib/techniques/testing.ts in checks and tests. */
@@ -46,7 +45,6 @@ export function installTechniques(lib: Library) {
     techniqueIds: new Map(lib.TECHNIQUES.map((t) => [t.id, t])),
     equipmentIds: new Map(lib.EQUIPMENT.map((e) => [e.id, e])),
   };
-  failure = null;
   for (const l of listeners) l();
 }
 
@@ -58,8 +56,6 @@ export function loadTechniquesFrom(importer: () => Promise<Library>): Promise<vo
   if (loaded) return Promise.resolve();
   loading ??= importer().then(installTechniques, (e: unknown) => {
     loading = null;
-    failure = e instanceof Error ? e : new Error(String(e));
-    for (const l of listeners) l();
     throw e;
   });
   return loading;
@@ -68,16 +64,9 @@ export function loadTechniquesFrom(importer: () => Promise<Library>): Promise<vo
 /**
  * A missing chunk (a deploy swapped the file names) only comes back with a reload,
  * but the browser words it the way it words a dropped connection, so a reload is for
- * a second failure while online, not the first.
+ * a tapped retry that fails again while online, never automatic.
  */
 export const looksLikeMissingChunk = (e: Error | null) => !!e && /chunk|loading module|dynamically imported|importing a module/i.test(e.message);
-
-/** The error from the last failed load, until a load succeeds; null before then and on the server. */
-export const techniquesFailure = () => failure;
-
-export function useTechniquesFailure(): Error | null {
-  return useSyncExternalStore(subscribe, techniquesFailure, () => null);
-}
 
 export const techniquesLoaded = () => loaded !== null;
 
@@ -90,31 +79,36 @@ const subscribe = (l: () => void) => {
 };
 
 /**
- * True once the library is in. Starts the load when `want` (a screen that
- * may never need it passes false), and while it's mounted keeps trying a
- * failed one (offline), every few seconds, longer each time.
+ * The library's state for one mounted screen: `ready` once it's in; `failed`
+ * (the last error) once this mount's second try in a row has failed, so a
+ * one-off hiccup that the next try fixes never shows. Starts the load when
+ * `want` (a screen that may never need it passes false), and while mounted
+ * keeps trying a failed one (offline), every few seconds, longer each time.
+ * Failure is per mount, never shared, so a screen opened after an earlier
+ * failure starts from the fallback.
  */
-export function useTechniques(want = true): boolean {
+export function useTechniquesState(want = true): { ready: boolean; failed: Error | null } {
   const ready = useSyncExternalStore(subscribe, techniquesLoaded, notOnServer);
+  const [failed, setFailed] = useState<Error | null>(null);
   useEffect(() => {
     if (ready || !want) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let wait = 2000;
+    let misses = 0;
     const tryLoad = () =>
-      loadTechniques().catch(() => {
+      loadTechniques().catch((e: unknown) => {
+        if (++misses >= 2) setFailed(e instanceof Error ? e : new Error(String(e)));
         timer = setTimeout(tryLoad, wait);
         wait = Math.min(wait * 2, 30_000);
       });
-    // A failure from before this screen mounted is stale (back online, say): start from the fallback again.
-    if (failure) {
-      failure = null;
-      for (const l of listeners) l();
-    }
     void tryLoad();
     return () => clearTimeout(timer);
   }, [ready, want]);
-  return ready;
+  return { ready, failed: ready ? null : failed };
 }
+
+/** True once the library is in; see useTechniquesState. */
+export const useTechniques = (want = true): boolean => useTechniquesState(want).ready;
 
 /** Every technique; empty until the library is in. */
 export const allTechniques = (): readonly Technique[] => loaded?.techniques ?? [];

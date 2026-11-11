@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
 /** TechnicalIngredientCard, once the technique library is in (lib/techniques). */
 export function TechnicalIngredientCard(props: ComponentProps<typeof TechnicalIngredientCardBody>) {
   return (
-    <TechniquesGate>
+    <TechniquesGate onFailure="none">
       <TechnicalIngredientCardBody {...props} />
     </TechniquesGate>
   );
