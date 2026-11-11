@@ -29,6 +29,7 @@ import { authRedirect, needsOnboarding } from '@/lib/onboarding';
 import { installWebAlert } from '@/lib/dialogs';
 import { afterFirstData } from '@/lib/idleQueue';
 import { prefetchRoutes } from '@/lib/prefetchRoutes';
+import { loadTechniques } from '@/lib/techniques';
 import { BringIn, RootExtras, SideNav } from '@/components/nav/RootLazy';
 import { SEE_THROUGH_ROUTES } from '@/components/nav/seeThrough';
 
@@ -269,6 +270,7 @@ function RootLayout() {
       () => {
         loadAsync(LATER_FONTS).catch((e) => console.warn('Fonts failed to load', e));
         void prefetchRoutes();
+        loadTechniques().catch(() => {}); // so the screens that read it rarely wait (lib/techniques)
       },
       15_000,
       1_000,

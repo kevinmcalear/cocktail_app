@@ -2,29 +2,109 @@
  * The technique library: how to make anything behind the bar, with the
  * equipment each way needs. Built-in data, not a table.
  *
+ * The data (lib/techniques/library.ts, ~150 KB) is one lazy chunk on the web,
+ * so no page's first load carries it. This file is the small part every page
+ * may load: the groups, the pure helpers, and a registry that answers once
+ * the data is in. A screen that reads the library renders under
+ * <TechniquesGate> (components/techniques/TechniquesGate.tsx) or returns early
+ * until useTechniques() is true; a save path awaits loadTechniques(). Read
+ * before then, every getter answers as if the library were empty.
+ *
  * ponytail: shipped with the app, so a new technique is an app update and
  * venues can't write their own yet. Upgrade path: a `techniques` table
  * seeded from this data, once venues need house techniques.
  */
+import { useEffect, useSyncExternalStore } from 'react';
+
 import type { IconName } from '@/components/ds';
 
-import { AGE, KITCHEN } from './data/age';
-import { CLARIFY, WASH } from './data/clarify';
-import { COOK } from './data/cook';
-import { FERMENT } from './data/ferment';
-import { FOAM } from './data/foam';
-import { GARNISH } from './data/garnish';
-import { INFUSE } from './data/infuse';
-import { LAB } from './data/lab';
-import { CARBONATE, COLD, DISTIL, PRESERVE } from './data/more';
-import { SHAKE } from './data/shake';
-import { SYRUP } from './data/syrup';
-import { TEXTURE } from './data/texture';
-import { equipmentById } from './equipment';
-import type { Part, Technique, TechniqueGroup } from './types';
+import type { Equipment, EquipmentKind, Part, Technique, TechniqueGroup } from './types';
 
 export type { BuyAudience, BuyLink, Equipment, EquipmentKind, Grade, Part, Source, Step, Technique, TechniqueGroup } from './types';
-export { EQUIPMENT, EQUIPMENT_KINDS, equipmentById, equipmentMatches, TIER_LABEL } from './equipment';
+
+// --- the registry ---
+
+type Library = { TECHNIQUES: readonly Technique[]; EQUIPMENT: readonly Equipment[] };
+type Loaded = {
+  techniques: readonly Technique[];
+  equipment: readonly Equipment[];
+  techniqueIds: ReadonlyMap<string, Technique>;
+  equipmentIds: ReadonlyMap<string, Equipment>;
+};
+
+let loaded: Loaded | null = null;
+let loading: Promise<void> | null = null;
+const listeners = new Set<() => void>();
+
+/** Puts the data in: loadTechniques() on the app, lib/techniques/testing.ts in checks and tests. */
+export function installTechniques(lib: Library) {
+  if (loaded) return;
+  loaded = {
+    techniques: lib.TECHNIQUES,
+    equipment: lib.EQUIPMENT,
+    techniqueIds: new Map(lib.TECHNIQUES.map((t) => [t.id, t])),
+    equipmentIds: new Map(lib.EQUIPMENT.map((e) => [e.id, e])),
+  };
+  for (const l of listeners) l();
+}
+
+/** Loads the library once; a failed load (offline, an old deploy) is tried again on the next call. */
+export function loadTechniques(): Promise<void> {
+  if (loaded) return Promise.resolve();
+  loading ??= import('./library').then(installTechniques, (e: unknown) => {
+    loading = null;
+    throw e;
+  });
+  return loading;
+}
+
+export const techniquesLoaded = () => loaded !== null;
+
+// The static export renders without the library, and hydration must match it.
+const notOnServer = () => false;
+
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+
+/**
+ * True once the library is in. Starts the load when `want` (a screen that
+ * may never need it passes false), and while it's mounted keeps trying a
+ * failed one (offline), every few seconds, longer each time.
+ */
+export function useTechniques(want = true): boolean {
+  const ready = useSyncExternalStore(subscribe, techniquesLoaded, notOnServer);
+  useEffect(() => {
+    if (ready || !want) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let wait = 2000;
+    const tryLoad = () =>
+      loadTechniques().catch(() => {
+        timer = setTimeout(tryLoad, wait);
+        wait = Math.min(wait * 2, 30_000);
+      });
+    void tryLoad();
+    return () => clearTimeout(timer);
+  }, [ready, want]);
+  return ready;
+}
+
+/** Every technique; empty until the library is in. */
+export const allTechniques = (): readonly Technique[] => loaded?.techniques ?? [];
+
+/** Every piece of equipment; empty until the library is in. */
+export const allEquipment = (): readonly Equipment[] => loaded?.equipment ?? [];
+
+export function techniqueById(id: string | null | undefined): Technique | undefined {
+  return id ? loaded?.techniqueIds.get(id) : undefined;
+}
+
+export function equipmentById(id: string): Equipment | undefined {
+  return loaded?.equipmentIds.get(id);
+}
+
+// --- small, always here ---
 
 export const GROUPS: { id: TechniqueGroup; name: string; blurb: string; icon: IconName }[] = [
   { id: 'shake', name: 'Shake and stir', blurb: 'Dilution, dry shakes, the whip', icon: 'wineglass' },
@@ -42,17 +122,6 @@ export const GROUPS: { id: TechniqueGroup; name: string; blurb: string; icon: Ic
   { id: 'age', name: 'Age and wood', blurb: 'Barrels, oak, house liqueurs', icon: 'clock' },
   { id: 'distil', name: 'Distil', blurb: 'Rotary evaporation', icon: 'hammer.fill' },
 ];
-
-export const TECHNIQUES: Technique[] = [
-  ...SHAKE, ...FOAM, ...CLARIFY, ...WASH, ...INFUSE, ...SYRUP, ...TEXTURE, ...CARBONATE, ...COLD, ...PRESERVE, ...DISTIL,
-  ...LAB, ...FERMENT, ...COOK, ...GARNISH, ...AGE, ...KITCHEN,
-];
-
-const BY_ID = new Map(TECHNIQUES.map((t) => [t.id, t]));
-
-export function techniqueById(id: string | null | undefined): Technique | undefined {
-  return id ? BY_ID.get(id) : undefined;
-}
 
 export function groupById(id: string | null | undefined) {
   return GROUPS.find((g) => g.id === id);
@@ -72,7 +141,7 @@ export function groupForAction(action: string): TechniqueGroup | undefined {
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
 
 /** Techniques whose name, other names or summary hold every word typed. */
-export function searchTechniques(query: string, list: readonly Technique[] = TECHNIQUES): Technique[] {
+export function searchTechniques(query: string, list: readonly Technique[] = allTechniques()): Technique[] {
   const words = norm(query).split(' ').filter(Boolean);
   if (!words.length) return [...list];
   return list.filter((t) => {
@@ -94,15 +163,15 @@ export function missingKit(t: Technique, kit: ReadonlySet<string>): string[] {
 /** Techniques that need or use a piece of equipment. */
 export function techniquesUsing(equipmentId: string): { needs: Technique[]; helps: Technique[] } {
   return {
-    needs: TECHNIQUES.filter((t) => t.equipment.includes(equipmentId)),
-    helps: TECHNIQUES.filter((t) => t.helpful?.includes(equipmentId)),
+    needs: allTechniques().filter((t) => t.equipment.includes(equipmentId)),
+    helps: allTechniques().filter((t) => t.helpful?.includes(equipmentId)),
   };
 }
 
 /** How many techniques owning this piece would open up, given the rest of the kit. */
 export function unlocks(equipmentId: string, kit: ReadonlySet<string>): number {
   const withIt = new Set(kit).add(equipmentId);
-  return TECHNIQUES.filter((t) => t.equipment.includes(equipmentId) && canMake(t, withIt)).length;
+  return allTechniques().filter((t) => t.equipment.includes(equipmentId) && canMake(t, withIt)).length;
 }
 
 /** The parts for an amount of base: 400 g juice → 133 g water, 1.07 g agar. */
@@ -119,3 +188,29 @@ export function formatDose(n: number): string {
   return n > 0 ? '<0.01' : '0';
 }
 
+export const EQUIPMENT_KINDS: { id: EquipmentKind; name: string }[] = [
+  { id: 'bar', name: 'Bar tools' },
+  { id: 'kitchen', name: 'Kitchen' },
+  { id: 'measure', name: 'Measure' },
+  { id: 'mix', name: 'Blend and whip' },
+  { id: 'pressure', name: 'Gas and vacuum' },
+  { id: 'temperature', name: 'Heat and cold' },
+  { id: 'separate', name: 'Strain and spin' },
+  { id: 'specialist', name: 'Specialist' },
+];
+
+/** A tier in words: only `price` is sourced, so tiers stay rough. */
+export const TIER_LABEL: Record<Equipment['tier'], string> = { $: 'Under about $50', $$: 'About $50 to $500', $$$: 'Over about $500' };
+
+/**
+ * A search of the kit list: every word in its name, what it's for, its other
+ * names or a product it names ("hydrosonic homogenizer" finds the ultrasonic
+ * probe; "Klaris", "Hoshizaki"). A buy link's shop, after its last comma, is
+ * left out, or "pan" would find everything Modernist Pantry sells.
+ */
+export function equipmentMatches(e: Equipment, search: string): boolean {
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean);
+  const products = (e.buy ?? []).map((b) => (b.name.includes(', ') ? b.name.slice(0, b.name.lastIndexOf(', ')) : b.name));
+  const text = [e.name, e.what, ...(e.aka ?? []), ...products].join(' ').toLowerCase();
+  return words.every((w) => text.includes(w));
+}

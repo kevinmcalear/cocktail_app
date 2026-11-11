@@ -10,13 +10,14 @@ import { HOME_BAR } from '@/lib/itemRoutes';
 import { WizardDialog } from '../addDrink/WizardDialog';
 import { WizardWaiting } from '../addDrink/WizardWaiting';
 import { AddBottle } from './AddBottle';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 /**
  * /add-ingredient without a draft: A bottle you buy (Add-bottle), one
  * screen; on a wide web window a centred dialog. It's something I make goes
  * to the house-made steps (/make-recipe). Saved, it opens the bottle's page.
  */
-export function AddIngredientRoute() {
+function AddIngredientRouteBody() {
   const router = useRouter();
   const params = useLocalSearchParams<{ barId?: string; name?: string }>();
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
@@ -50,5 +51,14 @@ export function AddIngredientRoute() {
         wizard
       )}
     </VenueBrandProvider>
+  );
+}
+
+/** AddIngredientRoute, once the technique library is in (lib/techniques). */
+export function AddIngredientRoute() {
+  return (
+    <TechniquesGate>
+      <AddIngredientRouteBody />
+    </TechniquesGate>
   );
 }

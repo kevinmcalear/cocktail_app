@@ -5,11 +5,12 @@ import { Chip, EquipmentThumb, Field } from '@/components/ds';
 import { space } from '@/constants/tokens';
 import { useBarKit, useSaveTool, type KitRow, type ToolChange } from '@/hooks/useBarKit';
 import { useVenueSuppliers } from '@/hooks/useVenueSuppliers';
-import { EQUIPMENT, equipmentById, equipmentMatches } from '@/lib/techniques/equipment';
+import { allEquipment, equipmentById, equipmentMatches } from '@/lib/techniques';
 import { kitCount, TOOL_LOCATION_LABEL } from '@/lib/venueKit';
 
 import { KitAddSheet, KitChipGroup, useOpenKey, type KitQuestion } from './KitAddSheet';
 import { SourceQuestion, trimmed, type KitSource } from './SourceQuestion';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 const FAILED = 'Couldn’t save that. Check your connection and try again.';
 const LOCATIONS = ['bar', 'prep'] as const;
@@ -35,7 +36,7 @@ export interface ToolSheetProps {
  * Add tools, or change one: which tool, where it comes from, where it is.
  * Adding picks as many of ours as you like; the next two answers go on each.
  */
-export function ToolSheet(props: ToolSheetProps) {
+function ToolSheetKeyed(props: ToolSheetProps) {
   return <ToolSheetBody key={useOpenKey(props.visible)} {...props} />;
 }
 
@@ -60,7 +61,7 @@ function ToolSheetBody({ barId, visible, onClose, tool, initialKey, startAt = 0,
 
   // Ours not on the venue's list yet, matching the search; every one with none typed.
   // ponytail: the first dozen until a search narrows it; a browse by kind if a dozen isn't enough.
-  const ours = EQUIPMENT.filter((e) => !have.includes(e.id) && (!search || equipmentMatches(e, search))).slice(0, search ? 30 : 12);
+  const ours = allEquipment().filter((e) => !have.includes(e.id) && (!search || equipmentMatches(e, search))).slice(0, search ? 30 : 12);
   const picked = keys.flatMap((id) => equipmentById(id) ?? []);
   // Picked ones stay where they are; any the list doesn't show lead it.
   const shown = [...picked.filter((e) => !ours.includes(e)), ...ours];
@@ -160,3 +161,12 @@ const styles = StyleSheet.create({
   stack: { gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });
+
+/** ToolSheet, once the technique library is in (lib/techniques). */
+export function ToolSheet(props: ToolSheetProps) {
+  return (
+    <TechniquesGate>
+      <ToolSheetKeyed {...props} />
+    </TechniquesGate>
+  );
+}

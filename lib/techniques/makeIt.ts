@@ -6,7 +6,7 @@
  */
 import { guessKind } from '../prepMath';
 import type { PREP_ACTIONS } from '../scale';
-import { formatDose, scaleParts, techniqueById, TECHNIQUES } from './index';
+import { allTechniques, formatDose, scaleParts, techniqueById, techniquesLoaded } from './index';
 import type { BaseKind, Technique, TechniqueGroup } from './types';
 
 type PrepAction = (typeof PREP_ACTIONS)[number];
@@ -95,8 +95,14 @@ const RULES: { test: RegExp; ids?: string[]; group?: TechniqueGroup; mod?: true 
 
 /** Other names that are just an ingredient, so they don't make a technique on their own. */
 const NOT_ALIASES = new Set(['olive oil', 'gum arabic', 'tapioca maltodextrin', 'soy lecithin']);
-/** Every technique's other names of two words or more ("bacon bourbon", "herb oil"), as whole phrases. */
-const ALIASES = TECHNIQUES.flatMap((t) => (t.also ?? []).filter((a) => a.includes(' ') && !NOT_ALIASES.has(a)).map((a) => ({ t, re: new RegExp(`\\b${a}\\b`) })));
+/** Every technique's other names of two words or more ("bacon bourbon", "herb oil"), as whole phrases; built once the library is in. */
+let ALIASES: { t: Technique; re: RegExp }[] | undefined;
+const aliases = () => {
+  if (!ALIASES && techniquesLoaded()) {
+    ALIASES = allTechniques().flatMap((t) => (t.also ?? []).filter((a) => a.includes(' ') && !NOT_ALIASES.has(a)).map((a) => ({ t, re: new RegExp(`\\b${a}\\b`) })));
+  }
+  return ALIASES ?? [];
+};
 
 /**
  * Bought, not made: a name that only looks like a prep. Brands of bitters
@@ -144,11 +150,11 @@ export function waysToMake(name: string): Technique[] {
   };
   for (const r of RULES) {
     if (!r.test.test(n)) continue;
-    const list = r.group ? TECHNIQUES.filter((t) => t.group === r.group) : (r.ids ?? []).map((id) => techniqueById(id));
+    const list = r.group ? allTechniques().filter((t) => t.group === r.group) : (r.ids ?? []).map((id) => techniqueById(id));
     for (const t of list) add(t, !!r.mod);
   }
   // Every technique's other names reach it too ("bacon bourbon", "herb oil"), whole phrases of two words or more.
-  for (const { t, re } of ALIASES) if (re.test(n)) add(t, false);
+  for (const { t, re } of aliases()) if (re.test(n)) add(t, false);
   const kind = startsFrom(n);
   const fit = (t: Technique) => (!kind || !t.starts ? 0 : FITS[kind]?.includes(t.starts) ? 0 : t.starts === 'liquid' ? 1 : 2);
   return found

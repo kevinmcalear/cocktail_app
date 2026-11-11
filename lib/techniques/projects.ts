@@ -3,8 +3,7 @@
 // (hooks/useKit); the lab is technical ingredient ids, matched from the
 // names on your shelf.
 
-import { equipmentById } from './equipment';
-import { TECHNIQUES } from './index';
+import { allTechniques, equipmentById } from './index';
 import { LAB_TITLES, labIdFor } from './labNames';
 import { actionFor, waysToMake } from './makeIt';
 import type { Technique } from './types';
@@ -41,7 +40,7 @@ const labName = (id: string) => LAB_TITLES[id as keyof typeof LAB_TITLES] ?? id;
  * Techniques behind a safety or legal gate (liquid nitrogen, distilling) are
  * never suggested.
  */
-export function projectsFor(kit: ReadonlySet<string>, lab: ReadonlySet<string>, list: readonly Technique[] = TECHNIQUES): { ready: Project[]; away: AwayProject[] } {
+export function projectsFor(kit: ReadonlySet<string>, lab: ReadonlySet<string>, list: readonly Technique[] = allTechniques()): { ready: Project[]; away: AwayProject[] } {
   const ready: Project[] = [];
   const away = new Map<string, AwayProject>();
   for (const t of list) {
@@ -73,6 +72,6 @@ export function madeWith(t: Technique, prep: { name: string; actions: readonly s
   if (t.method) return false;
   const action = actionFor(t);
   if (!prep.actions.includes(action)) return false;
-  const sharing = TECHNIQUES.filter((x) => !x.method && actionFor(x) === action);
+  const sharing = allTechniques().filter((x) => !x.method && actionFor(x) === action);
   return sharing.length === 1 || waysToMake(prep.name).some((x) => x.id === t.id);
 }

@@ -2,7 +2,7 @@
  * Learn (Kept-learn): the hub's kit rows and a technique's steps as drawn.
  * Pure, so lib/techniques/learn.check.ts can hold it to the board.
  */
-import { EQUIPMENT, TECHNIQUES, unlocks } from './index';
+import { allEquipment, allTechniques, unlocks } from './index';
 
 /**
  * A step as the board draws it: the first sentence as its name, the rest
@@ -29,10 +29,10 @@ export interface KitPick {
  * said yet, the two that would open the most.
  */
 export function kitPicks(kit: ReadonlySet<string>): KitPick[] {
-  const needs = (id: string) => TECHNIQUES.filter((t) => t.equipment.includes(id)).length;
+  const needs = (id: string) => allTechniques().filter((t) => t.equipment.includes(id)).length;
   const byNeed = (a: { id: string }, b: { id: string }) => needs(b.id) - needs(a.id);
-  const had = EQUIPMENT.filter((e) => kit.has(e.id)).sort(byNeed)[0];
-  const away = EQUIPMENT.filter((e) => !kit.has(e.id))
+  const had = allEquipment().filter((e) => kit.has(e.id)).sort(byNeed)[0];
+  const away = allEquipment().filter((e) => !kit.has(e.id))
     .map((e) => ({ e, opens: unlocks(e.id, kit) }))
     .filter((x) => x.opens > 0)
     .sort((a, b) => b.opens - a.opens || byNeed(a.e, b.e));

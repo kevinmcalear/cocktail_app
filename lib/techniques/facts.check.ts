@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 import { factTiles, keepLabel, keepLine, membersLine, ratioTile, swapLine } from './facts';
+import './testing';
 import { techniqueById } from './index';
 
 // The Keeps row: how long and how, never the word keeps again.

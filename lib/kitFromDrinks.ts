@@ -7,7 +7,7 @@ import { itemGlass } from '../supabase/functions/_shared/sketchKinds';
 
 import { iceKind, iceNameOf, type IceName } from './iceBuild';
 import type { SketchGlass } from './sketch/types';
-import { equipmentById } from './techniques/equipment';
+import { equipmentById } from './techniques';
 import { venueIceKinds, type IceKind } from './venueKit';
 
 export interface DrinkKit {

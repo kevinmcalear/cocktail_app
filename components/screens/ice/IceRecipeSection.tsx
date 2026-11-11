@@ -9,7 +9,7 @@ import { useAddTools, useBarKit } from '@/hooks/useBarKit';
 import { useIceStartsFrom } from '@/hooks/useIceRecipe';
 import { useItemPrep } from '@/hooks/usePrepCard';
 import { useVenueIce, type VenueIce } from '@/hooks/useVenueIce';
-import { equipmentById } from '@/lib/techniques/equipment';
+import { equipmentById } from '@/lib/techniques';
 import { iceDrawKind, kitHasTool, kitSourceLine, toolLabel } from '@/lib/venueKit';
 
 export const iceRecipeHref = (barId: string, iceId: string) => `/settings/bar/${barId}/kit/ice/${iceId}?recipe=1` as Href;

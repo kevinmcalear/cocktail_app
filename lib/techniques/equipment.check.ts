@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { EQUIPMENT, equipmentById, equipmentMatches } from './equipment';
+import { EQUIPMENT } from './equipment';
+import { equipmentById, equipmentMatches } from './index';
+import './testing';
 
 const found = (search: string) => EQUIPMENT.filter((e) => equipmentMatches(e, search)).map((e) => e.id);
 

@@ -11,7 +11,7 @@ import { TechniqueSheet } from '@/components/techniques/TechniqueSheet';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import { useKitHere } from '@/hooks/useBarKit';
-import { canMake, groupById, GROUPS, searchTechniques, TECHNIQUES, type Technique } from '@/lib/techniques';
+import { allTechniques, canMake, groupById, GROUPS, searchTechniques, type Technique } from '@/lib/techniques';
 import { membersLine } from '@/lib/techniques/facts';
 
 type Filter = 'kit' | 'vegan' | 'quick';
@@ -38,7 +38,7 @@ export function TechniquesScreen({ group, foam = false, search = false }: { grou
   const only = groupById(group);
 
   const toggle = (f: Filter) => setFilters((fs) => (fs.includes(f) ? fs.filter((x) => x !== f) : [...fs, f]));
-  const pool = only ? TECHNIQUES.filter((t) => t.group === only.id) : TECHNIQUES;
+  const pool = only ? allTechniques().filter((t) => t.group === only.id) : allTechniques();
   const shown = searchTechniques(query, pool)
     .filter((t) => filters.every((f) => FILTERS.find((x) => x.value === f)!.test(t, kit)))
     // Once you've said what you have, what needs something else moves to the end.
@@ -86,7 +86,7 @@ export function TechniquesScreen({ group, foam = false, search = false }: { grou
       ) : (
         <Surface style={styles.groups}>
           {GROUPS.map((g, i) => {
-            const list = TECHNIQUES.filter((t) => t.group === g.id);
+            const list = allTechniques().filter((t) => t.group === g.id);
             return (
               <PressableScale
                 key={g.id}

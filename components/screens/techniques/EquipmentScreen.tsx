@@ -5,13 +5,14 @@ import { Body, Caption, DsText, PressableScale, Surface, useDs } from '@/compone
 import { LEARN_CRUMBS, TechniquePage } from '@/components/techniques/TechniquePage';
 import { font, radius, space } from '@/constants/tokens';
 import { useKit } from '@/hooks/useKit';
-import { canMake, EQUIPMENT, TECHNIQUES, TIER_LABEL, unlocks, type Equipment } from '@/lib/techniques';
+import { allEquipment, allTechniques, canMake, TIER_LABEL, unlocks, type Equipment } from '@/lib/techniques';
 
 /** My kit: one list of tools with a switch each. What you have filters the technique library. */
 export function EquipmentScreen() {
   const ds = useDs();
   const { kit, toggle } = useKit();
-  const can = TECHNIQUES.filter((t) => canMake(t, kit)).length;
+  const can = allTechniques().filter((t) => canMake(t, kit)).length;
+  const equipment = allEquipment();
   return (
     <TechniquePage
       title="My kit"
@@ -23,11 +24,11 @@ export function EquipmentScreen() {
         <DsText variant="title" color={ds.c.ground} style={styles.count}>
           {String(can)}
         </DsText>
-        <Body color={ds.c.ground}>{`of ${TECHNIQUES.length} techniques you can make`}</Body>
+        <Body color={ds.c.ground}>{`of ${allTechniques().length} techniques you can make`}</Body>
       </View>
       <Surface style={styles.list}>
-        {EQUIPMENT.map((e, i) => (
-          <KitRow key={e.id} e={e} kit={kit} onToggle={toggle} last={i === EQUIPMENT.length - 1} />
+        {equipment.map((e, i) => (
+          <KitRow key={e.id} e={e} kit={kit} onToggle={toggle} last={i === equipment.length - 1} />
         ))}
       </Surface>
     </TechniquePage>

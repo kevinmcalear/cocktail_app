@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type ComponentProps } from 'react';
 import { Platform, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -34,6 +34,7 @@ import { MadeList } from './MadeList';
 import { PhonePreview, PREVIEW_ROOM } from './PhonePreview';
 import { useEditHistory } from './useEditHistory';
 import { VenueSections, type PendingEdits, type VenueSheet } from './VenueSections';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null;
 
@@ -46,7 +47,7 @@ const NO_OUTLINE = Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) 
  * editor sits beside the drink as a phone shows it. Drafts open the same
  * page (DraftEditScreen).
  */
-export function DrinkEditScreen({ id, onExit, openOn, inSheet }: { id: string; onExit: () => void; openOn?: OpenOn; inSheet?: boolean }) {
+function DrinkEditScreenBody({ id, onExit, openOn, inSheet }: { id: string; onExit: () => void; openOn?: OpenOn; inSheet?: boolean }) {
   return (
     <EditBrand barId={useCocktail(id).data?.bar_id}>
       <SavedDrinkEdit id={id} onExit={onExit} openOn={openOn} inSheet={inSheet} />
@@ -275,3 +276,12 @@ const styles = StyleSheet.create({
   // The editor at the desk board's 640, the phone beside it.
   right: { flex: 1, maxWidth: 640, gap: space.xl },
 });
+
+/** DrinkEditScreen, once the technique library is in (lib/techniques). */
+export function DrinkEditScreen(props: ComponentProps<typeof DrinkEditScreenBody>) {
+  return (
+    <TechniquesGate>
+      <DrinkEditScreenBody {...props} />
+    </TechniquesGate>
+  );
+}

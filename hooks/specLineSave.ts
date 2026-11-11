@@ -11,7 +11,7 @@ import type { PrepDraft } from '@/lib/prepKinds';
 import { recipesToFinish } from '@/lib/prepMath';
 import { toLine, type SortableRecipeItem } from '@/lib/recipeItem';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
-import { techniqueById } from '@/lib/techniques';
+import { loadTechniques, techniqueById } from '@/lib/techniques';
 import { prepCardFor } from '@/lib/techniques/makeIt';
 import { supabase } from '@/lib/supabase';
 import type { Json } from '@/types/db';
@@ -214,6 +214,11 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
   };
   /** Only rows this save made get a card: an existing prep keeps its own. */
   const saveCards = async () => {
+    // The technique library is a lazy chunk on the web (lib/techniques): in by now wherever a technique was picked, but a save doesn't assume it.
+    if (preps.length && !(await loadTechniques().then(() => true, () => false))) {
+      warnings.push('The new house-made ingredients’ steps weren’t added. Add them on their pages.');
+      return;
+    }
     for (const p of preps) {
       const t = techniqueById(p.technique);
       if (!t) continue;

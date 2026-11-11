@@ -25,6 +25,7 @@ import { useHouseMadeWizardStore } from '@/store/useHouseMadeWizardStore';
 import { PrepBuilder } from '../addDrink/prep/PrepBuilder';
 import { WizardDialog } from '../addDrink/WizardDialog';
 import { WizardWaiting } from '../addDrink/WizardWaiting';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 const hydrated = (cb: () => void) => useHouseMadeWizardStore.persist.onFinishHydration(cb);
 const isHydrated = () => useHouseMadeWizardStore.persist.hasHydrated();
@@ -38,7 +39,7 @@ const isHydrated = () => useHouseMadeWizardStore.persist.hasHydrated();
  * the new recipe's page with Log batch. `shelf` (Add to your bar's Make it
  * in house) puts it on your bar and goes back there.
  */
-export function MakeRecipeRoute() {
+function MakeRecipeRouteBody() {
   // The kept draft loads from storage first, so nothing written is lost to it.
   const ready = useSyncExternalStore(hydrated, isHydrated, () => true);
   const { barId, shelf, slot } = useLocalSearchParams<{ barId?: string; shelf?: string; slot?: string }>();
@@ -179,5 +180,14 @@ function MakeRecipe({ barId }: { barId: string | null }) {
         builder
       )}
     </VenueBrandProvider>
+  );
+}
+
+/** MakeRecipeRoute, once the technique library is in (lib/techniques). */
+export function MakeRecipeRoute() {
+  return (
+    <TechniquesGate>
+      <MakeRecipeRouteBody />
+    </TechniquesGate>
   );
 }

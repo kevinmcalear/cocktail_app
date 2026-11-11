@@ -11,7 +11,7 @@ import { displayFaces, palateHues, radius, space } from '@/constants/tokens';
 import { useShelfHere } from '@/hooks/useBarKit';
 import { useCoreIngredients, usePairings } from '@/hooks/usePairings';
 import { useVenueFeature } from '@/hooks/useVenueFeatures';
-import { EQUIPMENT, GROUPS, TECHNIQUES } from '@/lib/techniques';
+import { allEquipment, allTechniques, GROUPS } from '@/lib/techniques';
 import { kitPicks, pairLine, pickOfDay, type KitPick } from '@/lib/techniques/learn';
 
 /** The five groups Kept-learn draws on the hub, in its order; All opens the other eight. */
@@ -34,14 +34,14 @@ export function LearnScreen() {
       crumbs={[{ label: 'Discover', href: '/discover' }]}
       actions={<GlassButton icon="magnifyingglass" accessibilityLabel="Search Learn" onPress={go('/techniques?search=1')} />}
     >
-      <Section title="Techniques" aside={`All ${TECHNIQUES.length}`} onAside={go('/techniques')}>
+      <Section title="Techniques" aside={`All ${allTechniques().length}`} onAside={go('/techniques')}>
         <Group>
           {HUB_GROUPS.map((g) => (
-            <SettingsRow key={g.id} icon={g.icon} label={g.name} detail={g.blurb} value={String(TECHNIQUES.filter((t) => t.group === g.id).length)} onPress={go(`/techniques?group=${g.id}`)} />
+            <SettingsRow key={g.id} icon={g.icon} label={g.name} detail={g.blurb} value={String(allTechniques().filter((t) => t.group === g.id).length)} onPress={go(`/techniques?group=${g.id}`)} />
           ))}
         </Group>
       </Section>
-      <Section title="Equipment" aside={`All ${EQUIPMENT.length}`} onAside={go('/equipment')}>
+      <Section title="Equipment" aside={`All ${allEquipment().length}`} onAside={go('/equipment')}>
         <View role="list">
           {kitPicks(kit).map((p) => (
             <KitRow key={p.id} pick={p} shelf={bar ? 'In the bar’s kit' : 'On your shelf'} onPress={go(`/equipment/${p.id}`)} />

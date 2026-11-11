@@ -1,5 +1,5 @@
 import type { Href } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -30,6 +30,7 @@ import { useGiveItASpot, useLeaveGuard } from './EditSections';
 import { EditSheets } from './EditSheets';
 import { KeepsRows } from './PrepSections';
 import { useIngredientDraftEdit, useIngredientEdit, type IngredientEdit } from './useIngredientEdit';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 const PHONE_HERO = 280;
 
@@ -41,7 +42,7 @@ const PHONE_HERO = 280;
  * bottle what it is, its tags, where it lives, its price and who sees it.
  * Done saves; a prep other drinks use asks first (AskAtSave).
  */
-export function IngredientEditScreen({ id, onExit, inSheet }: { id: string; onExit: () => void; inSheet?: boolean }) {
+function IngredientEditScreenBody({ id, onExit, inSheet }: { id: string; onExit: () => void; inSheet?: boolean }) {
   const edit = useIngredientEdit(id);
   return (
     <EditBrand barId={useIngredient(id).data?.ingredient?.bar_id}>
@@ -51,7 +52,7 @@ export function IngredientEditScreen({ id, onExit, inSheet }: { id: string; onEx
 }
 
 /** A draft from New > Drafts on the same page: Done keeps it a draft, More publishes it. */
-export function IngredientDraftEditScreen({ draft, onExit }: { draft: Parameters<typeof useIngredientDraftEditor>[0]; onExit: () => void }) {
+function IngredientDraftEditScreenBody({ draft, onExit }: { draft: Parameters<typeof useIngredientDraftEditor>[0]; onExit: () => void }) {
   const edit = useIngredientDraftEdit(draft);
   return (
     <EditBrand barId={edit.editor.form.barId}>
@@ -216,3 +217,21 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.card, borderCurve: 'continuous', overflow: 'hidden' },
   main: { flex: 1, minWidth: 0, maxWidth: 680, gap: space.xl },
 });
+
+/** IngredientEditScreen, once the technique library is in (lib/techniques). */
+export function IngredientEditScreen(props: ComponentProps<typeof IngredientEditScreenBody>) {
+  return (
+    <TechniquesGate>
+      <IngredientEditScreenBody {...props} />
+    </TechniquesGate>
+  );
+}
+
+/** IngredientDraftEditScreen, once the technique library is in (lib/techniques). */
+export function IngredientDraftEditScreen(props: ComponentProps<typeof IngredientDraftEditScreenBody>) {
+  return (
+    <TechniquesGate>
+      <IngredientDraftEditScreenBody {...props} />
+    </TechniquesGate>
+  );
+}

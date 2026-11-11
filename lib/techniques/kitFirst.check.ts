@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 
+import './testing';
 import { byKit, needsText } from './kitFirst';
 import { kitFirstWay, waysByKit } from '../prepKinds';
 

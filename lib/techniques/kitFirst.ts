@@ -1,4 +1,4 @@
-import { equipmentById } from './equipment';
+import { equipmentById } from './index';
 import type { Technique } from './types';
 
 /**

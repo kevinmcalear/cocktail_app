@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Body, Caption, Chip, Field, PressableScale, useDs } from '@/components/ds';
 import { layout, radius, space } from '@/constants/tokens';
-import { equipmentById, GROUPS, searchTechniques, TECHNIQUES, type Technique, type TechniqueGroup } from '@/lib/techniques';
+import { allTechniques, equipmentById, GROUPS, searchTechniques, type Technique, type TechniqueGroup } from '@/lib/techniques';
 import { byKit, needsText } from '@/lib/techniques/kitFirst';
 import { waysToMake } from '@/lib/techniques/makeIt';
 
@@ -27,7 +27,7 @@ const CHIPS: { id: TechniqueGroup; label: string }[] = [
 ];
 
 /** What can be made in house: a method (a dry shake) never is. */
-const MADE = TECHNIQUES.filter((t) => !t.method);
+const made = () => allTechniques().filter((t) => !t.method);
 
 interface EveryTechniqueProps {
   /** What's being made, for the techniques its name points to. */
@@ -52,7 +52,7 @@ interface EveryTechniqueProps {
 export function EveryTechnique({ name, selected, kit, onPick, onAdd, onWrite }: EveryTechniqueProps) {
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<TechniqueGroup | null>(null);
-  const found = searchTechniques(query, MADE).filter((t) => !group || t.group === group);
+  const found = searchTechniques(query, made()).filter((t) => !group || t.group === group);
   const fromName = query || group ? [] : waysToMake(name);
   const row = (t: Technique, key = t.id) => <TechniqueRow key={key} t={t} kit={kit} on={selected === t.id} onPress={() => onPick(t.id)} onAdd={onAdd} />;
   return (

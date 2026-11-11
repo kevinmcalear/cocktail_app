@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
 
 import { Body, Caption } from '@/components/ds';
 import { IceThumb } from '@/components/ds/IceThumb';
@@ -13,6 +13,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useRemoveVenueIce, useVenueIce, type VenueIce } from '@/hooks/useVenueIce';
 import { iceLooksLine, inTheGlass, kitSourceLine } from '@/lib/venueKit';
+import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
 // The name already says a Collins block's or block's length.
 const iceFrom = (i: VenueIce) => kitSourceLine({ ...i, length_mm: null });
@@ -23,7 +24,7 @@ const iceFrom = (i: VenueIce) => kitSourceLine({ ...i, length_mm: null });
  * ice opens the shared Add sheet; one opens on its own page. Anyone with
  * Prep changes it.
  */
-export function KitIceScreen({ barId, openId }: { barId: string; openId?: string | null }) {
+function KitIceScreenBody({ barId, openId }: { barId: string; openId?: string | null }) {
   const venue = useActiveVenue().venues.find((v) => v.id === barId);
   const canEdit = (useCapabilities(barId).data ?? []).includes('prep');
   const { data: ices = [], isLoading, error } = useVenueIce(barId);
@@ -104,5 +105,14 @@ function IcePage({ barId, ice, canEdit, onChange }: { barId: string; ice: VenueI
     >
       {ice.source === 'made' ? <IceRecipeSection barId={barId} ice={ice} canEdit={canEdit} /> : null}
     </KitItemPage>
+  );
+}
+
+/** KitIceScreen, once the technique library is in (lib/techniques). */
+export function KitIceScreen(props: ComponentProps<typeof KitIceScreenBody>) {
+  return (
+    <TechniquesGate>
+      <KitIceScreenBody {...props} />
+    </TechniquesGate>
   );
 }

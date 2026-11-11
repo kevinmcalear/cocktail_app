@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 
+import './techniques/testing';
+
 import { kitCheck, methodTools } from './kitCheck';
 
 assert.deepEqual(methodTools(['Shake', 'Dry shake']), ['shaker', 'strainers']);
