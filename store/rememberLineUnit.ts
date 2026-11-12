@@ -16,5 +16,6 @@ export function rememberLineUnit(unit: string | null | undefined): void {
   const metric = (u: string | null | undefined) => u === 'ml' || u === 'oz';
   if (s.barId && metric(unit) && metric(lineUnitAt(s.lineUnits, s.barId, unitIn(s))) && s.lineUnits[s.barId] !== unit) s.setLineUnit(s.barId, unit!);
   const next = stickyUnit(unit, unitIn(s));
-  if (next) s.setUnits(next);
+  // Not setUnits: that is a Units choice, which clears the bars' picks.
+  if (next) useSettingsStore.setState({ units: next, unitsChecked: true });
 }

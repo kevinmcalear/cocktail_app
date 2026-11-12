@@ -78,7 +78,8 @@ export const useSettingsStore = create<SettingsState>()(
         (set) => ({
             themeMode: 'system',
             units: null,
-            setUnits: (unit) => set({ units: unit, unitsChecked: true }),
+            // A Units choice wins from here: every bar's remembered line pick starts again (store/rememberLineUnit.ts).
+            setUnits: (unit) => set({ units: unit, unitsChecked: true, lineUnits: {} }),
             barUnit: null,
             setBarUnit: (unit) =>
                 set((s) => {

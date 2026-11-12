@@ -38,3 +38,16 @@ test('a pick that is already the start unit still holds that bar', () => {
   at('rye', 'ml');
   expect(getLineUnit()).toBe('oz');
 });
+
+test('a Units choice after a pick wins, and line picks start again from it', () => {
+  useSettingsStore.setState({ units: 'ml', lineUnits: {} });
+  at('rye', 'ml');
+  rememberLineUnit('oz');
+  expect(getLineUnit()).toBe('oz');
+  // Settings, the drink page or onboarding: ml.
+  useSettingsStore.getState().setUnits('ml');
+  expect(getLineUnit()).toBe('ml');
+  // A later pick on a line is remembered again.
+  rememberLineUnit('oz');
+  expect(getLineUnit()).toBe('oz');
+});
