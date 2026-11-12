@@ -12,6 +12,18 @@ type Dated = Pick<MenuSummary, 'startsAt' | 'endsAt'> & Partial<Pick<MenuSummary
  * undated home menu is still a draft, even once sharing gave it a start
  * (`barId` null says it's a home menu).
  */
+/**
+ * The "now" a menu page reads its status against: when the page opened, or
+ * when the menu last arrived, whichever is later. "Put it on now" starts the
+ * menu at the database's now(), after the page opened; reading it against the
+ * opening time alone said "Coming up" until a reload.
+ * ponytail: a phone clock behind the server's by more than the round trip
+ * still reads "Coming up" for those seconds; a ticking clock would fix that.
+ */
+export function menuPageNow(openedAt: number, fetchedAt: number): number {
+  return Math.max(openedAt, fetchedAt);
+}
+
 export function menuStatus(menu: Dated, now: number): MenuStatus {
   const start = menu.startsAt ? Date.parse(menu.startsAt) : null;
   const end = menu.endsAt ? Date.parse(menu.endsAt) : null;

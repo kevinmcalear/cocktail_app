@@ -19,7 +19,7 @@ import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useShoppingEdit } from '@/hooks/useShoppingList';
 import { isLivingList } from '@/lib/menuLens';
 import { inMenuQuery, pagerPlace } from '@/lib/menuPager';
-import { isOneNightMenu, menuStatus, newDrinkIds } from '@/lib/menus';
+import { isOneNightMenu, menuPageNow, menuStatus, newDrinkIds } from '@/lib/menus';
 import { menuShopping } from '@/lib/shoppingList';
 import type { ShelfMatch } from '@/lib/shelfReach';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
@@ -98,7 +98,9 @@ type PageProps = { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () 
 // A bar's menu that's on or coming up leads with its cover photo, which sets light or dark
 // for the page (Menu-g-photo-dark, Menu-g-photo-bright). Drafts, past and home menus are drawn.
 function MenuPage(props: PageProps) {
-  const [now] = useState(() => Date.now());
+  const [openedAt] = useState(() => Date.now());
+  // Read against the latest fetch too, so a menu put on from this page reads On now at once.
+  const now = menuPageNow(openedAt, useMenu(props.menu.id).dataUpdatedAt);
   const status = menuStatus(props.menu, now);
   const cover = props.menu.barId && status !== 'draft' && status !== 'previous' ? props.menu.coverUrl : null;
   const [tone, focused] = [usePhotoTone(cover), useIsFocused()];
