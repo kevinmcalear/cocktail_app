@@ -27,7 +27,8 @@ export function AllergenToggles({ draft, set }: { draft: PrepDraft; set: (change
   return (
     <View role="group" aria-label="Allergens in it" style={styles.toggles}>
       {ALLERGENS.map((a) => {
-        const fixed = fromParts.includes(a.key);
+        // A part's, and not ticked here too: it changes in the part. One ticked here as well can still be unticked.
+        const fixed = fromParts.includes(a.key) && !allergens.includes(a.key);
         const on = fixed || allergens.includes(a.key);
         return (
           <PressableScale
