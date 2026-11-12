@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useSearchCatalog } from '@/hooks/useSearchCatalog';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { useSpecSearch } from '@/hooks/useSpecSearch';
 import { itemIdOf } from '@/lib/drinksFilters';
 import { mineGroups, narrowView } from '@/lib/mineSearch';
+import { searchShown } from '@/lib/searchProbe';
 import type { SearchItem } from '@/types/search';
 
 const NO_BARS: readonly string[] = [];
@@ -32,6 +33,7 @@ export function useMineSearch(mine: SearchMine, query: string) {
   const local = book.books.length > 0;
   const hidden = useMemo(() => new Set(mine.hiddenIds), [mine.hiddenIds]);
   const found = useMemo(() => mineGroups(items, query, local ? book.hits : null, hidden), [items, query, local, book.hits, hidden]);
+  useEffect(searchShown, [query]);
   // The book answers at once; without one, wait for it or for the lists.
   return { ...found, items, isLoading: local ? false : !book.ready || isLoading };
 }
@@ -40,5 +42,6 @@ export function useMineSearch(mine: SearchMine, query: string) {
 export function useViewSearch(barId: string | null, view: readonly SearchItem[], query: string) {
   const barIds = useMemo(() => (barId ? [barId] : NO_BARS), [barId]);
   const book = useSpecSearch(query, { barIds, limit: Infinity });
+  useEffect(searchShown, [query]);
   return narrowView(view, query, book.books.length ? book.hits : null, book.books);
 }

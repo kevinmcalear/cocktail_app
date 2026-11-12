@@ -4,6 +4,7 @@ import { Platform, StyleSheet, TextInput, View, type StyleProp, type ViewStyle }
 import { Button, Caption, GlassSurface, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
+import { searchTyped } from '@/lib/searchProbe';
 import { useBringIn } from '@/store/useBringIn';
 
 interface SearchFieldProps {
@@ -43,6 +44,11 @@ export function KeyCap({ label }: { label: string }) {
  * header instead, with the esc key at its end (nav-search-desk-palette).
  */
 export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, onDone, keys, cancel, onFocusChange, glass, camera }: SearchFieldProps) {
+  // Timed from here to the results on screen (lib/searchProbe.ts).
+  const typed = (text: string) => {
+    searchTyped();
+    onQuery(text);
+  };
   const ds = useDs();
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [focused, setFocused] = useState(false);
@@ -69,7 +75,7 @@ export function SearchField({ query, onQuery, placeholder, autoFocus, onSubmit, 
         <TextInput
           ref={input}
           value={query}
-          onChangeText={onQuery}
+          onChangeText={typed}
           placeholder={placeholder}
           placeholderTextColor={ds.c.muted}
           // The web focuses at once too, so ⌘K then typing straight away keeps its first letters.
