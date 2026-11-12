@@ -10,9 +10,9 @@ import { usePublicPeople } from '@/hooks/useProfiles';
 import { useInviteToRole } from '@/hooks/useTakeover';
 import { useMakeTakeoverRole } from '@/hooks/useTakeoverPage';
 import { useSetRoleCapability } from '@/hooks/useVenueRoles';
-import { plainDbMessage } from '@/lib/dbError';
 import { ROLE_PRESETS } from '@/lib/roleMatrix';
-import { accessEnds, defaultAccessEnd, firstName } from '@/lib/takeover';
+import { saveErrorWords } from '@/lib/saveErrorWords';
+import { accessEnds, defaultAccessEnd, firstName, refusalWords } from '@/lib/takeover';
 import { looksLikeEmail } from '@/lib/team';
 
 import type { TakeoverModel } from './useTakeoverModel';
@@ -28,6 +28,9 @@ import type { TakeoverModel } from './useTakeoverModel';
  * they see is that role's permissions, so it's the same for every guest on it.
  */
 const TAKEOVER_LEVEL = ROLE_PRESETS.find((p) => p.id === 'takeover')!.base_level;
+type Seen = 'locations' | 'specs';
+const SEEN: Seen[] = ['locations', 'specs'];
+const NEW_ROLE: Record<Seen, boolean> = { locations: true, specs: false };
 
 export function AddGuestSheet({ m, visible, onClose, onSent }: { m: TakeoverModel; visible: boolean; onClose: () => void; onSent: (text: string) => void }) {
   const ds = useDs();
@@ -43,23 +46,22 @@ export function AddGuestSheet({ m, visible, onClose, onSent }: { m: TakeoverMode
   const [person, setPerson] = useState<{ id: string; name: string } | null>(null);
   const [elsewhere, setElsewhere] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  // Before the role exists, what they'll see is chosen here and saved with it.
-  // The host's own specs start off, as drawn.
-  const [draft, setDraft] = useState({ locations: true, specs: false });
+  // What they'll see is chosen here and saved at Send (never at the tap): only the switches turned.
+  const [draft, setDraft] = useState<Partial<Record<Seen, boolean>>>({});
   // A role already made keeps its own end; only a new one takes the default.
   const ends = m.role?.ends_at ?? (head?.roleId ? null : defaultAccessEnd(head?.startsAt, head?.endsAt));
   const typed = name.trim();
-  const first = firstName(person?.name ?? name);
+  // One letter isn't a name yet ("I's email"): the lookup starts at two.
+  const first = person ? firstName(person.name) : typed.length >= 2 ? firstName(typed) : '';
   // People already on the app by that name (an account each); none asks for an email.
   const search = usePublicPeople(typed && !person ? typed : '');
   const found = (search.data ?? []).filter((p) => p.is_claimed).slice(0, 5);
   const searching = typed.length >= 2 && !person && search.isFetching;
-  const askEmail = !!typed && !person && !searching && (elsewhere || found.length === 0);
-  const sees = (c: 'locations' | 'specs') => (m.role ? m.role.capabilities.includes(c) : draft[c]);
-  const setSees = (c: 'locations' | 'specs', on: boolean) => {
-    if (m.role) flip.mutate({ roleId: m.role.role_id, level: m.role.base_level, capability: c, on });
-    else setDraft((d) => ({ ...d, [c]: on }));
-  };
+  const askEmail = typed.length >= 2 && !person && !searching && (elsewhere || found.length === 0);
+  // The role's own setting once it's read, else a new role's (as drawn: where things live on, the host's specs off).
+  const current = (c: Seen) => (m.role ? m.role.capabilities.includes(c) : head?.roleId ? null : NEW_ROLE[c]);
+  const sees = (c: Seen) => draft[c] ?? current(c) ?? NEW_ROLE[c];
+  const setSees = (c: Seen, on: boolean) => setDraft((d) => ({ ...d, [c]: on }));
   const busy = makeRole.isPending || invite.isPending || addPerson.isPending || send.isPending;
 
   const close = () => {
@@ -67,6 +69,7 @@ export function AddGuestSheet({ m, visible, onClose, onSent }: { m: TakeoverMode
     setEmail('');
     setPerson(null);
     setElsewhere(false);
+    setDraft({});
     setProblem(null);
     onClose();
   };
@@ -74,7 +77,7 @@ export function AddGuestSheet({ m, visible, onClose, onSent }: { m: TakeoverMode
   const submit = async () => {
     const to = email.trim().toLowerCase();
     const label = person?.name ?? typed;
-    if (!typed) return setProblem('Add their name.');
+    if (typed.length < 2) return setProblem('Add their name.');
     if (searching) return setProblem('Still looking for them on the app. One moment.');
     if (!person && !looksLikeEmail(to)) {
       setElsewhere(true);
@@ -83,19 +86,20 @@ export function AddGuestSheet({ m, visible, onClose, onSent }: { m: TakeoverMode
     if (!head || !barId) return;
     setProblem(null);
     try {
-      const roleId = head.roleId ?? (await makeRole.mutateAsync({ endsAt: ends ?? defaultAccessEnd(head.startsAt, head.endsAt), matrix: m.matrix }));
-      // The switches were the draft until the role was read back: save what they say (a retry included).
-      if (!m.role) {
-        for (const c of ['locations', 'specs'] as const) {
-          if (!draft[c]) await flip.mutateAsync({ roleId, level: TAKEOVER_LEVEL, capability: c, on: false });
-        }
+      const made = !head.roleId;
+      const roleId = head.roleId ?? (await makeRole.mutateAsync({ endsAt: ends ?? defaultAccessEnd(head.startsAt, head.endsAt), matrix: m.matrix, startsAt: head.startsAt, guestName: m.guestName }));
+      // Save the switches: a new role (made with the preset's menu, specs and where things live) takes what they say; a role already made only what was turned.
+      for (const c of SEEN) {
+        const want = made ? sees(c) : draft[c];
+        const had = made ? true : current(c);
+        if (want !== undefined && want !== had) await flip.mutateAsync({ roleId, level: m.role?.base_level ?? TAKEOVER_LEVEL, capability: c, on: want });
       }
       const note = m.guestName ? `From ${m.guestName}` : null;
       // Someone already on the host's team is refused by invite_to_role ("They're already on your team"), so nobody's own role is swapped for this one.
       if (person) await addPerson.mutateAsync({ profileId: person.id, roleLevel: TAKEOVER_LEVEL, roleId, note });
       else await invite.mutateAsync({ email: to, roleId, name: typed, note });
     } catch (e) {
-      return setProblem(plainDbMessage(e) ?? 'Couldn’t add them. Check your connection and try again.');
+      return setProblem(refusalWords(e, saveErrorWords));
     }
     try {
       await send.mutateAsync(person ? { profileId: person.id } : to);

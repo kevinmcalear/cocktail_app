@@ -80,14 +80,21 @@ export function TakeoverPeople({ m, onAdd }: { m: TakeoverModel; onAdd: () => vo
           <ListRow key={p.key} first={i === 0} lead={<BarMark name={p.name} color={p.color} />} title={p.name} detail={p.line} />
         ))}
       </ListGroup>
-      <SectionLabel title="Guest bartenders" />
-      <ListGroup>
-        {m.guests.map((g, i) => (
-          <ListRow key={g.key} first={i === 0} lead={<BarMark name={g.name} color={null} />} title={g.name} detail={g.line} />
-        ))}
-        {m.canStaff ? <AddRow label="Add a guest bartender" icon="person.badge.plus" onPress={onAdd} /> : null}
-      </ListGroup>
-      {!m.guests.length && !m.canStaff ? <Caption tone="muted">No guest bartenders yet.</Caption> : null}
+      {m.seesTeam ? (
+        <>
+          <SectionLabel title="Guest bartenders" />
+          {m.guests.length || m.canStaff ? (
+            <ListGroup>
+              {m.guests.map((g, i) => (
+                <ListRow key={g.key} first={i === 0} lead={<BarMark name={g.name} color={null} />} title={g.name} detail={g.line} />
+              ))}
+              {m.canStaff ? <AddRow label="Add a guest bartender" icon="person.badge.plus" onPress={onAdd} /> : null}
+            </ListGroup>
+          ) : (
+            <Caption tone="muted">No guest bartenders yet.</Caption>
+          )}
+        </>
+      ) : null}
     </View>
   );
 }

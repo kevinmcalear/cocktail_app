@@ -113,8 +113,10 @@ export function useTakeoverModel(menuId: string) {
     matrix: matrix ?? [],
     guests,
     open,
-    // Guests join a takeover list's own role; any other list never gets one from here.
-    canStaff: staff && !!h?.isTakeoverList,
+    // Guests join a takeover list's own role; any other list never gets one from here. Making that role also sets it on the list, which needs menus.
+    canStaff: staff && !!h?.isTakeoverList && (!!h?.roleId || can('menus')),
+    /** The team list is readable (the staff permission): without it, an empty list says nothing. */
+    seesTeam: staff,
     canPlan: can('menus'),
   };
 }

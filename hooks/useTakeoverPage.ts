@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { baseCapabilities, overridesFor, ROLE_PRESETS, toCapability } from '@/lib/roleMatrix';
 import type { RoleMatrixRow } from '@/hooks/useVenueRoles';
 import { PROFILE_COLUMNS } from '@/hooks/useLineage';
+import { takeoverRoleNames } from '@/lib/takeover';
 import { makerName, SHOWN_CREDITS, type ItemCredit } from '@/lib/whoMadeIt';
 
 export interface TakeoverHead {
@@ -64,27 +65,40 @@ export function useTakeoverHead(menuId: string | null | undefined) {
  * The takeover's guest role, made the first time someone adds a guest
  * bartender: the Takeover bartender preset (menu, specs, where things live),
  * ending `endsAt`, set as the list's change role so its holders work on it.
+ * Each takeover gets its own role, named for its night (role names are
+ * unique per bar, so the preset's own name would stop a second takeover).
+ * Setting it on the list needs the menus permission; when that's refused the
+ * role is taken away again, so nothing is left behind.
  */
 export function useMakeTakeoverRole(menuId: string, barId: string | null) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async ({ endsAt, matrix }: { endsAt: string; matrix: RoleMatrixRow[] }): Promise<string> => {
+    mutationFn: async ({ endsAt, matrix, startsAt, guestName }: { endsAt: string; matrix: RoleMatrixRow[]; startsAt: string | null; guestName: string | null }): Promise<string> => {
       const preset = ROLE_PRESETS.find((p) => p.id === 'takeover')!;
       const base = baseCapabilities(matrix, preset.base_level);
       const { granted, revoked } = overridesFor(base, preset.on(base));
-      const { data, error } = await supabase
-        .from('venue_roles')
-        .insert({ bar_id: barId!, name: preset.name, base_level: preset.base_level, granted: granted.map(toCapability), revoked: revoked.map(toCapability), ends_at: endsAt })
-        .select('id')
-        .single();
-      if (error) throw error;
-      const { error: setError } = await supabase.from('menus').update({ change_role_id: data.id }).eq('id', menuId);
-      if (setError) {
-        // No role left behind for the next try to duplicate.
-        await supabase.from('venue_roles').delete().eq('id', data.id);
-        throw setError;
+      let roleId: string | null = null;
+      for (const name of takeoverRoleNames(startsAt, guestName)) {
+        const { data, error } = await supabase
+          .from('venue_roles')
+          .insert({ bar_id: barId!, name, base_level: preset.base_level, granted: granted.map(toCapability), revoked: revoked.map(toCapability), ends_at: endsAt })
+          .select('id')
+          .single();
+        // 23505: another role here has that name; try the next one.
+        if (error?.code === '23505') continue;
+        if (error) throw error;
+        roleId = data.id;
+        break;
       }
-      return data.id;
+      if (!roleId) throw new Error('This bar already has roles with every name this takeover could use. Rename one in Roles and try again.');
+      const { data: set, error: setError } = await supabase.from('menus').update({ change_role_id: roleId }).eq('id', menuId).select('id');
+      if (setError || !set?.length) {
+        // No role left behind for the next try to trip over.
+        await supabase.from('venue_roles').delete().eq('id', roleId);
+        if (setError) throw setError;
+        throw new Error('Adding guest bartenders needs the menus permission too. Ask someone who runs the menus.');
+      }
+      return roleId;
     },
     onSuccess: async () => {
       await Promise.all([
@@ -185,23 +199,22 @@ export interface TakeoverGuest {
 }
 
 /**
- * You're a guest bartender at this bar: your role here is a takeover's, and it
- * hasn't ended. Null for the bar's own team. Tonight shows the guest's page then.
+ * You're a guest bartender at this bar: your role here (`venueRoleId`, from
+ * the bars you're on, already loaded) is a takeover's, and it hasn't ended.
+ * Null for the bar's own team. Off for anyone on no custom role, so most of
+ * the team never waits on it. Tonight shows the guest's page then.
  */
-export function useTakeoverGuest(barId: string | null | undefined, userId: string | null | undefined) {
+export function useTakeoverGuest(barId: string | null | undefined, venueRoleId: string | null | undefined) {
   return useQuery({
-    queryKey: ['takeover-guest', barId, userId],
-    enabled: !!barId && !!userId,
+    queryKey: ['takeover-guest', barId, venueRoleId],
+    enabled: !!barId && !!venueRoleId,
     staleTime: 5 * 60_000,
     // Kept on the phone, so Tonight doesn't wait on it after the first load.
     meta: { persist: true },
     queryFn: async (): Promise<TakeoverGuest | null> => {
-      const { data: me, error } = await supabase.from('user_bars').select('venue_role_id').eq('bar_id', barId!).eq('user_id', userId!).maybeSingle();
-      if (error) throw error;
-      if (!me?.venue_role_id) return null;
       const [roleRes, menuRes] = await Promise.all([
-        supabase.from('venue_roles').select('ends_at').eq('id', me.venue_role_id).maybeSingle(),
-        supabase.from('menus').select('id').eq('bar_id', barId!).eq('list_type', 'takeover').eq('change_role_id', me.venue_role_id).is('hidden_at', null).limit(1).maybeSingle(),
+        supabase.from('venue_roles').select('ends_at').eq('id', venueRoleId!).maybeSingle(),
+        supabase.from('menus').select('id').eq('bar_id', barId!).eq('list_type', 'takeover').eq('change_role_id', venueRoleId!).is('hidden_at', null).limit(1).maybeSingle(),
       ]);
       if (roleRes.error) throw roleRes.error;
       if (menuRes.error) throw menuRes.error;

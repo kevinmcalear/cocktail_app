@@ -20,7 +20,9 @@ export function RunLinkScreen({ token }: { token: string }) {
   const ds = useDs();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const { data, isLoading } = usePublicRunSheet(token);
+  const { data, isSuccess, isError } = usePublicRunSheet(token);
+  // Ended only once the database has answered: the first HTML (and a slow first load) says it's opening.
+  const ended = isError || (isSuccess && !data);
   const list = (data?.list ?? null) as unknown as PartyList | null;
   const host = list?.from.replace(/^From /, '') ?? '';
   const party = list?.party.name ?? data?.party_name ?? '';
@@ -29,7 +31,7 @@ export function RunLinkScreen({ token }: { token: string }) {
     <ScrollView style={{ backgroundColor: ds.c.ground }} contentContainerStyle={[styles.body, { paddingTop: insets.top + 60, paddingHorizontal: gutter, paddingBottom: insets.bottom + space.xxxl }]}>
       <View style={styles.column}>
         {!data || !list ? (
-          <Body tone="muted">{isLoading ? 'Opening your run sheet…' : 'This link has ended, or isn’t right. Ask the bar for a new one.'}</Body>
+          <Body tone="muted">{ended ? 'This link has ended, or isn’t right. Ask the bar for a new one.' : 'Opening your run sheet…'}</Body>
         ) : (
           <>
             <Marks marks={[{ name: party }, ...(host ? [{ name: host }] : [])]} size={48} />

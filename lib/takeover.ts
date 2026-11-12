@@ -74,3 +74,35 @@ export function houseTonight<T extends { id: string }>(drinks: readonly T[], off
   const rows = drinks.map((d) => ({ ...d, on: houseMenuOn !== false && !offIds.has(d.id) }));
   return { drinks: rows, on: rows.filter((r) => r.on).length };
 }
+
+/** The longest name a venue role may have (venue_roles name check). */
+const ROLE_NAME_MAX = 40;
+const fit = (name: string) => (name.length <= ROLE_NAME_MAX ? name : `${name.slice(0, ROLE_NAME_MAX - 1).trimEnd()}…`);
+
+/**
+ * Names for a takeover's own guest role, best first: "Takeover bartender, Thu
+ * 6 Nov", then with the guest bar ("Night Owl, Thu 6 Nov"), then numbered.
+ * Role names are unique per bar, so the preset's own "Takeover bartender"
+ * would stop every takeover after the first; each takes the first name free.
+ */
+export function takeoverRoleNames(startsAt: string | null | undefined, guestName: string | null | undefined): string[] {
+  const day = shortDay(startsAt);
+  const first = fit(day ? `Takeover bartender, ${day}` : 'Takeover bartender, guest');
+  const names = [first, ...(guestName?.trim() ? [fit(day ? `${guestName.trim()}, ${day}` : `${guestName.trim()} takeover`)] : [])];
+  for (let n = 2; n <= 5; n++) names.push(fit(`${first.replace(/…$/, '')} (${n})`));
+  return [...new Set(names)];
+}
+
+/**
+ * What a refused invite or link says. The invite functions raise their
+ * refusals in words for people (42501 "You need the invite and manage staff
+ * permission…", 22023 "They're already on your team."); a policy's own
+ * refusal, a dropped connection and the rest get the app's sentences
+ * (saveErrorWords).
+ */
+export function refusalWords(error: unknown, fallback: (e: unknown) => string): string {
+  const e = error as { code?: unknown; message?: unknown } | null;
+  const message = typeof e?.message === 'string' ? e.message : '';
+  if ((e?.code === '42501' || e?.code === '22023') && message && !/row-level security|permission denied|violates|syntax/i.test(message)) return message;
+  return fallback(error);
+}

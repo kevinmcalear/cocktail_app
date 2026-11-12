@@ -5,8 +5,8 @@ import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
-import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useBars } from '@/hooks/useBars';
 import { useBarDrinks } from '@/hooks/useHomeBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
@@ -50,7 +50,9 @@ export function TonightScreen() {
 
 /** A guest bartender on a takeover gets their own Tonight (Keep-phone guestview); the bar's team gets theirs. */
 function BarPage({ barId, barName }: { barId: string; barName: string }) {
-  const { data: guest, isLoading } = useTakeoverGuest(barId, useUserId());
+  // Only someone on one of the bar's own roles can be a takeover's guest; the rest of the team never waits.
+  const roleId = useBars().data?.find((b) => b.bar_id === barId)?.venue_role_id ?? null;
+  const { data: guest, isLoading } = useTakeoverGuest(barId, roleId);
   // Until we know, neither page: a guest never sees the host's staff page first.
   if (isLoading)
     return (

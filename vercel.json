@@ -221,6 +221,14 @@
     {
       "source": "/e/:id",
       "destination": "/e/[id]"
+    },
+    {
+      "source": "/takeover/:id",
+      "destination": "/takeover/[id]"
+    },
+    {
+      "source": "/run/:token",
+      "destination": "/run/[token]"
     }
   ],
   "headers": [

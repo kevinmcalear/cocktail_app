@@ -74,11 +74,9 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === 'auth';
-    // Privacy, terms, account-deletion and support pages must open without signing in,
-    // and venue staff links (/v/<slug>) have their own branded sign-in. The
-    // design gallery (/dev/gallery) shows no data. Published drinks (/d/<id>),
-    // releases (/r/<id>), public profiles (/p/<handle>), shared home menus
-    // (/m/<id>), public events (/e/<id>) and a party's run-sheet link (/run/<token>) are public.
+    // Privacy, terms, account-deletion and support pages open signed out; venue staff links (/v/<slug>) have their own sign-in;
+    // the design gallery (/dev/gallery) shows no data. Published drinks (/d/<id>), releases (/r/<id>), public profiles (/p/<handle>),
+    // shared home menus (/m/<id>), public events (/e/<id>) and a party's run-sheet link (/run/<token>) are public.
     if (segments[0] === 'legal' || segments[0] === 'support' || segments[0] === 'v' || segments[0] === 'dev' || segments[0] === 'd' || segments[0] === 'r' || segments[0] === 'p' || segments[0] === 'm' || segments[0] === 'e' || segments[0] === 'run') return;
     // Your allergies are kept on this phone until you sign in (Loop-allergy, At a table, signed out).
     if (segments[0] === 'settings' && (segments as string[])[1] === 'allergies') return;
@@ -139,6 +137,8 @@ function RootLayoutNav() {
             <Stack.Screen name="r/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="m/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="run/[token]" options={{ headerShown: false, title: 'Your run sheet' }} />
+            <Stack.Screen name="takeover/[id]" options={{ headerShown: false, title: 'Takeover' }} />
             <Stack.Screen name="week/index" options={{ headerShown: false }} />
             <Stack.Screen name="week/review" options={{ headerShown: false }} />
             <Stack.Screen name="add-cocktail" options={{ presentation: "modal", headerShown: false }} />
