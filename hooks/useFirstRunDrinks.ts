@@ -3,12 +3,14 @@ import { useMemo } from 'react';
 
 import { useItemFlavors } from '@/hooks/useFlavor';
 import { useItemSketches } from '@/hooks/useItemSketch';
-import { FIRST_RUN_DRINKS, type PickedDrink } from '@/lib/firstRun';
+import { FIRST_RUN_DRINKS, FIRST_RUN_LABELS, type PickedDrink } from '@/lib/firstRun';
 import { liquidOf } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 
 export interface FirstRunDrink extends PickedDrink {
   name: string;
+  /** What the tiles and cards say (lib/firstRun FIRST_RUN_LABELS). */
+  label: string;
   /** Its paint colour, for its tile and the sky. */
   tint: string | null;
 }
@@ -37,7 +39,8 @@ export function useFirstRunDrinks() {
     (): FirstRunDrink[] =>
       (catalog.data ?? []).map((d) => {
         const inputs = sketches.byId[d.id];
-        return { ...d, method: inputs?.method ?? null, tint: inputs ? liquidOf(inputs).hex : null, profile: flavors.data?.[d.id] ?? null };
+        const label = FIRST_RUN_LABELS[d.name as (typeof FIRST_RUN_DRINKS)[number]] ?? d.name;
+        return { ...d, label, method: inputs?.method ?? null, tint: inputs ? liquidOf(inputs).hex : null, profile: flavors.data?.[d.id] ?? null };
       }),
     [catalog.data, sketches.byId, flavors.data]
   );

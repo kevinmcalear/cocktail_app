@@ -12,6 +12,9 @@ import { LABEL, QUICK_QUESTIONS, type Dimension, type Profile, type Taste } from
 /** The nine catalog classics "Which have you had?" offers, in the board's order. */
 export const FIRST_RUN_DRINKS = ['Negroni', 'Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin', 'Aperol Spritz', 'Clover Club', 'Last Word', "Bee's Knees"] as const;
 
+/** What the board calls a drink where that differs from the catalog's name. */
+export const FIRST_RUN_LABELS: Partial<Record<(typeof FIRST_RUN_DRINKS)[number], string>> = { Martini: 'House Martini' };
+
 /** How many to pick, and how many pairs to ask. */
 export const PICKS = 5;
 export const PAIRS = 3;

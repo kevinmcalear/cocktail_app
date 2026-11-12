@@ -3,7 +3,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, DrinkDrawingFor, DsText, GlassButton, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, DrinkDrawingFor, DsText, GlassButton, Head, PressableScale, Title, useDs, useGutter } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, radius, space } from '@/constants/tokens';
 import { useFirstRunDrinks, type FirstRunDrink } from '@/hooks/useFirstRunDrinks';
@@ -51,7 +51,6 @@ export function FirstRunTaste({
         home={home}
         pending={pending}
         error={finishError}
-        onBack={() => (setWinners((w) => w.slice(0, -1)), setStage('pairs'))}
         onDone={onDone}
       />
     );
@@ -66,7 +65,7 @@ export function FirstRunTaste({
     const left = a ? byId.get(a) : undefined;
     const right = b ? byId.get(b) : undefined;
     return (
-      <FirstRunPage onBack={back} title="Which do you like more?" sub="Three of these and your taste is set.">
+      <FirstRunPage onBack={back} title="Which do you like more?" sub="Three of these and your taste is set." size="title">
         {left && right ? (
           <View style={styles.pair}>
             <PairCard drink={left} onPress={() => choose(left.id)} />
@@ -91,7 +90,9 @@ export function FirstRunTaste({
   return (
     <FirstRunPage
       onBack={onBack}
-      onNext={full ? next : undefined}
+      onNext={next}
+      nextReady={full}
+      size="head"
       title={COPY.taste.title}
       sub={COPY.taste.intro ?? ''}
     >
@@ -109,8 +110,30 @@ export function FirstRunTaste({
   );
 }
 
-/** The board's page for these steps: a glass Back, the round Next when there is one, the title and its line, left. */
-function FirstRunPage({ onBack, onNext, title, sub, children }: { onBack?: () => void; onNext?: () => void; title: string; sub: string; children: ReactNode }) {
+/**
+ * The board's page for these steps: a glass Back, the round Next when there is
+ * one (drawn filled even before it can go, as the board draws it), the title
+ * and its line, left. The board's 38 and 36 titles take the nearest type
+ * steps: head (40) and title (34).
+ */
+function FirstRunPage({
+  onBack,
+  onNext,
+  nextReady,
+  size,
+  title,
+  sub,
+  children,
+}: {
+  onBack?: () => void;
+  onNext?: () => void;
+  nextReady?: boolean;
+  size: 'head' | 'title';
+  title: string;
+  sub: string;
+  children: ReactNode;
+}) {
+  const Heading = size === 'head' ? Head : Title;
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
@@ -122,13 +145,13 @@ function FirstRunPage({ onBack, onNext, title, sub, children }: { onBack?: () =>
             <View style={styles.top}>
               {onBack ? <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={onBack} /> : <View />}
               {onNext ? (
-                <PressableScale role="button" accessibilityLabel="Next" onPress={onNext} style={[styles.next, { backgroundColor: ds.accentFill.fill }]}>
+                <PressableScale role="button" accessibilityLabel="Next" aria-disabled={!nextReady} onPress={onNext} style={[styles.next, { backgroundColor: ds.accentFill.fill }]}>
                   <IconSymbol name="checkmark" size={20} color={ds.accentFill.text} />
                 </PressableScale>
               ) : null}
             </View>
             <View style={styles.head}>
-              <Title role="heading">{title}</Title>
+              <Heading>{title}</Heading>
               <Body tone="muted">{sub}</Body>
             </View>
             {children}
@@ -147,7 +170,7 @@ function PickTile({ drink, on, onPress }: { drink: FirstRunDrink; on: boolean; o
     <PressableScale
       role="checkbox"
       aria-checked={on}
-      accessibilityLabel={drink.name}
+      accessibilityLabel={drink.label}
       onPress={onPress}
       style={[styles.tile, { backgroundColor: bg, borderColor: on ? ds.accentText : ds.c.line, borderWidth: on ? 2 : StyleSheet.hairlineWidth }]}
     >
@@ -157,7 +180,7 @@ function PickTile({ drink, on, onPress }: { drink: FirstRunDrink; on: boolean; o
         </View>
       </View>
       <DsText variant="label" align="center" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
-        {drink.name}
+        {drink.label}
       </DsText>
       {on ? (
         <View style={[styles.check, { backgroundColor: ds.accentFill.fill }]}>
@@ -176,7 +199,7 @@ function PairCard({ drink, onPress }: { drink: FirstRunDrink; onPress: () => voi
   return (
     <PressableScale
       role="button"
-      accessibilityLabel={`${drink.name}${words ? `. ${words}` : ''}`}
+      accessibilityLabel={`${drink.label}${words ? `. ${words}` : ''}`}
       onPress={onPress}
       style={[styles.card, { borderColor: ds.c.line, backgroundColor: drink.tint ? withAlpha(drink.tint, ds.scheme === 'dark' ? 0.28 : 0.2) : ds.c.surface }]}
     >
@@ -190,7 +213,7 @@ function PairCard({ drink, onPress }: { drink: FirstRunDrink; onPress: () => voi
           </Caption>
         ) : null}
         <DsText variant="headline" numberOfLines={2} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
-          {drink.name}
+          {drink.label}
         </DsText>
         {words ? <Caption tone="muted">{words}</Caption> : null}
       </View>

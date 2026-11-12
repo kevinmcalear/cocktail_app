@@ -8,11 +8,12 @@ import { FirstRunTaste } from './FirstRunPicks';
 
 const mockSaveTaste = jest.fn();
 const profile = (some: Partial<Profile>) => Object.fromEntries((Object.keys(LABEL) as Dimension[]).map((d) => [d, some[d] ?? 0])) as Profile;
-const names = ['Negroni', 'Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin', 'Aperol Spritz', 'Clover Club', 'Last Word', 'Bee’s Knees'];
-const stirred = new Set(['Negroni', 'Martini', 'Old Fashioned']);
+const names = ['Negroni', 'House Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin', 'Aperol Spritz', 'Clover Club', 'Last Word', 'Bee’s Knees'];
+const stirred = new Set(['Negroni', 'House Martini', 'Old Fashioned']);
 const mockDrinks = names.map((name, i) => ({
   id: `d${i}`,
-  name,
+  name: name === 'House Martini' ? 'Martini' : name,
+  label: name,
   tint: null,
   method: stirred.has(name) ? 'stir' : 'shake',
   profile: profile(name === 'Negroni' ? { bitter: 0.9, sweet: 0.4 } : name === 'Daiquiri' ? { sour: 0.8, sweet: 0.4 } : { sweet: 0.3 }),
@@ -36,7 +37,7 @@ beforeEach(() => {
 });
 
 async function pickFive() {
-  for (const name of ['Negroni', 'Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin']) await fireEvent.press(screen.getByRole('checkbox', { name }));
+  for (const name of ['Negroni', 'House Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin']) await fireEvent.press(screen.getByRole('checkbox', { name }));
 }
 
 test('five picks, three pairs, then the taste they make, saved on Start', async () => {
@@ -44,6 +45,8 @@ test('five picks, three pairs, then the taste they make, saved on Start', async 
   await renderWithProviders(<FirstRunTaste home pending={false} onDone={onDone} />);
   expect(screen.getByText('Which have you had?')).toBeTruthy();
   expect(screen.getByRole('button', { name: '0 of 5' })).toBeDisabled();
+  await fireEvent.press(screen.getByRole('button', { name: 'Next' }));
+  expect(screen.getByText('Which have you had?')).toBeTruthy();
 
   // A sixth pick waits for one to be let go.
   await pickFive();
@@ -56,7 +59,7 @@ test('five picks, three pairs, then the taste they make, saved on Start', async 
     expect(screen.getByText('Which do you like more?')).toBeTruthy();
     const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
     expect(cards).toHaveLength(2);
-    for (const c of cards) expect(['Negroni', 'Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin'].some((n) => c.props.accessibilityLabel.startsWith(n))).toBe(true);
+    for (const c of cards) expect(['Negroni', 'House Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin'].some((n) => c.props.accessibilityLabel.startsWith(n))).toBe(true);
     await fireEvent.press(cards.find((c) => c.props.accessibilityLabel.startsWith('Negroni')) ?? cards[0]);
   }
 
@@ -94,7 +97,7 @@ test('a bar under the taste ends setup on its page', async () => {
   expect(onDone).toHaveBeenCalledWith('/p/attaboy');
 });
 
-test('Your taste steps back to the last pair, and fewer than five to pick from still lets setup end', async () => {
+test('Your taste has no Back (the board draws none); a bartender gets no unit guessed; fewer than five still lets setup end', async () => {
   const onDone = jest.fn();
   await renderWithProviders(<FirstRunTaste home={false} pending={false} onDone={onDone} />);
   await pickFive();
@@ -103,13 +106,10 @@ test('Your taste steps back to the last pair, and fewer than five to pick from s
     const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
     await fireEvent.press(cards[0]);
   }
-  await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
-  expect(screen.getByText('Which do you like more?')).toBeTruthy();
-  const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
-  await fireEvent.press(cards[1]);
+  expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  await fireEvent.press(screen.getByRole('button', { name: /Start|Saving/ }));
   expect(onDone).toHaveBeenCalledTimes(1);
-  // A bartender's unit follows their bar: none is guessed.
   expect(useSettingsStore.getState().units).toBeNull();
 
   mockOffered = mockDrinks.slice(0, 3);

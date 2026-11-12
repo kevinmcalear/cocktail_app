@@ -4,11 +4,11 @@ import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BackbarTheme, Body, Button, Caption, DrinkDrawingFor, GlassButton, Head, Headline, PressableScale, useDs, useGutter } from '@/components/ds';
+import { BackbarTheme, Body, Button, Caption, DrinkDrawingFor, Head, Headline, PressableScale, useDs, useGutter } from '@/components/ds';
 import { TonightSky } from '@/components/screens/tonight/TonightParts';
 import { BarMark } from '@/components/screens/home/BarMark';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, layout, space } from '@/constants/tokens';
+import { displayFaces, space } from '@/constants/tokens';
 import { useBestNear } from '@/hooks/useDiscoverHome';
 import { useSaveTasteAnswers } from '@/hooks/useFlavor';
 import type { FirstRunDrink } from '@/hooks/useFirstRunDrinks';
@@ -38,7 +38,6 @@ type Props = {
   /** Setup is finishing, and what went wrong if it didn't. */
   pending: boolean;
   error?: string;
-  onBack: () => void;
   onDone: (to?: Href) => void;
 };
 
@@ -50,7 +49,7 @@ export function YourTasteStep(props: Props) {
   );
 }
 
-function Page({ picks, winners, home, pending, error, onBack, onDone }: Props) {
+function Page({ picks, winners, home, pending, error, onDone }: Props) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
@@ -91,11 +90,8 @@ function Page({ picks, winners, home, pending, error, onBack, onDone }: Props) {
   return (
     <View style={[styles.fill, { backgroundColor: ds.c.ground }]}>
       <TonightSky ids={liked.slice(0, 3).map((d) => d.id)} />
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + space.sm, paddingBottom: insets.bottom + space.xxl, paddingHorizontal: gutter }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + space.xxl, paddingHorizontal: gutter }}>
         <View style={styles.column}>
-          <View style={styles.top}>
-            <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={() => !busy && onBack()} />
-          </View>
           <View style={styles.hero}>{top ? <DrinkDrawingFor itemId={top.id} size="tile" /> : null}</View>
           <View style={styles.head}>
             <Head align="center" aria-level={1}>
@@ -149,8 +145,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   column: { width: '100%', maxWidth: 420, alignSelf: 'center', gap: space.lg },
   // The board's hero: 220 tall, the drawing 30 from its top, in the middle.
-  top: { minHeight: layout.minTapTarget, alignItems: 'flex-start' },
-  hero: { height: 190, alignItems: 'center' },
+  hero: { height: 220, paddingTop: 30, alignItems: 'center' },
   head: { gap: space.md, alignItems: 'center', paddingBottom: space.md },
   sub: { maxWidth: 320 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md + 2, paddingVertical: space.sm + 2, borderBottomWidth: StyleSheet.hairlineWidth },
