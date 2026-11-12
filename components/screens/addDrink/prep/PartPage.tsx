@@ -185,7 +185,7 @@ export function PartPage(p: PartPageProps) {
         />
       ) : null}
       {last ? <Prompt warn icon="exclamationmark.triangle" title="Three levels is the most." body="A part that needs its own parts opens on its own page." /> : null}
-      <PrepRows name={shown} draft={draft} set={(c) => setDraft({ ...draft, ...c })} version={version} phrase={phrase} onKind={pickKind} onTechnique={pickTechnique} bar={p.bar} inPlace={p.inPlace} allergens={p.level >= 2} />
+      <PrepRows name={shown} draft={draft} set={(c) => setDraft({ ...draft, ...c })} version={version} phrase={phrase} onKind={pickKind} onTechnique={pickTechnique} bar={p.bar} inPlace={p.inPlace} />
       {p.note}
     </View>
   );

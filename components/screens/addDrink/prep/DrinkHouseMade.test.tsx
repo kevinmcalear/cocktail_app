@@ -112,13 +112,25 @@ test('the check saves the drink with it, the page open, and says Saving… while
   expect(screen.getByRole('button', { name: 'Saving' })).toBeDisabled();
 });
 
-test('empty, with a name that says nothing: all four rows say Add (Add-inside, Empty)', async () => {
+test('empty, with a name that says nothing: four rows say Add, Allergens None found (Add-inside, Empty)', async () => {
   await renderWithProviders(<DrinkHouseMade {...props({ name: 'Rvwa' })} />);
   await laidOut();
-  for (const row of ['What it is', 'Method', 'Makes', 'Keeps']) expect(screen.getByText(row)).toBeTruthy();
-  // Add-inside draws four rows; the Allergens row is a part's (Add-parts, decided 12 Nov).
-  expect(screen.queryByText('Allergens')).toBeNull();
+  for (const row of ['What it is', 'Method', 'Makes', 'Keeps', 'Allergens']) expect(screen.getByText(row)).toBeTruthy();
+  // The fifth row (decided 12 Nov) never reads Add.
+  expect(screen.getByText('None found')).toBeTruthy();
   expect(screen.getAllByText('Add')).toHaveLength(4);
+});
+
+test('an allergen ticked inside the drink saves with it, set by hand', async () => {
+  const onSave = jest.fn();
+  await renderWithProviders(<DrinkHouseMade {...props({ initial: startPrep('syrup', 'Pine syrup'), save: { onSave, saving: false, canSave: true } })} />);
+  await laidOut();
+  await fireEvent.press(screen.getByText('Allergens'));
+  await fireEvent.press(screen.getByRole('checkbox', { name: 'Sulphites' }));
+  // The row's value and its chip.
+  expect(screen.getAllByText('Sulphites')).toHaveLength(2);
+  await fireEvent.press(screen.getByRole('button', { name: 'Done: save Pine Fizz with Pine syrup' }));
+  expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ allergens: ['sulphites'], allergensSet: true }), 'Pine syrup');
 });
 
 test('Back while its name is still being checked asks too; Leave keeps the line a name to make, no recipe on it', async () => {

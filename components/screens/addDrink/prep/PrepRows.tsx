@@ -67,20 +67,18 @@ interface PrepRowsProps {
   bar: { id: string; name: string } | null;
   /** Under its line on the web's dialog (Add-parts, Web): the rows open in place, not as sheets over the dialog. */
   inPlace?: boolean;
-  /** A part (Add-parts, 2 and 3, decided 12 Nov): a fifth row, Allergens, opening in place as on Add-house, 2. */
-  allergens?: boolean;
 }
 
 /**
  * A house-made's flat rows (boards Add-parts 2, Add-inside 2): What it is,
- * Method, Makes and Keeps (and a part's Allergens), each with what it says now, Add in amber while
+ * Method, Makes, Keeps and Allergens (decided 12 Nov), each with what it says now, Add in amber while
  * it's empty (Add-inside, Empty: a kind nothing says yet, keeping nobody
  * said). A kind read from the name says so ("Syrup · from the name").
  * Each opens its step as a sheet (Add-inside, 3): Method and
  * Keeps open How it's made (your kit first, the steps, a time in a step a
  * timer, then keeps), What it is the kinds.
  */
-export function PrepRows({ name, draft, set, version, phrase, onKind, onTechnique, bar, inPlace, allergens }: PrepRowsProps) {
+export function PrepRows({ name, draft, set, version, phrase, onKind, onTechnique, bar, inPlace }: PrepRowsProps) {
   const [open, setOpen] = useState<Row | null>(null);
   const [allergensOpen, setAllergensOpen] = useState(false);
   // The sheet keeps what it shows while it slides away.
@@ -129,9 +127,9 @@ export function PrepRows({ name, draft, set, version, phrase, onKind, onTechniqu
         <ListRow title="Method" value={method ?? 'Add'} warn={!method} expanded={inPlace && open === 'method'} onPress={() => toggle('method')} />
         <ListRow title="Makes" value={makes ? `About ${formatQuantity({ kind: 'ml', value: makes, unit: 'ml' })}` : 'Add'} warn={!makes} expanded={inPlace && open === 'makes'} onPress={() => toggle('makes')} />
         <ListRow title="Keeps" value={keeps ?? 'Add'} warn={!keeps} expanded={inPlace && open === 'keeps'} onPress={() => toggle('keeps')} />
-        {allergens ? <ListRow title="Allergens" value={allergensValue(draft)} expanded={allergensOpen} onPress={() => setAllergensOpen(!allergensOpen)} /> : null}
+        <ListRow title="Allergens" value={allergensValue(draft)} expanded={allergensOpen} onPress={() => setAllergensOpen(!allergensOpen)} />
       </ListGroup>
-      {allergens && allergensOpen ? <AllergenToggles draft={draft} set={set} /> : null}
+      {allergensOpen ? <AllergenToggles draft={draft} set={set} /> : null}
       {inPlace ? shown : (
         <Sheet visible={sheet} onClose={() => setSheet(false)} accessibilityLabel={title} keyboard header={<FlowHead title={title} done />}>
           <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
