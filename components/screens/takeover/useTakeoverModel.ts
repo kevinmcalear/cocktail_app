@@ -6,7 +6,7 @@ import { useCapabilities } from '@/hooks/useCapabilities';
 import { useOffTonight } from '@/hooks/useListAsks';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useRunSheet } from '@/hooks/useRunSheet';
-import { useTakeoverHead } from '@/hooks/useTakeoverPage';
+import { useListMakers, useTakeoverHead } from '@/hooks/useTakeoverPage';
 import { useRoleMatrix } from '@/hooks/useVenueRoles';
 import { useWeekEvent, useWeekEventBrand } from '@/hooks/useWeek';
 import { partyHues } from '@/constants/tokens';
@@ -90,6 +90,7 @@ export function useTakeoverModel(menuId: string) {
   const offIds = new Set((off ?? []).filter((o) => o.menuId === house?.id && Date.parse(o.until) > Date.parse(event?.startsAt ?? h?.startsAt ?? new Date(now).toISOString())).map((o) => o.itemId));
   const houseDrinks = houseTonight((houseDetail?.sections ?? []).flatMap((s) => s.drinks), offIds, event?.houseMenuOn ?? null);
   const open = stillOpen(theirs, guests[0] ? firstName(guests[0].name) : guestName);
+  const makers = useListMakers(theirs.map((d) => d.itemId)).data ?? {};
 
   return {
     loading: head.isLoading || run.isLoading,
@@ -105,6 +106,8 @@ export function useTakeoverModel(menuId: string) {
     sheet,
     data,
     theirs,
+    /** Who made each of their drinks, by item id. */
+    makers,
     house: house ? { name: house.name, ...houseDrinks } : null,
     role,
     matrix: matrix ?? [],

@@ -11,7 +11,7 @@ import { AddRow, BarMark } from './parts';
 import { RunLinkRow } from './RunLinkRow';
 import type { TakeoverModel } from './useTakeoverModel';
 
-/** Lists (Keep-phone takeover A): their list with each drink's maker and serves, and the house list beside it, each drink on or off tonight. */
+/** Lists (Keep-phone takeover A): their list with each drink's maker (its creator credit) and serves, and the house list beside it, each drink on or off tonight. */
 export function TakeoverLists({ m }: { m: TakeoverModel }) {
   const router = useRouter();
   const open = (itemId: string) => router.push(`/cocktail/${itemId}` as Href);
@@ -25,8 +25,8 @@ export function TakeoverLists({ m }: { m: TakeoverModel }) {
               key={d.id}
               itemId={d.itemId}
               name={d.name}
-              line={(d.partyId && m.data?.parties.find((p) => p.id === d.partyId)?.name) || m.guestName || m.hostName}
-              end={d.serves ? { text: `${d.serves} serves`, tone: 'muted' } : { text: 'No count', tone: 'warn' }}
+              line={[m.makers[d.itemId], (d.partyId && m.data?.parties.find((p) => p.id === d.partyId)?.name) || m.guestName || m.hostName].filter(Boolean).join(' · ')}
+              end={d.serves ? { text: d.serves.toLocaleString('en-GB'), under: 'serves', tone: 'ink' } : { text: 'No count', tone: 'warn' }}
               onPress={() => open(d.itemId)}
             />
           ))}
@@ -57,7 +57,12 @@ export function TakeoverLists({ m }: { m: TakeoverModel }) {
 
 /** People (takeover B): the parties and what each does, then the guest bartenders and when their access ends. */
 export function TakeoverPeople({ m, onAdd }: { m: TakeoverModel; onAdd: () => void }) {
-  const brings = (id: string) => andList((m.sheet?.parties.find((p) => p.id === id)?.needs ?? []).slice(0, 2).map((n) => n.name.toLowerCase()));
+  // What the brand brings on the run sheet ("Kestrel Gin and tonic"); the board's "menu cards and education" are tasks, which aren't stored yet.
+  const brings = (id: string) => {
+    if (!m.sheet) return '';
+    const needs = m.sheet.parties.find((p) => p.id === id)?.needs ?? [];
+    return needs.length ? andList([...needs.slice(0, 3).map((n) => n.name), ...(needs.length > 3 ? [`${needs.length - 3} more`] : [])]) : 'nothing on the run sheet yet';
+  };
   const parties = [
     { key: 'host', name: m.hostName, color: m.colorOf(null), line: 'Hosts · buys the stock' },
     ...(m.data?.parties ?? []).map((p) => ({

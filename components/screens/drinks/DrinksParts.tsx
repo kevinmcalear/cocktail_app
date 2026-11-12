@@ -58,8 +58,8 @@ export interface DrinkListRowProps {
   line?: string | null;
   /** "Egg" in amber (warn), "Off tonight" on a soft fill. */
   tag?: { label: string; warn?: boolean } | null;
-  /** On the right in place of the chevron: "Ready" (green), "Need limes" (amber), a count. */
-  end?: { text: string; tone: 'ready' | 'warn' | 'muted' } | null;
+  /** On the right in place of the chevron: "Ready" (green), "Need limes" (amber), a count ("60" in ink over a small "serves"). */
+  end?: { text: string; tone: 'ready' | 'warn' | 'muted' | 'ink'; under?: string } | null;
   /** An ingredient (a bottle, a house-made): its drawing on a card instead of the drink's. */
   ingredient?: boolean;
   /** Lit: the drink open beside the list on a wide screen. */
@@ -76,12 +76,12 @@ export interface DrinkListRowProps {
 export function DrinkListRow({ itemId, name, line, tag, end, ingredient, picked, onPress, onPressIn }: DrinkListRowProps) {
   const ds = useDs();
   const hues = palateHues[ds.scheme];
-  const endColor = end?.tone === 'ready' ? hues.green : end?.tone === 'warn' ? ds.accentText : ds.c.muted;
+  const endColor = end?.tone === 'ready' ? hues.green : end?.tone === 'warn' ? ds.accentText : end?.tone === 'ink' ? ds.c.ink : ds.c.muted;
   return (
     <View role="listitem">
       <PressableScale
         role="link"
-        accessibilityLabel={`${[name, line, tag?.label, end?.text].filter(Boolean).join(', ')}, open`}
+        accessibilityLabel={`${[name, line, tag?.label, [end?.text, end?.under].filter(Boolean).join(' ')].filter(Boolean).join(', ')}, open`}
         onPressIn={onPressIn}
         onPress={onPress}
         style={[styles.row, picked && { backgroundColor: withAlpha(ds.accentText, 0.12) }]}
@@ -102,7 +102,14 @@ export function DrinkListRow({ itemId, name, line, tag, end, ingredient, picked,
           ) : null}
         </View>
         {tag ? <Tag label={tag.label} tone={tag.warn ? 'warning' : 'default'} /> : null}
-        {end ? (
+        {end?.under ? (
+          <View style={styles.endStack}>
+            <DsText variant="body" color={endColor} style={styles.end}>
+              {end.text}
+            </DsText>
+            <Caption tone="muted">{end.under}</Caption>
+          </View>
+        ) : end ? (
           <DsText variant="body" color={endColor} style={styles.end}>
             {end.text}
           </DsText>
@@ -209,6 +216,7 @@ const styles = StyleSheet.create({
   card: { width: 52, height: 52, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   words: { flex: 1, minWidth: 0, gap: 2 },
   end: { textAlign: 'right' },
+  endStack: { alignItems: 'flex-end', gap: 3 },
   onNow: { flexDirection: 'row', alignItems: 'center', minHeight: 168, borderRadius: radius.card + space.xs, borderCurve: 'continuous', overflow: 'hidden', padding: space.lg + 2 },
   // The eyebrow runs wider than the name so "On now · since 1 Oct" stays on one line, as Prod-drinks draws it; the name and its line keep left of the drawings.
   onNowWords: { flex: 1, minWidth: 0, gap: space.xs, zIndex: 1 },

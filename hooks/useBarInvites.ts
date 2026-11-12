@@ -180,12 +180,13 @@ export function useSendInviteEmail(barId: string) {
 export function useInviteProfile(barId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (p: { profileId: string; roleLevel: number; roleId?: string | null }): Promise<boolean> => {
+    mutationFn: async (p: { profileId: string; roleLevel: number; roleId?: string | null; note?: string | null }): Promise<boolean> => {
       const { data, error } = await supabase.rpc('invite_profile_to_bar', {
         p_profile_id: p.profileId,
         p_bar_id: barId,
         p_role_level: p.roleLevel,
         ...(p.roleId ? { p_role_id: p.roleId } : {}),
+        ...(p.note ? { p_note: p.note } : {}),
       });
       if (error) throw error;
       return data === true;

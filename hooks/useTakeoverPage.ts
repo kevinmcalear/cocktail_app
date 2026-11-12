@@ -7,6 +7,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { baseCapabilities, overridesFor, ROLE_PRESETS, toCapability } from '@/lib/roleMatrix';
 import type { RoleMatrixRow } from '@/hooks/useVenueRoles';
+import { PROFILE_COLUMNS } from '@/hooks/useLineage';
+import { makerName, SHOWN_CREDITS, type ItemCredit } from '@/lib/whoMadeIt';
 
 export interface TakeoverHead {
   id: string;
@@ -91,6 +93,86 @@ export function useMakeTakeoverRole(menuId: string, barId: string | null) {
       ]);
     },
     onError: () => {},
+  });
+}
+
+/** Who made each drink on the list ("Mika Sato"), chosen as every row and poster does (makerName). Drinks with no credit are left out. */
+export function useListMakers(itemIds: readonly string[]) {
+  const ids = [...new Set(itemIds)].sort();
+  return useQuery({
+    queryKey: ['takeover-makers', ids],
+    enabled: ids.length > 0,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase
+        .from('item_credits')
+        .select(`item_id, id, role, what, profile_id, name, sort_order, status, disputed_at, dispute_note, profile:profiles(${PROFILE_COLUMNS})`)
+        .in('item_id', ids)
+        .in('status', SHOWN_CREDITS);
+      if (error) throw error;
+      const byItem: Record<string, ItemCredit[]> = {};
+      for (const r of (data ?? []) as unknown as (ItemCredit & { item_id: string })[]) (byItem[r.item_id] ??= []).push(r);
+      const out: Record<string, string> = {};
+      for (const [id, credits] of Object.entries(byItem)) {
+        const name = makerName(credits);
+        if (name) out[id] = name;
+      }
+      return out;
+    },
+  });
+}
+
+export interface TakeoverPlace {
+  key: string;
+  name: string;
+  /** "Walk-in, top shelf". */
+  where: string;
+  kind: 'house' | 'glass' | 'ice' | 'bottle';
+}
+
+/**
+ * Where the list's ingredients live at the host (guest's Tonight, Keep-phone
+ * guestview): each drink's spec lines and glass, then their spots in
+ * item_locations. Needs the `locations` permission, which the takeover role
+ * has unless its Where things live switch is off; without it, nothing.
+ */
+export function useTakeoverPlaces(barId: string | null | undefined, drinkIds: readonly string[]) {
+  const ids = [...new Set(drinkIds)].sort();
+  return useQuery({
+    queryKey: ['takeover-places', barId, ids],
+    enabled: !!barId && ids.length > 0,
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<TakeoverPlace[]> => {
+      const [lines, glasses] = await Promise.all([
+        supabase.from('app_recipe_presentation').select('display_ingredient(id)').in('recipe_item_id', ids),
+        supabase.from('drink_glass').select('glassware_id').in('item_id', ids),
+      ]);
+      if (lines.error) throw lines.error;
+      if (glasses.error) throw glasses.error;
+      // ponytail: matched by item id, so a spec's generic line ("London dry gin") finds no spot for the host's own gin; matching by generic_id is the upgrade.
+      const wanted = [...(lines.data ?? []).map((l) => l.display_ingredient?.id), ...(glasses.data ?? []).map((g) => g.glassware_id)].filter((id): id is string => !!id);
+      if (!wanted.length) return [];
+      const { data: spots, error: spotError } = await supabase
+        .from('item_locations')
+        .select('id, shelf, container, item:items!item_locations_item_id_fkey(id, name, item_type, bar_id), zone:bar_zones!item_locations_zone_id_bar_id_fkey(name)')
+        .eq('bar_id', barId!)
+        .in('item_id', [...new Set(wanted)])
+        .order('sort_order')
+        .limit(100);
+      if (spotError) throw spotError;
+      return (spots ?? []).flatMap((s) =>
+        s.item
+          ? [
+              {
+                key: s.id,
+                name: s.item.name,
+                where: [s.zone?.name, s.shelf, s.container].filter(Boolean).join(', '),
+                kind: s.item.item_type === 'glassware' ? ('glass' as const) : s.item.item_type === 'ice' ? ('ice' as const) : s.item.item_type === 'ingredient' && s.item.bar_id ? ('house' as const) : ('bottle' as const),
+              },
+            ]
+          : [],
+      );
+    },
   });
 }
 

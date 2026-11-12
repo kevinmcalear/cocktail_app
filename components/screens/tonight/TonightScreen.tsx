@@ -61,7 +61,7 @@ function BarPage({ barId, barName }: { barId: string; barName: string }) {
   if (guest)
     return (
       <Frame sky={[]} eyebrow={null}>
-        <GuestTonight guest={guest} barName={barName} />
+        <GuestTonight guest={guest} barId={barId} barName={barName} />
       </Frame>
     );
   return <StaffPage barId={barId} />;
