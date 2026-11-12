@@ -8,7 +8,7 @@ import { saveItemNotes } from '@/hooks/useItemNotes';
 import { savePrivateNote } from '@/hooks/usePrivateNote';
 import { recentEntry } from '@/hooks/useTrackRecent';
 import { refreshSpecs } from '@/hooks/useBulk';
-import { liveIds, specLineSaver, withKeptHouseMades } from '@/hooks/specLineSave';
+import { linesOnKeptHouseMades, liveIds, specLineSaver, withKeptHouseMades } from '@/hooks/specLineSave';
 import { saveDrinkSpec, type SpecLineInput } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
 import { NEW_DRINK, specFingerprint } from '@/lib/offlineWrites';
@@ -151,7 +151,9 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
         await saveDrinkSpec(updateId, ontoBarLines(lines, had), methodIds.length ? methodIds : orderedMethodIds(hadMethods.data), 'Updated from Bring in');
       } catch (e) {
         // Taken out again on a plain refusal; still saved after a dropped connection, and the error says which, for the draft's lines to point at.
-        throw withKeptHouseMades(e, await saver.dropHouseMades(e));
+        const kept = await saver.dropHouseMades(e);
+        // Part of it is in: sent again as it was, it would be refused by those names, so it isn't retried; the draft's lines move onto them (newDrinkFailed).
+        throw withKeptHouseMades(kept.size ? partlySaved() : e, kept);
       }
       return updateId;
     }
@@ -170,7 +172,9 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
     const fromElsewhere = !barId || !!draft.elsewhere;
     let originBar: string | null = fromElsewhere ? (draft.place?.id ?? null) : null;
     if (!fromElsewhere) {
-      const { data } = await supabase.from('profiles').select('id').eq('bar_id', barId).eq('kind', 'bar').limit(1).maybeSingle();
+      const { data, error } = await supabase.from('profiles').select('id').eq('bar_id', barId).eq('kind', 'bar').limit(1).maybeSingle();
+      // Not read is not "none": a missing credit would also change the save's key, and a retry would make a second drink.
+      if (error) throw error;
       originBar = data?.id ?? null;
     }
     // Another bar's name on it is a suggestion until the bar confirms it, as a drink added in setup is (useSaveCareerDrink).
@@ -221,7 +225,7 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
 
   if (updateId) {
     // A batch read from the sheet keeps its bottle's recipe.
-    await saver.saveOwnPreps();
+    await afterSaved(warnings, () => saver.saveOwnPreps());
     void qc.invalidateQueries({ queryKey: ['same-name-drink'] });
     void refreshSpecs(qc, { drinkIds: [updateId], ingredientIds: newIngredients });
     return { id: updateId, warnings, created, later };
@@ -278,9 +282,11 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
   if (photosMissed) warnings.push(photosMissed === 1 ? 'One photo wasn’t added. Add it on the drink’s page.' : `${photosMissed} photos weren’t added. Add them on the drink’s page.`);
   if (Object.keys(draft.photos ?? {}).length) void qc.invalidateQueries({ queryKey: ['cocktail', id] });
 
-  await saver.saveOwnPreps();
-  await saver.saveCards();
-  await saver.saveBottles();
+  await afterSaved(warnings, async () => {
+    await saver.saveOwnPreps();
+    await saver.saveCards();
+    await saver.saveBottles();
+  });
 
   if (menuSectionId) useMenuDrinkHandoff.getState().deliver(menuSectionId, id);
 
@@ -299,6 +305,24 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
   if (creatorId) void qc.invalidateQueries({ queryKey: ['profile-originals'] });
   if (privateNotes) void qc.invalidateQueries({ queryKey: ['private-note', id] });
   return { id, warnings, created, later };
+}
+
+/** A save stopped part way by a dropped connection: not a network error, so it isn't sent again as it was. */
+function partlySaved(): Error {
+  return Object.assign(new Error('The connection dropped part way through. Save it again.'), { code: 'partly-saved' });
+}
+
+/**
+ * Once the drink is in, a step after it that fails is said, not thrown:
+ * a dropped connection would otherwise send the whole save again, and its
+ * photos would be added twice.
+ */
+async function afterSaved(warnings: string[], step: () => Promise<unknown>) {
+  try {
+    await step();
+  } catch (e) {
+    warnings.push(`Some of what it uses wasn’t saved. ${saveErrorWords(e)}`);
+  }
 }
 
 /**
@@ -328,6 +352,13 @@ export function newDrinkSaved(qc: QueryClient, { warnings, later }: CreateDrinkR
 
 /** A save that waited and was refused: said here (the wizard has closed), and kept in Add and in what's waiting to send. */
 export function newDrinkFailed(e: unknown, input: CreateDrinkInput) {
+  // House-mades it left saved: the kept draft's lines use them now, so saving it again isn't refused by their names.
+  const store = useDrinkWizardStore.getState();
+  for (const [place, kept] of Object.entries(store.kept)) {
+    if (!input.draft.id || kept.draft.id !== input.draft.id) continue;
+    const on = linesOnKeptHouseMades(e, kept.draft);
+    if (on) store.patch(place, on);
+  }
   if (input.queued) Alert.alert(`Couldn’t save ${input.draft.name.trim() || 'the drink'}`, `${saveErrorWords(e)} It’s still in Add, under Pick up where you left off.`);
 }
 

@@ -189,15 +189,27 @@ export interface MenuLayoutWrite {
   queued: boolean;
 }
 
+/**
+ * Writes drinks' prices, as typed ("19.50", "MP"; blank clears). A drink the
+ * caller can't edit comes back with no row (RLS), which is an error here, so
+ * a price never looks saved when it wasn't. Here so the menu's waiting save
+ * uses it too (hooks/useDrinkCost.ts for one drink's).
+ */
+export async function writePrices(prices: Record<string, string | null>) {
+  const results = await Promise.all(
+    Object.entries(prices).map(([id, price]) => supabase.from('items').update({ price: price?.trim() || null }).eq('id', id).select('id'))
+  );
+  for (const { data, error } of results) {
+    if (error) throw error;
+    if (!data?.length) throw new Error('Couldn’t change that price: only people who can edit the drink can.');
+  }
+}
+
 /** A menu's layout (save_menu, one transaction), then the prices typed in it. */
 async function sendMenuLayout({ args, prices }: MenuLayoutWrite) {
   const { error } = await supabase.rpc('save_menu', args);
   if (error) throw error.code === '42501' ? new Error('You can’t change this menu. Ask someone who builds menus at this venue.') : error;
-  for (const [id, price] of Object.entries(prices)) {
-    const { data, error: priceError } = await supabase.from('items').update({ price: price?.trim() || null }).eq('id', id).select('id');
-    if (priceError) throw priceError;
-    if (!data?.length) throw new Error('Couldn’t change that price: only people who can edit the drink can.');
-  }
+  await writePrices(prices);
 }
 
 export const BAR_WRITES = {

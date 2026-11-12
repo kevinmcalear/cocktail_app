@@ -67,7 +67,8 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const router = useRouter();
   // This menu's saves still on the phone (no signal, or refused): the newest is where the editor starts, not the older menu.
   const unsent = useUnsentWrites<MenuLayoutWrite>(MENU_LAYOUT).filter((w) => w.variables.menuId === menu.id);
-  const kept = unsent.at(-1)?.variables.layout;
+  // The newest one still to go (one the database refused isn't a start: the menu as it is now is).
+  const kept = unsent.filter((w) => !w.failed).at(-1)?.variables.layout;
   const [layout, setLayout] = useState<MenuLayout>(() => (kept ? { ...kept, prices: {} } : layoutFromMenu(menu)));
   const [saved, setSaved] = useState<MenuLayout>(layout);
   // New menu's "Paste a list" opens the builder on the paste sheet.

@@ -37,6 +37,8 @@ export function resendWrite(client: QueryClient, write: AnyWrite): void {
 /** Gives up on a write that didn't send: what it would have changed is lost (the caller asks first). */
 export function discardWrite(client: QueryClient, write: AnyWrite): void {
   client.getMutationCache().remove(write);
+  // Writes queued behind it go now, not at the next reconnect.
+  void client.resumePausedMutations();
 }
 
 let saver: (queryKey: QueryKey) => Promise<void> = async () => undefined;

@@ -177,3 +177,17 @@ test('a write refused while its screen is open is the screen’s to say: it is n
   await tick();
   expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
 });
+
+test('a menu edited again offline sends only its newest layout; another menu keeps its own', async () => {
+  onlineManager.setOnline(false);
+  const layout = (menuId: string, id: string) => new MutationObserver<unknown, Error, { menuId: string; id: string }>(queryClient, { mutationKey: ['bar-write', 'menu-layout'] }).mutate({ menuId, id });
+  void layout('m1', 'first').catch(() => {});
+  void layout('m2', 'other').catch(() => {});
+  void layout('m1', 'second').catch(() => {});
+  await tick();
+  expect(queryClient.getMutationCache().getAll().filter(isKeptWrite)).toHaveLength(2);
+  onlineManager.setOnline(true);
+  await queryClient.resumePausedMutations();
+  await tick();
+  expect(mockOrder).toEqual(['other', 'second']);
+});

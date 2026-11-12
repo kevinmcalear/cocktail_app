@@ -21,8 +21,9 @@ import {
 } from '@/lib/queryCachePersist';
 import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
 import { retryDelay, retryQuery } from '@/lib/queryRetry';
-import { BAR_WRITE, isNetworkError, NEW_DRINK, OFFLINE_SCOPE, retryBarWrite } from '@/lib/offlineWrites';
+import { BAR_WRITE, isNetworkError, MENU_LAYOUT, NEW_DRINK, OFFLINE_SCOPE, retryBarWrite } from '@/lib/offlineWrites';
 import type { CreateDrinkInput, CreateDrinkResult } from '@/hooks/useCreateDrink';
+import type { MenuLayoutWrite } from '@/hooks/barWrites';
 import { loadSavedSpecBooks } from '@/lib/specBookFile';
 
 // Setup network listener for TanStack Query
@@ -70,9 +71,20 @@ const refreshSpecBooksSoon = () => {
 
 // Behind-the-bar writes that waited are kept until they're in, even refused (lib/keptWrites.ts); the rest go once settled.
 const isBarWrite = (write: AnyWrite) => write.options.mutationKey?.[0] === BAR_WRITE;
+const isMenuLayout = (write: AnyWrite) => isBarWrite(write) && write.options.mutationKey?.[1] === MENU_LAYOUT[1];
 const later = (fn: () => void) => setTimeout(fn, 0);
 
 const mutationCache = new MutationCache({
+  // A menu's layout is sent whole: a newer one replaces any of that menu's still kept (waiting or refused), so
+  // ten edits offline are one send, and an older one sent again later can't undo a newer one.
+  onMutate: (v, write) => {
+    if (!isMenuLayout(write as AnyWrite)) return;
+    const menuId = (v as MenuLayoutWrite | undefined)?.menuId;
+    if (!menuId) return;
+    for (const old of mutationCache.findAll({ mutationKey: MENU_LAYOUT })) {
+      if (old !== write && isKeptWrite(old as AnyWrite) && (old.state.variables as MenuLayoutWrite | undefined)?.menuId === menuId) mutationCache.remove(old);
+    }
+  },
   onSuccess: (_data, _v, _ctx, write) => {
     refreshSpecBooksSoon();
     // Bar writes are kept until they're in (gcTime: Infinity below): once in, they go.
@@ -230,14 +242,19 @@ queryClient.setMutationDefaults(NEW_DRINK, {
 // signal, or is refused after waiting, is saved at once, so closing the app straight after can't lose it.
 let saving: ReturnType<typeof setTimeout> | undefined;
 queryClient.getMutationCache().subscribe((event) => {
-  if (event.type !== 'added' && event.type !== 'updated') return;
   const write = event.mutation as AnyWrite;
+  // One that waited and is now in (or discarded) goes from the saved row at once too, so a quick relaunch can't send it again.
+  if (event.type === 'removed' && hasWaited(write)) return saveSoon();
+  if (event.type !== 'added' && event.type !== 'updated') return;
   // One restored from a relaunch (waiting or refused) or one waiting now: a refusal keeps it.
   if (write.state.isPaused || (event.type === 'added' && write.state.status === 'error')) markWaited(write);
-  if (!isKeptWrite(write) || saving) return;
+  if (isKeptWrite(write)) saveSoon();
+});
+function saveSoon() {
+  if (saving) return;
   saving = setTimeout(() => {
     saving = undefined;
     const clientState = dehydrate(queryClient, persistOptions.dehydrateOptions);
     void asyncStoragePersister.saveNow({ timestamp: Date.now(), buster: SAVED.buster, clientState }).catch(() => undefined);
   }, 0);
-});
+}
