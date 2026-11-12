@@ -12,7 +12,7 @@
     "hooks/useCocktails.ts": 1,
     "hooks/useDrafts.ts": 1,
     "hooks/useIngredients.ts": 1,
-    "hooks/useSearchCatalog.ts": 14,
+    "hooks/useSearchCatalog.ts": 13,
     "lib/drafts.ts": 13,
     "lib/platformKeys.ts": 1,
     "lib/recipeUtils.ts": 2

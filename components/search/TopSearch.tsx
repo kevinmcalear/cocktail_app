@@ -12,6 +12,7 @@ import { font, radius, space, type } from '@/constants/tokens';
 import { useAuth } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useKeyboardHeight } from '@/hooks/useKeyboardInset';
+import { searchTyped } from '@/lib/searchProbe';
 import { scopeOptions } from '@/lib/searchScope';
 import { searchBarLabel } from '@/lib/tabs';
 import { useBringIn } from '@/store/useBringIn';
@@ -61,7 +62,10 @@ export function TopSearch({ query, setQuery, scope, setScope, mine, area, focuse
         <TextInput
           ref={input}
           value={query}
-          onChangeText={setQuery}
+          onChangeText={(text) => {
+            searchTyped();
+            setQuery(text);
+          }}
           onSubmitEditing={() => useRecentSearches.getState().add(query)}
           placeholder={label}
           placeholderTextColor={ds.c.muted}

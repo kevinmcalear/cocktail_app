@@ -15,6 +15,7 @@ import { SEARCH_ANYTHING } from '@/lib/tabs';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { useSearchFrom } from '@/hooks/useSearchFrom';
 import { useBringIn } from '@/store/useBringIn';
+import { searchTyped } from '@/lib/searchProbe';
 import { scopeOptions, type SearchScope, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 
 import { CanMakeChip } from './CanMake';
@@ -115,7 +116,10 @@ export function SystemBottomSearch({ query, setQuery, scope, setScope, mine, are
             autoCapitalize: 'none',
             tintColor: ds.accentText,
             hideNavigationBar: false,
-            onChangeText: (e) => setQuery(e.nativeEvent.text),
+            onChangeText: (e) => {
+              searchTyped();
+              setQuery(e.nativeEvent.text);
+            },
             onCancelButtonPress: () => setQuery(''),
           },
         }}

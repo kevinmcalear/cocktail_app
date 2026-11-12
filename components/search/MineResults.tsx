@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { use, useEffect, useMemo, type ReactNode } from 'react';
+import { use, useEffect, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Button, Caption, RowScore, scoreWords } from '@/components/ds';
@@ -8,15 +8,14 @@ import { space } from '@/constants/tokens';
 import { useItemScores } from '@/hooks/useFlavor';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { usePublicPeople, useWaiting } from '@/hooks/useProfiles';
-import { useSearchCatalog } from '@/hooks/useSearchCatalog';
+import { useMineSearch } from '@/hooks/useMineSearch';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { foldName } from '@/lib/discover';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
-import { itemIdOf } from '@/lib/drinksFilters';
 import { openSearchItem } from '@/lib/openSearchItem';
 import { drinkFacts, ingredientFacts, menuFacts } from '@/lib/searchCaptions';
-import { completions, groupCatalog, shows, type SearchShow, type ShowCounts } from '@/lib/searchScope';
+import { completions, shows, type SearchShow, type ShowCounts } from '@/lib/searchScope';
 import { capitalize } from '@/lib/stringUtils';
 import type { SearchItem } from '@/types/search';
 
@@ -50,16 +49,6 @@ export const specLine = (i: SearchItem) =>
     .slice(0, 4)
     .join(', ');
 
-/** The venue's library (or your own drinks), less what it hides. */
-export function useMineCatalog(mine: SearchMine) {
-  const { items: catalog, isLoading } = useSearchCatalog(mine.contextIds);
-  const items = useMemo(() => {
-    const hidden = new Set(mine.hiddenIds);
-    return hidden.size ? catalog.filter((i) => !hidden.has(itemIdOf(i.id))) : catalog;
-  }, [catalog, mine.hiddenIds]);
-  return { items, isLoading };
-}
-
 /**
  * The venue's library (or your own drinks) matching the query: drinks, each
  * saying why it's here and ending with its score, ingredients and menus, the
@@ -69,8 +58,7 @@ export function useMineCatalog(mine: SearchMine) {
 export function MineResults({ query, mine, onEverywhere, commands, palette, show, onCounts, typeAhead }: MineResultsProps) {
   const router = useRouter();
   const drawn = use(DrawnSearch);
-  const { items, isLoading } = useMineCatalog(mine);
-  const groups = useMemo(() => groupCatalog(items, query), [items, query]);
+  const { groups, near, items, isLoading } = useMineSearch(mine, query);
   const facts = useMineFacts(mine.venueId, items);
   const q = query.trim();
   const drinkIds = groups.drinks.filter((i) => !i.isDraft).map((i) => i.id);
@@ -112,7 +100,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
             // After the results, a quiet row as the board draws it: "+ Add “negr” as a new drink", with what was missed under it.
             card: drawn ? null : mine.canAdd ? <ResultRow title={`Add “${capitalize(q)}” as a new drink`} caption={missed} icon="plus" accentIcon onPress={add} /> : <Caption tone="muted">{missed}</Caption>,
             add: mine.canAdd ? { label: `add ${capitalize(q)}`, onPress: add } : undefined,
-            yours: items,
+            yours: near,
             yoursCaption: mine.label,
           }}
         />
@@ -176,7 +164,7 @@ export function MineResults({ query, mine, onEverywhere, commands, palette, show
         />
       ) : null}
       {shows(show, 'people') ? <ResultGroup label="People" items={people} render={(p) => <PersonResultRow key={p.id} person={p} waiting={waiting?.[p.id]} />} /> : null}
-      <NearResults query={q} found={found} shown={shownIds} yours={items} yoursCaption={mine.label} title="" miss={null} show={show} />
+      <NearResults query={q} found={found} shown={shownIds} yours={near} yoursCaption={mine.label} title="" miss={null} show={show} />
       {commands}
       {everywhere}
       {/* The results end with Add "what you typed" (Prod-phone search, Add B), unless that drink is already here. */}

@@ -6,6 +6,7 @@ import { Body, Caption, PressableScale, useDs, type IconName } from '@/component
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { layout, radius, space } from '@/constants/tokens';
 import { useMineFacts } from '@/hooks/useMineFacts';
+import { useMineSearch } from '@/hooks/useMineSearch';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { foldName } from '@/lib/discover';
@@ -13,12 +14,11 @@ import { newDrinkHref } from '@/lib/itemRoutes';
 import { openSearchItem } from '@/lib/openSearchItem';
 import { learnTitle, madeFirst, usedFor } from '@/lib/paletteRows';
 import { drinkFacts, ingredientFacts, menuFacts } from '@/lib/searchCaptions';
-import { groupCatalog } from '@/lib/searchScope';
 import { capitalize } from '@/lib/stringUtils';
 import { searchTechniques, useTechniques } from '@/lib/techniques';
 import type { SearchItem } from '@/types/search';
 
-import { MineResults, useMineCatalog } from './MineResults';
+import { MineResults } from './MineResults';
 import { EverywhereRow } from './ResultRows';
 import { KeyCap } from './SearchField';
 import { useSearchNavRow } from './searchNav';
@@ -110,10 +110,9 @@ export function PaletteResults({ query: typed, mine, onEverywhere }: { query: st
   const router = useRouter();
   // The field never waits on the results, as SearchBody's don't.
   const query = useDeferredValue(typed);
-  const { items, isLoading } = useMineCatalog(mine);
-  const facts = useMineFacts(mine.venueId, items);
   const q = query.trim();
-  const groups = useMemo(() => groupCatalog(items, q), [items, q]);
+  const { groups, items, isLoading } = useMineSearch(mine, q);
+  const facts = useMineFacts(mine.venueId, items);
   // The house-mades its drinks use, shared ones too, as the Library's Preps shelf has them.
   const preps = useMemo(() => facts.prepItems.filter((p) => foldName(p.name).includes(foldName(q))), [facts.prepItems, q]);
   const ingredients = [...preps, ...groups.ingredients.filter((i) => !preps.some((p) => p.id === i.id))];

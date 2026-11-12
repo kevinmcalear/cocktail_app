@@ -53,8 +53,15 @@
       "target": "Typed letter echoes in the same frame. Local results ≤ 50 ms p95 on the reference Android (Superhuman's < 100 ms, aim < 50; Algolia ≤ 50 ms, vendor). ≤ 8 ms of JS per keystroke. 0 network calls for your venue or your drinks. Everywhere: at most 1 server call per settled query (250 ms pause), results ≤ 500 ms p75, appended below, never reordering the top hit.",
       "howMeasured": "`lib/searchBench.check.ts` counting operations (CI-stable). An on-device probe in a release build, reported as an Observe event. A Maestro typing flow.",
       "ratchet": "lower",
-      "current": null,
-      "why": "Not measured yet: lib/searchBench.check.ts does not exist."
+      "measuredBy": "By hand, first measured 12 Nov 2026 when the venue's search moved to its spec book (lib/specSearch.ts through hooks/useMineSearch.ts). Engine: the /dev/search-bench screen types 20 queries letter by letter over 1,100 synthetic items (1,000 drinks, 100 house-mades) and reports ms of JS per letter for names, lines, tags and ranking; `plain` is the old match on the same rows (groupCatalog, still used at home). Screen: lib/searchProbe.ts times a letter typed in the real search to its results on screen, here at Little Rye on the local stack (76 items). Both on Hermes in a dev build with production-mode JS (Metro --no-dev --minify), on the iPhone 17 Pro simulator (iOS 26.4) and the Pixel 8 Pro emulator (API Baklava), not the reference phones and not a release build. In CI, lib/specSearch.check.ts holds the engine under 2 ms p95 in Node and lib/mineSearch.check.ts fails if a screen goes back to matching a venue's list on each letter. Not measured: the 50 ms p95 on the reference Android, a release-build probe, the Everywhere numbers. Still calling the server in a venue's search: captions (the venue's lists), scores, people and drawings; the drink rows themselves make no call.",
+      "current": {
+        "engine ms per letter p95, 1,100 items, Android emulator": 1.97,
+        "engine ms per letter p95, 1,100 items, iOS simulator": 1.69,
+        "plain match ms per letter p95, 1,100 items, Android emulator": 101.57,
+        "plain match ms per letter p95, 1,100 items, iOS simulator": 6.19,
+        "letter to results on screen ms p95, Little Rye, Android emulator": 86.2,
+        "letter to results on screen ms p95, Little Rye, iOS simulator": 37.8
+      }
     },
     {
       "id": "B7",
@@ -126,7 +133,7 @@
         "/m/[id]": 547132,
         "/p/[id]": 612083,
         "/": 590767,
-        "/drinks": 618733,
+        "/drinks": 621875,
         "/discover": 567624,
         "/you": 553889
       },
