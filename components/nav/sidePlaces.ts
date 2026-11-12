@@ -14,6 +14,7 @@ import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { NavMatch } from '@/lib/shellNav';
 import { groupMenus } from '@/lib/menus';
 import { buildPrepList, DEFAULT_SERVES, tonightAt6 } from '@/lib/prep';
+import { shortDay } from '@/lib/takeover';
 import { canSeeTeam } from '@/lib/team';
 
 import { useWebTabs } from './WebTabBar';
@@ -54,6 +55,7 @@ export function useSidePlaces() {
   // Home when you chose it, or when you're on no bar's team. While a bar is still loading, no group yet, so the chip never shows the wrong place.
   const atHome = mode === 'home' || (!venue && !isLoading);
   const settings = venue ? `/settings/bar/${venue.id}` : null;
+  const takeovers = useTakeoverLists(venue?.id ?? null);
 
   // The four tabs, without Tonight at a venue that hasn't switched it on.
   const tabs: Place[] = useWebTabs().map((t) => ({ key: t.name, label: t.label, icon: t.icon, path: t.path, tab: true }));
@@ -62,6 +64,8 @@ export function useSidePlaces() {
       ? [
           // Menus waits for its step in the first round.
           ...(hidden.includes('menus') ? [] : [{ key: 'menus', label: 'Menus', icon: 'place.menus', path: '/menus/all', prefix: '/menus' } as Place]),
+          // A takeover coming up or on now, as its own row under the bar (Kept-takeover-desk).
+          ...(round ? [] : takeovers.map((t): Place => ({ key: `takeover-${t.id}`, label: t.name, icon: 'calendar', path: `/takeover/${t.id}` }))),
           ...(round || !has('prep') ? [] : [{ key: 'prep', label: 'House-made', short: 'House', icon: 'flask', path: '/prep' } as Place]),
           // The Team row stays lit on the rota (/team/rota).
           ...(canSeeTeam(role) && !round ? [{ key: 'team', label: 'Team', icon: 'place.team', path: '/team', prefix: '/team' } as Place] : []),
@@ -93,6 +97,27 @@ export function useSidePlaces() {
   return { venue, atHome, tabs, places: venue ? bar : atHome ? home : [], more };
 }
 
+/** Not over: its end is ahead, or with no end, it starts less than a day ago (or hasn't a date yet). */
+function takeoverAhead(m: { endsAt: string | null; plannedEndsAt?: string | null; startsAt: string | null; plannedStartsAt: string | null }, now: number): boolean {
+  const end = m.endsAt ?? m.plannedEndsAt ?? null;
+  if (end) return Date.parse(end) > now;
+  const start = m.plannedStartsAt ?? m.startsAt;
+  return !start || Date.parse(start) > now - 86_400_000;
+}
+
+/** The bar's takeover lists not over yet, soonest first: the sidebar's rows for them. */
+function useTakeoverLists(venueId: string | null) {
+  const menus = useVenueMenus(venueId).data;
+  const [now] = useState(() => Date.now());
+  return useMemo(
+    () =>
+      (menus ?? [])
+        .filter((m) => m.barId === venueId && m.listType === 'takeover' && !m.hiddenAt && takeoverAhead(m, now))
+        .sort((a, b) => Date.parse(a.plannedStartsAt ?? a.startsAt ?? a.createdAt) - Date.parse(b.plannedStartsAt ?? b.startsAt ?? b.createdAt)),
+    [menus, venueId, now],
+  );
+}
+
 /** What the bar's rows say at their right (board Prod-desk): the menu on now, how much house-made is low, the shelf's count. */
 export type SideNotes = Record<string, { text: string; warn?: boolean; label?: string } | undefined>;
 
@@ -119,7 +144,10 @@ export function useSideNotes(venueId: string | null): SideNotes {
       select: (d) => buildPrepList({ ...d, servesPerDrink: DEFAULT_SERVES, startsAt: tonightAt6(), now: new Date(now) }).make.length,
     }).data ?? 0;
   const shelf = useShelf().data?.length;
+  const takeovers = useTakeoverLists(venueId);
   return {
+    // A takeover's day: "Thu".
+    ...Object.fromEntries(takeovers.map((t) => [`takeover-${t.id}`, { text: shortDay(t.plannedStartsAt ?? t.startsAt)?.split(' ')[0] ?? '' }])),
     // One menu running is named, as the board draws it ("Autumn, on now"); several are counted.
     menus: on.length ? (on.length === 1 ? { text: 'on now', label: on[0].name } : { text: `${on.length} on now` }) : undefined,
     prep: low ? { text: `${low} low`, warn: true } : undefined,

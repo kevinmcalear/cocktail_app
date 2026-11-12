@@ -5,13 +5,16 @@ import { ScreenHeader } from '@/components/nav/ScreenHeader';
 import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
+import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useBarDrinks } from '@/hooks/useHomeBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useServiceDate } from '@/hooks/useServiceDay';
+import { useTakeoverGuest } from '@/hooks/useTakeoverPage';
 import { tonightEyebrow } from '@/lib/tonight';
 
+import { GuestTonight } from './GuestTonight';
 import { HomeTonight } from './HomeTonight';
 import { useNightHandover } from './NightHandover';
 import { NoVenue, showsLists, StaffLists, StaffSide } from './StaffTonight';
@@ -42,10 +45,30 @@ export function TonightScreen() {
         <PencilState kind="loading" title="Loading tonight" compact />
       </Frame>
     );
-  return home || !active ? <HomePage venueless={!home} /> : <StaffPage barId={active.id} />;
+  return home || !active ? <HomePage venueless={!home} /> : <BarPage barId={active.id} barName={active.name} />;
 }
 
-function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: string; children: React.ReactNode }) {
+/** A guest bartender on a takeover gets their own Tonight (Keep-phone guestview); the bar's team gets theirs. */
+function BarPage({ barId, barName }: { barId: string; barName: string }) {
+  const { data: guest, isLoading } = useTakeoverGuest(barId, useUserId());
+  // Until we know, neither page: a guest never sees the host's staff page first.
+  if (isLoading)
+    return (
+      <Frame sky={[]} eyebrow="">
+        <PencilState kind="loading" title="Loading tonight" compact />
+      </Frame>
+    );
+  if (guest)
+    return (
+      <Frame sky={[]} eyebrow={null}>
+        <GuestTonight guest={guest} barName={barName} />
+      </Frame>
+    );
+  return <StaffPage barId={barId} />;
+}
+
+/** `eyebrow` null: the page draws its own head. */
+function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: string | null; children: React.ReactNode }) {
   const ds = useDs();
   const bottom = useTabBarInset();
   const wide = useIsWideWeb();
@@ -55,7 +78,7 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
       <TonightScroll sky={<TonightSky ids={sky} />} cap={<TonightSky ids={sky} cap />} contentContainerStyle={{ paddingBottom: bottom }}>
         <ScreenHeader />
         <View style={[column, styles.body]}>
-          <TonightHead eyebrow={eyebrow} />
+          {eyebrow === null ? null : <TonightHead eyebrow={eyebrow} />}
           {children}
         </View>
       </TonightScroll>
