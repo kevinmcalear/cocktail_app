@@ -13,7 +13,7 @@ import { track } from '@/lib/analytics';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
 import { linePart, storedParts } from '@/lib/drinkParts';
-import { creatorProfileId, notesArePrivate, specLines, type WizardDraft } from '@/lib/drinkWizard';
+import { creatorProfileId, newDraftId, notesArePrivate, specLines, type WizardDraft, type WizardLine } from '@/lib/drinkWizard';
 import { fetchEditableRecipes } from '@/lib/editableRecipes';
 import { saysMore, toStored, type IceLayer } from '@/lib/iceBuild';
 import type { ImageAngle } from '@/lib/itemImages';
@@ -57,12 +57,12 @@ export interface CreateDrinkResult {
 }
 
 /**
- * Saves the add-drink wizard's drink in one go, at the end: any ingredient,
- * method, glass or ice typed in that doesn't exist yet, then the drink with
- * its credits, then its spec (a first version, through save_drink_spec). If
- * the spec can't be written the half-made drink is removed again, so trying
- * again doesn't leave a copy; the draft stays on the device until this
- * succeeds.
+ * Saves the add-drink wizard's drink in one go, at the end: any method, glass
+ * or ice typed in that doesn't exist yet (found by name when tried again),
+ * then one save_drink call with the drink, its credits, its spec (a first
+ * version), its house-mades and every ingredient typed in: all or none. Its
+ * key is the draft's id, kept on the device until this succeeds, so a try
+ * whose reply was lost gets the same drink back, never a copy.
  */
 /**
  * The drink's typed price. A draft saved before prices were typed text
@@ -107,23 +107,18 @@ export function useCreateDrink() {
       const saveCredits = (id: string, add: string[]) =>
         // Null is nobody; the generated types don't say a uuid argument can be null.
         supabase.rpc('set_drink_credits', { p_item_id: id, p_creator_profile_id: creatorId as string, p_creator_names: creatorNames, p_add: add, p_remove: [] });
-      // House-mades written inside the drink (board Add-inside) save with it: first, in one call, and out again if the drink can't be saved.
-      await saver.houseMades(specLines(draft).map(({ line }) => line));
+      const spec = specLines(draft);
+      const garnishes = new Set(draft.garnishes.map((g) => g.key));
+      const specOf = (line: WizardLine, i: number) => ({
+        id: null,
+        amount: spec[i].amount,
+        unit: line.unit || null,
+        preparation_notes: line.note?.trim() || null,
+        is_optional: !!line.optional,
+        is_float: !!line.float,
+        ...(draft.parts?.length ? { part: linePart(draft.parts, line.key, garnishes.has(line.key)) } : {}),
+      });
       const id = await (async () => {
-        const lines: SpecLineInput[] = [];
-        const garnishes = new Set(draft.garnishes.map((g) => g.key));
-        for (const { line, amount } of specLines(draft)) {
-          lines.push({
-            id: null,
-            ingredient_item_id: await saver.line(line),
-            amount,
-            unit: line.unit || null,
-            preparation_notes: line.note?.trim() || null,
-            is_optional: !!line.optional,
-            is_float: !!line.float,
-            ...(draft.parts?.length ? { part: linePart(draft.parts, line.key, garnishes.has(line.key)) } : {}),
-          });
-        }
         // Made in parts: each part's methods in turn, with its number (Build can be in two parts).
         const methodIds: string[] = [];
         const methodParts: number[] = [];
@@ -134,11 +129,21 @@ export function useCreateDrink() {
         }
         const parts = draft.parts?.length ? { methodParts, parts: storedParts(draft.parts) } : undefined;
         if (updateId) {
-          // Its ranks, photos and menus stay; the spec it had is the version before, so it can be put back.
-          const [had, hadMethods] = await Promise.all([fetchEditableRecipes(updateId), supabase.from('item_methods').select('method_item_id, sort_order').eq('item_id', updateId)]);
-          if (hadMethods.error) throw hadMethods.error;
-          // Its own rows keep their notes and service decisions, and a sheet that names no method we know (it went to notes) keeps the drink's.
-          await saveDrinkSpec(updateId, ontoBarLines(lines, had), methodIds.length ? methodIds : orderedMethodIds(hadMethods.data), 'Updated from Bring in');
+          // ponytail: Bring in's "Update it" stays on the two-step save (house-mades first, taken out again on a refusal):
+          // ontoBarLines needs every line's row before the spec is written. It moves to save_drink with useIngredientEditor.
+          await saver.houseMades(spec.map(({ line }) => line));
+          try {
+            const lines: SpecLineInput[] = [];
+            for (const [i, { line }] of spec.entries()) lines.push({ ...specOf(line, i), ingredient_item_id: await saver.line(line) });
+            // Its ranks, photos and menus stay; the spec it had is the version before, so it can be put back.
+            const [had, hadMethods] = await Promise.all([fetchEditableRecipes(updateId), supabase.from('item_methods').select('method_item_id, sort_order').eq('item_id', updateId)]);
+            if (hadMethods.error) throw hadMethods.error;
+            // Its own rows keep their notes and service decisions, and a sheet that names no method we know (it went to notes) keeps the drink's.
+            await saveDrinkSpec(updateId, ontoBarLines(lines, had), methodIds.length ? methodIds : orderedMethodIds(hadMethods.data), 'Updated from Bring in');
+          } catch (e) {
+            // Taken out again on a plain refusal; still saved after a dropped connection, and the error says which, for the draft's lines to point at.
+            throw withKeptHouseMades(e, await saver.dropHouseMades(e));
+          }
           return updateId;
         }
         const glassId = draft.glass ? await ensure(draft.glass, 'glassware') : null;
@@ -163,7 +168,8 @@ export function useCreateDrink() {
         const otherBar = fromElsewhere && !!originBar;
 
         const row: Insert<'items'> = {
-          id: undefined,
+          // Under the draft's id, so it's drawn with the wizard's seed; the database gives one that's taken an id of its own.
+          id: draft.id,
           name: capitalize(draft.name),
           item_type: 'cocktail',
           bar_id: barId,
@@ -188,40 +194,21 @@ export function useCreateDrink() {
           origin_year: draft.originYear ?? null,
           price: barId ? await draftPrice(draft, barId) : null,
         };
-        // Under the draft's id, so it's drawn with the wizard's seed. A clash
-        // (an earlier try that saved but never answered) gets an id of its own.
-        // (undefined is left out of the request, so the database makes one.)
-        const insert = (id: string | undefined) => supabase.from('items').insert({ ...row, id }).select('id').single();
-        let { data: item, error: itemError } = await insert(draft.id);
-        if (itemError?.code === '23505' && draft.id) ({ data: item, error: itemError } = await insert(undefined));
-        if (itemError || !item) throw itemError ?? new Error('Couldn’t save the drink.');
-        const id = item.id as string;
-
-        try {
-          if (creatorId || creatorNames.length) {
-            const { error } = await saveCredits(id, []);
-            if (error) throw error;
-          }
-          // You can say yes to your own credit; anyone else's starts as suggested.
-          if (creatorId && creatorId === myProfileId && !otherBar) {
-            const lead = await supabase.from('item_credits').select('id').eq('item_id', id).eq('role', 'creator').eq('profile_id', creatorId).maybeSingle();
-            if (lead.error) throw lead.error;
-            if (lead.data) {
-              const { error } = await supabase.rpc('answer_item_credit', { p_credit_id: lead.data.id, p_accept: true });
-              if (error) throw error;
-            }
-          }
-          // Every method, in order, in the same transaction as the spec.
-          await saveDrinkSpec(id, lines, methodIds, null, parts);
-        } catch (e) {
-          await supabase.from('items').delete().eq('id', id);
-          throw e;
-        }
-        return id;
-      })().catch(async (e: unknown) => {
-        // Taken out again on a plain refusal; still saved after a dropped connection, and the error says which, for the draft's lines to point at.
-        throw withKeptHouseMades(e, await saver.dropHouseMades(e));
-      });
+        const saved = await saver.saveDrink(
+          draft.id ?? newDraftId(),
+          spec.map(({ line }) => line),
+          {
+            drink: row,
+            // Every method, in order, in the same transaction as the spec.
+            methods: methodIds,
+            ...(parts ? { method_parts: parts.methodParts, parts: parts.parts } : {}),
+            // You can say yes to your own credit; anyone else's starts as suggested.
+            credits: { creator: creatorId, names: creatorNames, accept: !!creatorId && creatorId === myProfileId && !otherBar },
+          },
+          specOf,
+        );
+        return saved.item;
+      })();
 
       if (updateId) {
         // A batch read from the sheet keeps its bottle's recipe.
