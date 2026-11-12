@@ -1,5 +1,6 @@
 // A failed library load (offline, a chunk an old deploy removed) rejects and is
-// tried again on the next call; a good load installs the data.
+// tried again on the next call; a good load installs the data. What a screen
+// shows on failure is tested in components/techniques/TechniquesGate.test.tsx.
 // Run: npm run test:unit
 import assert from 'node:assert/strict';
 
