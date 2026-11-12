@@ -83,8 +83,12 @@ describe('Made in parts', () => {
     expect(screen.getByText('Eggs and sulphites')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /^Allergens/ }));
     expect(screen.getByRole('checkbox', { name: 'Sulphites, from a part' })).toBeDisabled();
-    const part = onKeep.mock.calls.at(-1)![0].lines.find((l: { name: string }) => l.name === 'House sour').prep;
+    const kept = onKeep.mock.calls.at(-1)![0];
+    const part = kept.lines.find((l: { name: string }) => l.name === 'House sour').prep;
     expect([part.allergens, part.allergensSet]).toEqual([['eggs', 'sulphites'], true]);
+    // The house-made's own list stays its own: the part's are the part's (they save on it).
+    expect(kept.allergensSet).toBeFalsy();
+    expect(kept.allergens ?? []).toEqual([]);
   });
 
   test('a part whose name says nothing about how it’s made starts empty; Add “X” leaves a line To make, and its card makes it one more level in', async () => {

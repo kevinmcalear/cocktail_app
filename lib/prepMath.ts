@@ -67,29 +67,39 @@ export function prepYield(d: PrepDraft): number | null {
   return ml > 0 ? Math.round(ml / 10) * 10 : null;
 }
 
-/** What its parts carry up (board Add-parts): each part's allergens, found or set by hand, and its parts' in turn. */
+/**
+ * What its parts carry up (board Add-parts): each part's allergens, found or
+ * set by hand, and its own parts' in turn; what else they contain; vegan.
+ */
 export function partFacts(d: PrepDraft): { allergens: Allergen[]; contains: string[]; vegan: boolean | null } {
   const parts = d.lines.filter((l) => l.prep && !l.slot).map((l) => withFacts(l.prep!));
   return {
-    allergens: [...new Set(parts.flatMap((p) => p.allergens ?? []))],
+    allergens: [...new Set(parts.flatMap((p) => [...(p.allergens ?? []), ...partFacts(p).allergens]))],
     contains: [...new Set(parts.flatMap((p) => p.contains ?? []))],
     vegan: parts.some((p) => p.vegan === false) ? false : parts.some((p) => p.vegan == null) ? null : true,
   };
 }
 
 /**
+ * Every allergen in it: its own (`allergens`: from its lines, or set by hand)
+ * and its parts'. Shown together, as drink_allergens rolls them up once
+ * saved, but kept apart: a part's stays the part's, so it goes when the part
+ * drops it, and the house-made never declares it as its own.
+ */
+export function allAllergens(d: PrepDraft): Allergen[] {
+  return [...new Set([...(d.allergens ?? []), ...partFacts(d).allergens])];
+}
+
+/**
  * Allergens and vegan, read again from the lines as they are now (a line
- * swapped or added), and what its parts carry up: a part's allergens are in
- * what it goes in, set by hand or not (as drink_allergens rolls them up once
- * saved).
+ * swapped or added). What else it contains, and vegan, count its parts too.
  */
 export function withFacts<D extends PrepDraft>(d: D): D {
   const facts = prepFacts(d.lines.filter((l) => !l.slot).map((l) => l.name), d.lines.some((l) => l.slot));
   const parts = partFacts(d);
-  // Allergens set by hand stay as they were set.
-  const own = d.allergensSet ? (d.allergens ?? []) : facts.allergens;
   const vegan = facts.vegan === false || parts.vegan === false ? false : facts.vegan === null || parts.vegan === null ? null : true;
-  return { ...d, allergens: [...new Set([...own, ...parts.allergens])], contains: [...new Set([...facts.contains, ...parts.contains])], vegan };
+  // Allergens set by hand stay as they were set.
+  return { ...d, allergens: d.allergensSet ? d.allergens : facts.allergens, contains: [...new Set([...facts.contains, ...parts.contains])], vegan };
 }
 
 /** "https://www.imbibemagazine.com/recipe/x" → "imbibemagazine.com": a source as people say it. */

@@ -6,7 +6,7 @@ import { FlowHead } from '@/components/ds/FlowHead';
 import { ListGroup, ListNote, ListRow } from '@/components/ds/ListGroup';
 import { layout, radius, space } from '@/constants/tokens';
 import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
-import { guessKind, keepsText, partFacts, PREP_KINDS, prepYield, startPrep, tileOf, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
+import { allAllergens, guessKind, keepsText, partFacts, PREP_KINDS, prepYield, startPrep, tileOf, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
 import { formatQuantity } from '@/lib/quantity';
 
 import { PrepKindStep } from './PrepKindStep';
@@ -14,11 +14,11 @@ import { PrepMethodStep } from './PrepMethodStep';
 
 /** The Allergens row's value (board Add-house, 2; Add-parts, 2): what's in it, "None" when set by hand to none, else "None found". */
 export function allergensValue(draft: PrepDraft): string {
-  const contains = [listAllergens(draft.allergens ?? []), ...(draft.contains ?? []).map((c) => c.toLowerCase())].filter(Boolean).join(', ');
+  const contains = [listAllergens(allAllergens(draft)), ...(draft.contains ?? []).map((c) => c.toLowerCase())].filter(Boolean).join(', ');
   return contains ? contains[0].toUpperCase() + contains.slice(1) : draft.allergensSet ? 'None' : 'None found';
 }
 
-/** The Allergens row opened in place: the 14, each a toggle. One a part carries stays on here: it changes in the part. */
+/** The Allergens row opened in place: the 14, each a toggle of its own. One a part carries shows on here, and changes in the part. */
 export function AllergenToggles({ draft, set }: { draft: PrepDraft; set: (change: Partial<PrepDraft>) => void }) {
   const ds = useDs();
   const allergens = draft.allergens ?? [];
@@ -27,8 +27,8 @@ export function AllergenToggles({ draft, set }: { draft: PrepDraft; set: (change
   return (
     <View role="group" aria-label="Allergens in it" style={styles.toggles}>
       {ALLERGENS.map((a) => {
-        const on = allergens.includes(a.key);
         const fixed = fromParts.includes(a.key);
+        const on = fixed || allergens.includes(a.key);
         return (
           <PressableScale
             key={a.key}
@@ -38,7 +38,7 @@ export function AllergenToggles({ draft, set }: { draft: PrepDraft; set: (change
             disabled={fixed}
             accessibilityLabel={fixed ? `${a.label}, from a part` : a.label}
             onPress={() => toggle(a.key)}
-            style={[styles.toggle, { backgroundColor: on ? ds.c.ink : ds.c.raised, borderColor: on ? ds.c.ink : ds.c.line }]}
+            style={[styles.toggle, { backgroundColor: on ? ds.c.ink : ds.c.raised, borderColor: on ? ds.c.ink : ds.c.line }, fixed ? styles.fixed : null]}
           >
             <Caption color={on ? ds.c.ground : ds.c.ink}>{a.label}</Caption>
           </PressableScale>
@@ -144,6 +144,7 @@ export function PrepRows({ name, draft, set, version, phrase, onKind, onTechniqu
 
 const styles = StyleSheet.create({
   toggles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  fixed: { opacity: 0.6 },
   toggle: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
   body: { gap: space.lg, padding: space.xl, paddingTop: space.sm, paddingBottom: space.xxxl },
 });

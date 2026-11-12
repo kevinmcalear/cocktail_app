@@ -18,7 +18,7 @@ import { techniqueById } from './techniques';
 import { byKit } from './techniques/kitFirst';
 import type { Technique } from './techniques/types';
 
-export { guessKind, partFacts, pickUpAt, prepAmounts, prepYield, recipesToFinish, sourceSite, withFacts } from './prepMath';
+export { allAllergens, guessKind, partFacts, pickUpAt, prepAmounts, prepYield, recipesToFinish, sourceSite, withFacts } from './prepMath';
 
 /** 'batch' is a drink's pours bottled ahead (lib/batchLines): where combining two lines starts. 'wash' is a fat or milk wash; 'clarified' and 'distillate' are made one of the library's clarifying or distilling ways. */
 export type PrepKindId = 'syrup' | 'rich' | 'shrub' | 'cordial' | 'oleo' | 'infusion' | 'super' | 'other' | 'batch' | 'wash' | 'clarified' | 'distillate';
