@@ -97,7 +97,7 @@ test('a failed first read with nothing saved is not kept as none: ready now, rea
   expect(first.result.current.has('prep')).toBe(false);
   expect(mockReads).toBe(1);
   expect(client.getQueryData(venueFeaturesKey('rye'))).toBeUndefined();
-  first.unmount();
+  await first.unmount();
 
   mockRead = { data: { enabled_features: ['prep'] }, error: null };
   const second = await renderHook(() => useVenueFeatures(), { wrapper: wrapper(client) });
