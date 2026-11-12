@@ -52,30 +52,34 @@ const catalog = [...published, ...drafts, ...menus];
 
 // --- Search at a venue: the book answers, the lists are not matched ---
 reads = 0;
-for (const typed of ['n', 'ne', 'neg', 'negr', 'negro', 'negron', 'negroni']) mineGroups(catalog, typed, search(typed));
+for (const typed of ['n', 'ne', 'neg', 'negr', 'negro', 'negron', 'negroni']) mineGroups(catalog, typed, search(typed), [book]);
 assert.equal(reads, 0, 'at a venue no letter reads down the venue’s drinks and ingredients');
 
-const found = mineGroups(catalog, 'negroni', search('negroni'));
+const found = mineGroups(catalog, 'negroni', search('negroni'), [book]);
 assert.equal(found.groups.drinks[0].name, 'Negroni', 'the exact name leads');
 assert.ok(found.groups.drinks.some((i) => i.id === 'beer-b1'), 'beer and wine are drinks');
 assert.equal(found.groups.drinks.at(-1)?.id, 'draft-1', 'a draft follows the book’s rows');
 assert.deepEqual(found.groups.menus.map((i) => i.id), ['menu-1'], 'menus keep the plain match');
 assert.ok(found.groups.drinks.every((i) => i.id !== 'g1'));
-assert.ok(mineGroups(catalog, 'campari', search('campari')).groups.drinks.length > 10, 'a drink is found by what’s in it');
-assert.deepEqual(mineGroups(catalog, 'fig leaf', search('fig leaf')).groups.ingredients.map((i) => i.id), ['draft-2']);
-assert.ok(mineGroups(catalog, 'house camp', search('house camp')).groups.ingredients.every((i) => i.category === 'Ingredient'));
+assert.ok(mineGroups(catalog, 'campari', search('campari'), [book]).groups.drinks.length > 10, 'a drink is found by what’s in it');
+assert.deepEqual(mineGroups(catalog, 'fig leaf', search('fig leaf'), [book]).groups.ingredients.map((i) => i.id), ['draft-2']);
+assert.ok(mineGroups(catalog, 'house camp', search('house camp'), [book]).groups.ingredients.every((i) => i.category === 'Ingredient'));
 
 // A typo: nothing as typed, and the close names go to Did you mean with the drafts.
-const typo = mineGroups(catalog, 'negorni', search('negorni'));
+const typo = mineGroups(catalog, 'negorni', search('negorni'), [book]);
 assert.deepEqual(typo.groups, { drinks: [], ingredients: [], menus: [] });
 assert.ok(typo.near.some((i) => i.id === 'd0') && typo.near.some((i) => i.id === 'draft-1'));
 assert.ok(typo.near.length < 50, 'Did you mean looks through a handful, not the venue');
 
+// A drink saved since the book was synced is found by the plain match until the book catches up.
+const fresh: SearchItem = { id: 'new-1', name: 'Negroni Nuovo', category: 'Cocktail' };
+assert.ok(mineGroups([...catalog, fresh], 'negroni', search('negroni'), [book]).groups.drinks.some((i) => i.id === 'new-1'));
+
 // R&D trials stay out.
-assert.ok(mineGroups(catalog, 'negroni', search('negroni'), new Set(['d0'])).groups.drinks.every((i) => i.id !== 'd0'));
+assert.ok(mineGroups(catalog, 'negroni', search('negroni'), [book], new Set(['d0'])).groups.drinks.every((i) => i.id !== 'd0'));
 
 // Home, or no book on this phone: the plain match over everything, as before.
-const home = mineGroups(catalog, 'negroni', null);
+const home = mineGroups(catalog, 'negroni', null, []);
 assert.ok(home.groups.drinks.length > 10 && home.near === catalog);
 assert.ok(reads > 0);
 

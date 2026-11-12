@@ -30,14 +30,26 @@ export function bookSearchItem(item: DatabaseItem): SearchItem | null {
   return card;
 }
 
-// The rows of a catalog no book holds, worked out once per catalog.
-const offBooks = new WeakMap<readonly SearchItem[], SearchItem[]>();
-function offBook(catalog: readonly SearchItem[]): SearchItem[] {
-  let rest = offBooks.get(catalog);
-  if (!rest) {
-    rest = catalog.filter((i) => i.isDraft || i.category === 'Menu');
-    offBooks.set(catalog, rest);
+// The card ids a book holds, once per book.
+const held = new WeakMap<SpecBook, Set<string>>();
+function heldBy(book: SpecBook): Set<string> {
+  let ids = held.get(book);
+  if (!ids) {
+    ids = new Set(book.items.flatMap((item) => bookSearchItem(item)?.id ?? []));
+    held.set(book, ids);
   }
+  return ids;
+}
+
+// The rows of a catalog no book holds, worked out once per catalog and set of books: drafts, menus,
+// and a drink or ingredient saved since the book was last synced.
+const offBooks = new WeakMap<readonly SearchItem[], { books: readonly SpecBook[]; rest: SearchItem[] }>();
+function offBook(catalog: readonly SearchItem[], books: readonly SpecBook[]): SearchItem[] {
+  const kept = offBooks.get(catalog);
+  if (kept && kept.books === books) return kept.rest;
+  const ids = books.map(heldBy);
+  const rest = catalog.filter((i) => i.isDraft || i.category === 'Menu' || !ids.some((set) => set.has(i.id)));
+  offBooks.set(catalog, { books, rest });
   return rest;
 }
 
@@ -51,12 +63,13 @@ export interface MineFound {
  * Your place's matches by kind. `hits`: the venue's spec book's answer,
  * closest first (hooks/useSpecSearch.ts), or null at home and when no book is
  * on this phone. With hits, the catalog's drinks and ingredients are never
- * matched here: only its drafts and menus are, after the book's rows.
+ * matched here: only what the `books` don't hold is (drafts, menus, a row
+ * saved since the last sync), after the book's rows.
  * `hidden`: item ids the venue's search leaves out (R&D trials).
  */
-export function mineGroups(catalog: readonly SearchItem[], query: string, hits: readonly SearchHit[] | null, hidden: ReadonlySet<string> = NO_IDS): MineFound {
+export function mineGroups(catalog: readonly SearchItem[], query: string, hits: readonly SearchHit[] | null, books: readonly SpecBook[], hidden: ReadonlySet<string> = NO_IDS): MineFound {
   if (!hits) return { groups: groupCatalog(catalog, query), near: catalog };
-  const rest = offBook(catalog);
+  const rest = offBook(catalog, books);
   const typed = groupCatalog(rest, query);
   const drinks: SearchItem[] = [];
   const ingredients: SearchItem[] = [];
@@ -71,17 +84,6 @@ export function mineGroups(catalog: readonly SearchItem[], query: string, hits: 
     groups: { drinks: [...drinks, ...typed.drinks], ingredients: [...ingredients, ...typed.ingredients], menus: typed.menus },
     near: [...near, ...rest],
   };
-}
-
-// The card ids a book holds, once per book.
-const held = new WeakMap<SpecBook, Set<string>>();
-function heldBy(book: SpecBook): Set<string> {
-  let ids = held.get(book);
-  if (!ids) {
-    ids = new Set(book.items.flatMap((item) => bookSearchItem(item)?.id ?? []));
-    held.set(book, ids);
-  }
-  return ids;
 }
 
 /**

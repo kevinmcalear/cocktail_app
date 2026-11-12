@@ -32,7 +32,7 @@ export function useMineSearch(mine: SearchMine, query: string) {
   const book = useSpecSearch(mine.venueId ? query : '', { barIds, limit: Infinity });
   const local = book.books.length > 0;
   const hidden = useMemo(() => new Set(mine.hiddenIds), [mine.hiddenIds]);
-  const found = useMemo(() => mineGroups(items, query, local ? book.hits : null, hidden), [items, query, local, book.hits, hidden]);
+  const found = useMemo(() => mineGroups(items, query, local ? book.hits : null, book.books, hidden), [items, query, local, book.hits, book.books, hidden]);
   useEffect(searchShown, [query]);
   // The book answers at once; without one, wait for it or for the lists.
   return { ...found, items, isLoading: local ? false : !book.ready || isLoading };
