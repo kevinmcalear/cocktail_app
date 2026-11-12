@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { Body, Button, Caption, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, space } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useShareMenu } from '@/hooks/useMenuMutations';
 import { useShareSlug } from '@/hooks/useShareSlug';
@@ -46,7 +47,7 @@ export function ShareMenuSheet({ menu, onClose }: { menu: SharedMenu; onClose: (
   const [error, setError] = useState<string | null>(null);
   const [pictures, setPictures] = useState<CardPictures>('above');
   const [choosing, setChoosing] = useState(false);
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow();
   // The readable link (/m/halloween-party) once shared; the id link works too.
   const slug = useShareSlug('m', menu.id, !!menu.sharedAt).data;
   const menuUrl = (key: string) => `${siteOrigin()}/m/${key}`;

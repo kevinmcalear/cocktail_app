@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { useRowLines } from '@/components/screens/drinks/useRowLines';
 import { useDrinksView } from '@/components/screens/drinks/useDrinksView';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useGuestDrinkAllergens } from '@/hooks/useGuestAllergies';
@@ -42,10 +43,10 @@ export function useStaffDrinks(beside: boolean) {
   const { data: capabilities, isLoading: capsLoading } = useCapabilities(activeId);
   const canCost = !!capabilities?.includes('costs');
   const { data: pricedIds } = usePricedItemIds(activeId, canCost);
-  const { data: menus } = useVenueMenus(activeId);
+  const { data: menus, dataUpdatedAt: menusAt } = useVenueMenus(activeId);
   const staff = useStaffList(activeId);
   const linked = useBarRiffs(activeId);
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow(menusAt);
 
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
   const shelves = useVenueShelves(activeId, published);

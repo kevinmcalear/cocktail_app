@@ -8,6 +8,7 @@ import { BackbarTheme, Body, Button, Caption, GlassButton, useBreakpoint, useDs,
 import { DrawingBar } from '@/components/ds/DrawingBar';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { layout, menuCover, space } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useOffTonight } from '@/hooks/useListAsks';
@@ -19,7 +20,7 @@ import { usePhotoTone } from '@/hooks/usePhotoTone';
 import { useShoppingEdit } from '@/hooks/useShoppingList';
 import { isLivingList } from '@/lib/menuLens';
 import { inMenuQuery, pagerPlace } from '@/lib/menuPager';
-import { isOneNightMenu, menuPageNow, menuStatus, newDrinkIds } from '@/lib/menus';
+import { isOneNightMenu, menuStatus, newDrinkIds } from '@/lib/menus';
 import { menuShopping } from '@/lib/shoppingList';
 import type { ShelfMatch } from '@/lib/shelfReach';
 import type { MenuDetail, MenuDrink } from '@/types/menus';
@@ -98,9 +99,8 @@ type PageProps = { menu: MenuDetail; /** When the menu last arrived (useMenu's d
 // A bar's menu that's on or coming up leads with its cover photo, which sets light or dark
 // for the page (Menu-g-photo-dark, Menu-g-photo-bright). Drafts, past and home menus are drawn.
 function MenuPage(props: PageProps) {
-  const [openedAt] = useState(() => Date.now());
   // Read against the latest fetch too, so a menu put on from this page reads On now at once.
-  const now = menuPageNow(openedAt, props.fetchedAt);
+  const now = useMenuNow(props.fetchedAt);
   const status = menuStatus(props.menu, now);
   const cover = props.menu.barId && status !== 'draft' && status !== 'previous' ? props.menu.coverUrl : null;
   const [tone, focused] = [usePhotoTone(cover), useIsFocused()];
