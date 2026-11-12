@@ -12,6 +12,7 @@ import { AreaNote } from '@/components/screens/home/DiscoverArea';
 import { DiscoverFullMap } from '@/components/screens/home/DiscoverFullMapLazy';
 import { mapAvailable } from '@/components/screens/home/DiscoverMapLazy';
 import { BestNear, DeskChips, DiscoverLoading, DiscoverOffline, MapCard, NewMenus, PHONE_NAMES } from '@/components/screens/home/DiscoverParts';
+import { DiscoverSearchField, OnMenusNear, PhoneStyleChips } from '@/components/screens/home/DiscoverOnMenus';
 import { placeSections } from '@/components/screens/home/DiscoverPlace';
 import { TonightHead } from '@/components/screens/tonight/TonightParts';
 import { LinkRow } from '@/components/techniques/LinkRow';
@@ -39,7 +40,10 @@ const ranksFor = (id: string | undefined) => STYLES.some((s) => s.id === id && s
 /**
  * Discover, as drawn (Prod-discover, Prod-and-dark, Prod-desk-discover,
  * Sta-discover): where you are and what's open, the map of the bars near you,
- * the best of one style near you, ranked, and the new menus. Near me on an
+ * the best of one style near you, ranked, and the new menus. Until a bar there
+ * has its rankers the list is that style's drinks on menus now, phones pick the
+ * style from chips, and the page has its own search field (Kevin, 12 Nov 2026:
+ * Discover showed no drinks, since no bar had 20 rankers). Near me on an
  * iPhone's top row; Android's search bar sits on top instead. The desktop puts
  * the list beside a tall map, with Open now, two styles and Late as chips.
  * Search is the one search (the tab bar's field, Android's bar, ⌘K): Discover
@@ -81,9 +85,15 @@ export function DiscoverScreen() {
     const shownIds = new Set(shown.map((b) => b.id));
     return best.rows.filter((r) => shownIds.has(r.barId) || !nearby.bars.some((b) => b.id === r.barId));
   }, [best.rows, nearby.bars, shown, split]);
+  // Before any bar here is ranked: the style's drinks on menus now, under the same chips.
+  const onMenus = useMemo(() => {
+    if (!split) return best.onMenus;
+    const shownIds = new Set(shown.map((b) => b.id));
+    return best.onMenus.filter((r) => shownIds.has(r.barId) || !nearby.bars.some((b) => b.id === r.barId));
+  }, [best.onMenus, nearby.bars, shown, split]);
   const menus = useNewMenus(split ? [] : nearby.bars, now);
   const limit = split ? BEST_ROWS.desk : BEST_ROWS.phone;
-  const named = useMemo(() => rows.slice(0, limit).map((r) => r.barId), [rows, limit]);
+  const named = useMemo(() => (rows.length ? rows : onMenus).slice(0, limit).map((r) => r.barId), [rows, onMenus, limit]);
   const me = useMemo(() => (near.status === 'ready' ? { latitude: near.latitude, longitude: near.longitude } : null), [near]);
   const open = nearby.bars.filter((b) => b.open).length;
   const eyebrow = `${placeName(area, nearby.bars)}${open ? ' · open now' : ''}`;
@@ -120,9 +130,15 @@ export function DiscoverScreen() {
 
   const where = areaLabel(area);
   const techniques = useVenueFeature('techniques');
-  const label = `Best ${best.style.label} ${area.kind === 'point' && area.source === 'me' ? 'near you' : where}`;
+  const label = `Best ${best.style.label} ${where}`;
   const onAll = best.classicId ? () => router.push(`/rankings/${best.classicId}` as Href) : undefined;
-  const bestList = <BestNear label={label} classic={best.style.classics[0] ?? ''} where={where} rows={rows} limit={limit} state={best.isLoading ? 'loading' : best.error ? 'error' : undefined} onRetry={() => void best.refetch()} onAll={onAll} highlight={split ? (hover ?? rows[0]?.barId ?? null) : null} onHover={split ? setHover : undefined} />;
+  const lit = split ? (hover ?? named[0] ?? null) : null;
+  const unranked = !rows.length && onMenus.length > 0 && !best.isLoading && !best.error;
+  const bestList = unranked ? (
+    <OnMenusNear label={`${best.style.label} on menus ${where}`} classic={best.classic} rows={onMenus} limit={limit} highlight={lit} onHover={split ? setHover : undefined} />
+  ) : (
+    <BestNear label={label} classic={best.style.classics[0] ?? ''} where={where} rows={rows} limit={limit} state={best.isLoading ? 'loading' : best.error ? 'error' : undefined} onRetry={() => void best.refetch()} onAll={onAll} highlight={lit} onHover={split ? setHover : undefined} />
+  );
 
   // Learn (Kept-learn, "Learn, from Discover"): techniques, kit and pairings, under the lists.
   // At a venue, only with Techniques switched on (lib/venueFeatures.ts).
@@ -147,7 +163,10 @@ export function DiscoverScreen() {
   ) : (
     <View style={styles.body}>
       <MapCard bars={nearby.bars} named={named.slice(0, PHONE_NAMES)} area={area} me={me} caption={caption} onExpand={mapAvailable ? () => setFull(true) : undefined} />
-      {bestList}
+      <View style={styles.styled}>
+        <PhoneStyleChips styleId={styleId} onStyle={setStyleId} />
+        {bestList}
+      </View>
       <NewMenus menus={menus.menus} />
       {learn}
     </View>
@@ -155,6 +174,8 @@ export function DiscoverScreen() {
 
   // Near me on an iPhone's (and phone web's) top row; Android's top is its search bar, and the desktop draws none.
   const nearMe = Platform.OS === 'android' || wideWeb ? undefined : <GlassButton icon="location" accessibilityLabel="Near me" onPress={onNearMe} />;
+  // The page's own search field where no bar or sidebar has one: iPhones and phone web.
+  const searchField = Platform.OS === 'android' || wideWeb ? null : <DiscoverSearchField />;
   const list = (
     <ScrollView ref={listRef} aria-hidden={fullMap} style={split ? { width: DESK_LIST + space.xxxl * 2, flexGrow: 0 } : undefined} contentContainerStyle={{ paddingBottom: bottom }}>
       <ScreenHeader place={false} add={false} actions={nearMe} />
@@ -162,6 +183,7 @@ export function DiscoverScreen() {
         <View ref={head} collapsable={false}>
           <TonightHead title="Discover" eyebrow={eyebrow} eyebrowLabel={`${eyebrow}. Where to look`} onEyebrow={() => picker.open(head.current)} />
         </View>
+        {searchField}
         <AreaNote note={note} off={near.status === 'denied'} />
         {body}
       </View>
@@ -186,7 +208,7 @@ export function DiscoverScreen() {
           onClose={() => setFull(false)}
         />
       ) : null}
-      {split && !offline ? <MapCard pane bars={shown} named={named} area={area} me={me} selectedId={hover ?? rows[0]?.barId ?? null} /> : null}
+      {split && !offline ? <MapCard pane bars={shown} named={named} area={area} me={me} selectedId={lit} /> : null}
       <PopoverMenu anchor={picker.anchor} label="Where to look" onClose={picker.close} sections={places} />
     </View>
   );
@@ -198,4 +220,5 @@ const styles = StyleSheet.create({
   page: { gap: space.lg },
   deskColumn: { paddingHorizontal: space.xxxl, maxWidth: DESK_LIST + space.xxxl * 2 },
   body: { gap: space.xl },
+  styled: { gap: space.md },
 });

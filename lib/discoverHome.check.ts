@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import type { DiscoverDrink } from './discoverDrinks';
-import { bestRows, closesLate, mapCaption, newMenus, openNow, placeName } from './discoverHome';
+import { bestRows, closesLate, mapCaption, newMenus, onMenuRows, openNow, placeName } from './discoverHome';
 import type { MenuEdition } from './menuEditions';
 import type { Area, DiscoverRow } from './nearMe';
 
@@ -34,6 +34,13 @@ const drink = (id: string, barId: string, name: string) => ({ id, barId, name })
 const rows = bestRows([row(1, 'care', 9.1, 212), row(2, 'moth', 8.9, 96), row(null, 'new', null, 3)], [drink('d1', 'care', 'House Martini'), drink('d2', 'care', 'Dirty Martini')], 'Martini');
 assert.deepEqual(rows.map((r) => [r.position, r.name, r.drinkId, r.rankers]), [[1, 'House Martini', 'd1', 212], [2, 'Martini', null, 96]], 'early bars left out; the first drink at the bar names it');
 assert.equal(bestRows([row(1, 'a', 9, 40), row(2, 'b', 8, 30)], [], 'Martini').length, 2, 'every ranked row: the screen cuts the list');
+
+// --- onMenuRows: nobody ranked yet, so one drink a bar, in the list's order ---
+const listed = (id: string, barId: string, name: string, locality: string | null, city: string | null, distance: number | null) =>
+  ({ id, barId, name, distance, bar: { name: barId.toUpperCase(), handle: barId, logo: null, locality, city } }) as DiscoverDrink;
+const onMenus = onMenuRows([listed('d1', 'care', 'House Martini', 'Soho', 'London', 420), listed('d2', 'care', 'Dirty Martini', 'Soho', 'London', 420), listed('d3', 'moth', 'Gibson', null, 'Leeds', null)]);
+assert.deepEqual(onMenus.map((r) => [r.barId, r.name, r.drinkId, r.place, r.distanceM]), [['care', 'House Martini', 'd1', 'Soho', 420], ['moth', 'Gibson', 'd3', 'Leeds', null]], 'a bar shows once, its first drink; the city stands in for a missing neighbourhood');
+assert.deepEqual(onMenuRows([]), []);
 
 // --- newMenus: on now, newest first, the month only when it's this month ---
 const ed = (id: string, year: number, month: number | null, current = true): MenuEdition => ({ id, name: id, year, month, end_year: null, end_month: null, is_current: current, theme: null, drinks: [{ id: `${id}-1`, name: 'x' }] as MenuEdition['drinks'], source_url: null });

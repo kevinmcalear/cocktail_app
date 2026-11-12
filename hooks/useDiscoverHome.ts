@@ -7,7 +7,7 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useDiscoverRankings, useDrinkPick } from '@/hooks/useDiscover';
 import { useDiscoverList } from '@/hooks/useDiscoverDrinks';
 import { parseHours, type WeekHours } from '@/lib/barHours';
-import { closesLate, newMenus, openNow, bestRows, type NewMenuSource } from '@/lib/discoverHome';
+import { closesLate, newMenus, onMenuRows, openNow, bestRows, type NewMenuSource } from '@/lib/discoverHome';
 import { pickFilter, toDiscoverBar, type DiscoverBar } from '@/lib/discoverDrinks';
 import { STYLES } from '@/lib/drinkStyles';
 import { areaParams, type Area } from '@/lib/nearMe';
@@ -109,6 +109,7 @@ export function useAreaBars(area: Area, locating: boolean, now: Date) {
  * "Best Martinis near you": the style's classic (its first, as Discover's
  * styles name it), the bars ranked for it in the area, each named after its
  * own drink of it, on a menu now. Every ranked row: the screen cuts the list.
+ * `onMenus` when no bar there is ranked yet: the style's drinks on menus now.
  * Works for any style id in lib/drinkStyles STYLES that has a classic.
  */
 export function useBestNear(area: Area, styleId: string, enabled: boolean) {
@@ -119,9 +120,15 @@ export function useBestNear(area: Area, styleId: string, enabled: boolean) {
   const pick = found && found.name.toLowerCase() === classic.toLowerCase() ? found : null;
   const rankings = useDiscoverRankings(pick?.id, area, enabled);
   // ponytail: a bar's own drink is its first of the area's first 300 of the style, which may be a riff on the classic it's scored for; past 300 it shows the classic's name. Upgrade: discover_drink_rankings returning the drink.
-  const drinks = useDiscoverList(pickFilter({ kinds: [], search: '', area }, classic), { enabled: enabled && !!pick, pageSize: 300, onNow: true });
+  // Around a point the list comes nearest first, so the stand-in rows are the closest bars'.
+  // ponytail: a city or anywhere comes in the list's own order (by name among equals). Upgrade: discover_list sorting by the bar's relevance.
+  const from = useMemo(() => (area.kind === 'point' ? { latitude: area.latitude, longitude: area.longitude } : null), [area]);
+  const drinks = useDiscoverList(pickFilter({ kinds: [], search: '', area }, classic), { enabled: enabled && !!pick, pageSize: 300, onNow: true, from });
   const rows = useMemo(() => bestRows(rankings.data?.ranked ?? [], drinks.drinks, pick?.name ?? classic), [rankings.data, drinks.drinks, pick, classic]);
-  return { style, classicId: pick?.id ?? null, rows, isLoading: enabled && !!pick && rankings.isPending, error: rankings.error, refetch: rankings.refetch };
+  // Nobody ranked here yet: the same drinks stand in, one a bar, until a bar has its rankers.
+  const onMenus = useMemo(() => (rows.length ? [] : onMenuRows(drinks.drinks)), [rows.length, drinks.drinks]);
+  const waiting = rankings.isPending || (!rows.length && !rankings.error && drinks.isLoading);
+  return { style, classic, classicId: pick?.id ?? null, rows, onMenus, isLoading: enabled && !!pick && waiting, error: rankings.error, refetch: rankings.refetch };
 }
 
 /** New menus: what's on now at the nearest bars, newest first. One call for all of them. */
