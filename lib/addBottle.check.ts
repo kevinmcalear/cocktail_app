@@ -31,8 +31,36 @@ assert.deepEqual(bottleMatches('l', rows, null), []);
     { key: 'tanqueray 10', item_id: 'ten' },
     { key: 'tanqueray rangpur', item_id: 'rangpur' },
   ];
-  assert.deepEqual(bottleMatches('Tanq', tanq, 'bar', { aliases }).map((r) => r.id), ['ldg', 'ten']);
+  assert.deepEqual(bottleMatches('Tanq', tanq, 'bar', { aliases }).map((r) => r.id), ['ldg', 'zero']); // "tanqueray 10" isn't Ten's own name, so no lift
   assert.deepEqual(bottleMatches('Tanq', tanq, 'bar').map((r) => r.id), ['zero', 'ten']); // no aliases: shortest names, as before
+}
+// Only an alias that starts the row's own name makes it shorter: "Chart" keeps Yellow Chartreuse, "Havan" plain Havana Club (review of #1211).
+{
+  const chart = [
+    { id: 'plain', name: 'Chartreuse', ingredient_role: 'product' },
+    { id: 'yellow', name: 'Yellow Chartreuse', ingredient_role: 'product' },
+    { id: '1605', name: "Chartreuse Liqueur d'Élixir 1605", ingredient_role: 'product' },
+    { id: 'elixir', name: 'Élixir Végétal de la Grande-Chartreuse', ingredient_role: 'product' },
+  ];
+  const aliases = [
+    { key: 'chartreuse 1605', item_id: '1605' },
+    { key: 'chartreuse jaune', item_id: 'yellow' },
+    { key: 'chartreuse elixir', item_id: 'elixir' },
+  ];
+  assert.deepEqual(bottleMatches('Chart', chart, 'bar', { aliases }).map((r) => r.id), ['plain', 'yellow']);
+}
+{
+  const havana = [
+    { id: 'a7', name: 'Havana Club Añejo 7 Años', ingredient_role: 'product' },
+    { id: 'a3', name: 'Havana Club Añejo 3 Años', ingredient_role: 'product' },
+    { id: 'club', name: 'Havana Club', ingredient_role: 'product' },
+  ];
+  const aliases = [
+    { key: 'havana 7', item_id: 'a7' },
+    { key: 'havana 3yr', item_id: 'a3' },
+    { key: 'havana club 3', item_id: 'a3' },
+  ];
+  assert.deepEqual(bottleMatches('Havan', havana, 'bar', { aliases }).map((r) => r.id)[0], 'club');
 }
 
 // A venue's own bottle by name, which the shared check can't see.
