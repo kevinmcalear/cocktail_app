@@ -27,14 +27,16 @@ assert.equal(savesTogether('Fresh ginger juice', juice), null, 'one house-made a
 const payload = houseMadePayload('penicillin batch', batch);
 assert.deepEqual(payload.map((p) => p.name), ['Penicillin batch', 'Honey-ginger syrup', 'Fresh ginger juice']);
 assert.deepEqual(payload[0].lines, [
-  { name: 'Blended scotch', bottle: true, amount: 500, unit: 'ml', note: null },
+  { name: 'Blended scotch', bottle: true, allergens: [], amount: 500, unit: 'ml', note: null },
   { part: 1, amount: 200, unit: 'ml', note: null },
   { id: 'laphroaig', name: 'Laphroaig 10', amount: 25, unit: 'ml', note: null },
 ]);
 assert.equal(payload[0].base, 0, 'the base line is the first saved');
 assert.deepEqual(payload[1].lines.at(-1), { part: 2, amount: 100, unit: 'ml', note: null });
-assert.deepEqual(payload[2].lines, [{ name: 'Fresh ginger', amount: 1000, unit: 'g', note: 'unpeeled' }]);
+assert.deepEqual(payload[2].lines, [{ name: 'Fresh ginger', allergens: [], amount: 1000, unit: 'g', note: 'unpeeled' }]);
 assert.equal(payload[2].card.shelf_life_hours, 72);
+// A name to find or add carries the allergens read from it, for save_drink to store on a new ingredient.
+assert.deepEqual((houseMadePayload('Brown butter syrup', recipe([line('b', 'brown butter', '50', 'g')]))[0].lines[0] as { allergens: string[] }).allergens, ['milk']);
 // Allergens set by hand (even none) are declared; read from the names, they're not.
 assert.deepEqual(payload[1].allergens, []);
 assert.equal(payload[0].allergens, null);

@@ -1,4 +1,4 @@
-import { linesOnKeptHouseMades, saveEditItems, withKeptHouseMades } from '@/hooks/specLineSave';
+import { linesOnKeptHouseMades, saveDrinkItems, saveEditItems, withKeptHouseMades } from '@/hooks/specLineSave';
 import type { WizardLine } from '@/lib/drinkWizard';
 import { startPrep } from '@/lib/prepKinds';
 import type { SortableRecipeItem } from '@/lib/recipeItem';
@@ -8,7 +8,8 @@ jest.mock('@/hooks/usePrepCard', () => ({ savePrepCard: jest.fn(), savePrepRecip
 jest.mock('@/hooks/useDrinkDesk', () => ({ saveNewBottles: async () => [] }));
 
 const mockDeletes: string[][] = [];
-const mockState = { deleteFails: false, houseMadeCalls: 0 };
+const mockState = { deleteFails: false, houseMadeCalls: 0, saveRefused: false };
+const mockSaves: { p_key: string; p_save: { item?: string; bar: string | null; preps: { name: string }[]; lines: { ingredient: Record<string, unknown>; amount: number | null }[] } }[] = [];
 jest.mock('@/lib/supabase', () => {
   const chain = (result: () => unknown) => {
     const q: Record<string, unknown> = {};
@@ -23,6 +24,13 @@ jest.mock('@/lib/supabase', () => {
         if (fn === 'save_house_mades') {
           mockState.houseMadeCalls++;
           return { data: (args.p_preps as unknown[]).map((_, i) => `made-${i}`), error: null };
+        }
+        if (fn === 'save_drink') {
+          mockSaves.push(args as (typeof mockSaves)[number]);
+          if (mockState.saveRefused) return { data: null, error: { code: 'P0001', message: 'spec refused' } };
+          // Pine syrup is the house-made, Lime picked, Rosemary juice a new name, and My oleo yours from before.
+          const rows = [{ id: 'made-0', new: false }, { id: 'lime', new: false }, { id: 'rosemary', new: true }, { id: 'oleo', new: false, yours: true }];
+          return { data: { item: 'drink-1', version: 3, house_mades: ['made-0'], lines: rows }, error: null };
         }
         // A typed line whose lookup loses the connection.
         if (args.p_name === 'Blip') throw new TypeError('Network request failed');
@@ -56,8 +64,48 @@ async function save(items: SortableRecipeItem[], write: (items: SortableRecipeIt
 
 beforeEach(() => {
   mockDeletes.length = 0;
+  mockSaves.length = 0;
   mockState.deleteFails = false;
   mockState.houseMadeCalls = 0;
+  mockState.saveRefused = false;
+});
+
+// The editors' saves through save_drink (saveDrinkItems): one call, all or none.
+const spec = (item: SortableRecipeItem) => ({ amount: Number(item.amount) || null, unit: item.unit, preparation_notes: null, is_optional: false });
+const oleo: SortableRecipeItem = { key: 'o', ingredient_id: '', name: 'oleo', amount: '10', unit: 'ml', later: true };
+
+test('one save_drink call: each line goes by what it is, and comes back on its row', async () => {
+  const items = [pine, lime, typed('rosemary juice'), oleo];
+  const saved = await saveDrinkItems(items, 'bar-1', 'key-1', { item: 'drink-1', methods: ['shake'] }, spec);
+  expect(mockSaves).toHaveLength(1);
+  const { p_key, p_save } = mockSaves[0];
+  expect(p_key).toBe('key-1');
+  expect(p_save).toMatchObject({ item: 'drink-1', bar: 'bar-1', methods: ['shake'] });
+  expect(p_save.preps.map((p) => p.name)).toEqual(['Pine syrup']);
+  expect(p_save.lines.map((l) => l.ingredient)).toEqual([{ house_made: 0 }, { id: 'lime', name: 'Lime' }, { name: 'Rosemary juice', allergens: [] }, { name: 'Oleo', own: true }]);
+  expect(p_save.lines[0].amount).toBe(15);
+  // Not the two-step save: no save_house_mades, nothing to take out.
+  expect(mockState.houseMadeCalls).toBe(0);
+  expect(mockDeletes).toEqual([]);
+  expect(saved.item).toBe('drink-1');
+  expect(saved.items[1]).toBe(lime);
+  expect(saved.items.map((i) => i.ingredient_id)).toEqual(['made-0', 'lime', 'rosemary', 'oleo']);
+  expect(saved.items[0].prep).toBeUndefined();
+  expect(saved.created).toEqual(['made-0', 'rosemary']);
+  expect(saved.warnings).toEqual(['You already have “My Oleo”, so the drink uses it. Change its recipe on its page.']);
+});
+
+test('a name with an allergen in it sends it, for the new ingredient to keep', async () => {
+  await saveDrinkItems([typed('brown butter syrup')], null, 'key-2', { item: 'drink-1' }, spec).catch(() => null);
+  expect(mockSaves[0].p_save.lines[0].ingredient).toEqual({ name: 'Brown butter syrup', allergens: ['milk'] });
+  expect(mockSaves[0].p_save.bar).toBeNull();
+});
+
+test('a save the database refuses throws, and leaves nothing to take out', async () => {
+  mockState.saveRefused = true;
+  const error = await saveDrinkItems([pine, lime], 'bar-1', 'key-3', { item: 'drink-1' }, spec).then(() => null, (e: unknown) => e);
+  expect(error).toMatchObject({ message: 'spec refused' });
+  expect(mockDeletes).toEqual([]);
 });
 
 test('a spec the server refuses: the house-made goes again and its line is as it was, recipe and all', async () => {
