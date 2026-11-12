@@ -80,7 +80,7 @@ export interface PartPageProps {
 /**
  * A house-made written inside what it goes in, one flat page (boards
  * Add-parts 2 and 3, Add-inside 2): the trail, its lines and the search, then
- * What it is, Method, Makes and Keeps as rows, each opening its step. A
+ * What it is, Method, Makes, Keeps and Allergens as rows, each opening its step. A
  * line that's not one of yours yet can be made here too, one more level in,
  * three levels at most. On the web's dialog a part opens under its line
  * instead (Add-parts, Web); on the web's desktop page a house-made in a

@@ -60,6 +60,37 @@ describe('Made in parts', () => {
     expect(juice.prep.lines.map((l: { name: string; bottle?: boolean }) => [l.name, !!l.bottle])).toContainEqual(['Ginger shrub', true]);
   });
 
+  test('a part has an Allergens row (Kevin, 12 Nov, 3a): found from its lines, ticked in place, and carried up to the house-made', async () => {
+    const onKeep = jest.fn();
+    await renderWithProviders(<PrepBuilder name="Penicillin batch" initial={batch()} startAt="recipe" ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={onKeep} onDone={jest.fn()} onClose={jest.fn()} />);
+    await laidOut();
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'House sour');
+    await fireEvent.press(screen.getByRole('button', { name: /^Make “House sour” here/ }));
+    await partLaidOut();
+    // The fifth row of the part's group, None found while nothing is.
+    expect(screen.getByRole('button', { name: /^Allergens/ })).toBeTruthy();
+    expect(screen.getByText('None found')).toBeTruthy();
+    await fireEvent.changeText(screen.getByLabelText('Add an ingredient'), 'Egg white');
+    await fireEvent.press(screen.getByRole('button', { name: /^Add “Egg white”$/ }));
+    expect(screen.getByText('Eggs')).toBeTruthy();
+    // It opens in place: tick one by hand.
+    await fireEvent.press(screen.getByRole('button', { name: /^Allergens/ }));
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Sulphites' }));
+    expect(screen.getByText('Eggs and sulphites')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: /^Done: House sour goes in/ }));
+    await laidOut();
+    // Up in the house-made, both are in it, and the one from the part can't be ticked off there.
+    expect(screen.getByText('Eggs and sulphites')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: /^Allergens/ }));
+    expect(screen.getByRole('checkbox', { name: 'Sulphites, from a part' })).toBeDisabled();
+    const kept = onKeep.mock.calls.at(-1)![0];
+    const part = kept.lines.find((l: { name: string }) => l.name === 'House sour').prep;
+    expect([part.allergens, part.allergensSet]).toEqual([['eggs', 'sulphites'], true]);
+    // The house-made's own list stays its own: the part's are the part's (they save on it).
+    expect(kept.allergensSet).toBeFalsy();
+    expect(kept.allergens ?? []).toEqual([]);
+  });
+
   test('a part whose name says nothing about how it’s made starts empty; Add “X” leaves a line To make, and its card makes it one more level in', async () => {
     const onKeep = jest.fn();
     await renderWithProviders(<PrepBuilder name="Penicillin batch" initial={batch()} startAt="recipe" ingredients={[]} bar={{ id: 'b1', name: 'Caretaker’s' }} onKeep={onKeep} onDone={jest.fn()} onClose={jest.fn()} />);
