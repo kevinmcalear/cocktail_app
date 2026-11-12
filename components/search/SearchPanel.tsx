@@ -16,6 +16,7 @@ import { useDrafts } from '@/hooks/useDrafts';
 import { useMineFacts } from '@/hooks/useMineFacts';
 import { recentMatchesContext } from '@/hooks/useTrackRecent';
 import type { SearchMine } from '@/hooks/useSearchMine';
+import { useSpecSearchWarm } from '@/hooks/useSpecSearch';
 import { belongsHere, inSelectedContext } from '@/lib/barContextFilter';
 import { fallbackGlass } from '@/lib/itemRoutes';
 import type { City } from '@/lib/discover';
@@ -128,6 +129,8 @@ function SearchBodyInner({ query: typed, scope, onScope, mine, area, onJump, com
   // Android's search has no suggestions or Top hit (Miss-search-and): its Recent still fills the field.
   const ahead = use(DrawnSearch) ? undefined : typeAhead;
   const offline = useNetInfo().isConnected === false;
+  // The venue's search index is ready before the first letter (hooks/useSpecSearch.ts).
+  useSpecSearchWarm(mine.venueId);
   if (!typed.trim() || !query.trim()) return <Recent scope={scope} mine={mine} onJump={onJump} commands={commands} onTerm={typeAhead} />;
   if (offline) return <SearchOffline query={query} mine={mine} />;
   if (scope === 'mine') return <MineResults query={query} mine={mine} onEverywhere={() => onScope('everywhere')} commands={commands} palette={palette} show={show} onCounts={onCounts} typeAhead={ahead} />;

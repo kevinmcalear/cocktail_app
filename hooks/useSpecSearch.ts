@@ -1,10 +1,11 @@
 import { useQueries } from '@tanstack/react-query';
-import { useDeferredValue, useMemo } from 'react';
+import { useDeferredValue, useEffect, useMemo } from 'react';
 
 import { useUserId } from '@/ctx/AuthContext';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { specBookQuery } from '@/hooks/useSpecBook';
 import { useViewAs } from '@/hooks/useViewAs';
+import { whenIdle } from '@/lib/idleQueue';
 import type { SpecBook } from '@/lib/specBook';
 import { buildSearchIndex, NEAR_BELOW, rankHits, searchNames, searchNear, type SearchHit, type SearchIndex } from '@/lib/specSearch';
 
@@ -41,6 +42,10 @@ export function useSpecSearch(query: string, { barIds, limit = 50 }: { barIds?: 
   const ids = barIds ?? venues.map((v) => v.id);
   const { books, loading } = useQueries({ queries: ids.map((id) => specBookQuery(id, viewAsRoleLevel, userId)), combine: loadedBooks });
 
+  // Built in a quiet moment once the books are here, not on the first letter: about 150 ms
+  // for a 1,000-drink venue on an Android phone.
+  useEffect(() => whenIdle(() => books.forEach(indexOf)), [books]);
+
   const named = useMemo(() => books.flatMap((book) => searchNames(indexOf(book), query)), [books, query]);
   // Near misses cost more: they run on the deferred query, after the letter is on screen.
   const settled = useDeferredValue(query);
@@ -55,4 +60,12 @@ export function useSpecSearch(query: string, { barIds, limit = 50 }: { barIds?: 
   // Ready once every book has loaded or failed; no venues (home) is ready with nothing to search.
   // `books`: the ones in memory. None means nothing here can answer, and the caller falls back to its own lists.
   return { hits, ready: !loading, books };
+}
+
+const NO_BARS: readonly string[] = [];
+
+/** Where a search opens with nothing typed yet: gets the venue's index ready, so the first letter doesn't build it. */
+export function useSpecSearchWarm(barId: string | null) {
+  const barIds = useMemo(() => (barId ? [barId] : NO_BARS), [barId]);
+  useSpecSearch('', { barIds });
 }

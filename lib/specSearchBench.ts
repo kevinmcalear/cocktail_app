@@ -4,6 +4,8 @@
  * the /dev/search-bench screen. Real classic and ingredient names, accents
  * included; 3 to 6 lines a drink.
  */
+import { toSearchItem } from '@/lib/searchCards';
+import { groupCatalog } from '@/lib/searchScope';
 import { buildSearchIndex, rankHits, searchNames, searchNear } from '@/lib/specSearch';
 import type { DatabaseItem } from '@/types/types';
 
@@ -63,6 +65,8 @@ export interface BenchResult {
   keystroke: { p50: number; p95: number; max: number; letters: number };
   /** Tier 3 (near misses), per settled query of three letters or more. */
   near: { p50: number; p95: number; max: number };
+  /** The plain match over the same rows as search cards (groupCatalog: home mode, and every venue before the book), per typed letter. */
+  plain: { p50: number; p95: number; max: number };
 }
 
 /** Builds the index for `n` drinks, then types every query in TYPED letter by letter, `rounds` times. */
@@ -71,8 +75,10 @@ export function runSearchBench(n: number, now: () => number, rounds = 3): BenchR
   const b0 = now();
   const index = buildSearchIndex('bench', items);
   const buildMs = now() - b0;
+  const cards = items.flatMap((item) => toSearchItem(item) ?? []);
   const keys: number[] = [];
   const near: number[] = [];
+  const plain: number[] = [];
   for (let r = 0; r < rounds; r++) {
     for (const typed of TYPED) {
       for (let i = 1; i <= typed.length; i++) {
@@ -80,6 +86,9 @@ export function runSearchBench(n: number, now: () => number, rounds = 3): BenchR
         const t0 = now();
         rankHits(searchNames(index, q));
         keys.push(now() - t0);
+        const p0 = now();
+        groupCatalog(cards, q);
+        plain.push(now() - p0);
       }
       const found = new Set(searchNames(index, typed).map((h) => h.item.id!));
       const t1 = now();
@@ -93,5 +102,6 @@ export function runSearchBench(n: number, now: () => number, rounds = 3): BenchR
     buildMs: round(buildMs),
     keystroke: { p50: round(median(keys)), p95: round(p95(keys)), max: round(Math.max(...keys)), letters: keys.length },
     near: { p50: round(median(near)), p95: round(p95(near)), max: round(Math.max(...near)) },
+    plain: { p50: round(median(plain)), p95: round(p95(plain)), max: round(Math.max(...plain)) },
   };
 }
