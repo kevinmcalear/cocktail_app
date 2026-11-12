@@ -105,6 +105,9 @@ before(async () => {
   ids.ownerBarDraft = (
     await serviceInsert('drafts', { user_id: users.owner.id, bar_id: ids.barOne, entity_type: 'cocktail', draft_data: {} })
   ).id;
+  ids.creatorBarDraft = (
+    await serviceInsert('drafts', { user_id: users.creator.id, bar_id: ids.barOne, entity_type: 'cocktail', draft_data: { name: 'Mine' } })
+  ).id;
 });
 
 after(async () => {
@@ -121,6 +124,37 @@ after(async () => {
   await db.query('DELETE FROM public.bars WHERE name LIKE $1', [like]);
   for (const user of Object.values(users)) await service.auth.admin.deleteUser(user.id);
   await db.end();
+});
+
+describe('drafts are their author\'s', () => {
+  const reads = async (client, id) => (await client.from('drafts').select('id').eq('id', id)).data.length;
+
+  test('the author reads, changes and removes their own draft', async () => {
+    const { client } = users.creator;
+    assert.equal(await reads(client, ids.creatorBarDraft), 1);
+    const { data } = await client.from('drafts').update({ draft_data: { name: 'Mine, changed' } }).eq('id', ids.creatorBarDraft).select('id');
+    assert.equal(data.length, 1);
+    const extra = await client.from('drafts').insert({ user_id: users.creator.id, bar_id: ids.barOne, entity_type: 'cocktail', draft_data: {} }).select('id').single();
+    assert.ifError(extra.error);
+    assert.equal((await client.from('drafts').delete().eq('id', extra.data.id).select('id')).data.length, 1);
+  });
+
+  test('nobody else at the bar reads one, however senior: owner, drink creator, bartender', async () => {
+    assert.equal(await reads(users.owner.client, ids.creatorBarDraft), 0, 'the bar owner');
+    assert.equal(await reads(users.creator.client, ids.ownerBarDraft), 0, 'a drink creator');
+    assert.equal(await reads(users.bartender.client, ids.creatorBarDraft), 0, 'a bartender');
+  });
+
+  test('nor changes or removes one', async () => {
+    const { client } = users.owner;
+    assert.deepEqual((await client.from('drafts').update({ draft_data: {} }).eq('id', ids.creatorBarDraft).select('id')).data, []);
+    assert.deepEqual((await client.from('drafts').delete().eq('id', ids.creatorBarDraft).select('id')).data, []);
+    assert.equal(await reads(users.creator.client, ids.creatorBarDraft), 1, 'still there');
+  });
+
+  test('signed out, there are no drafts to read', async () => {
+    assert.deepEqual((await anon.from('drafts').select('id').in('id', [ids.ownerBarDraft, ids.creatorBarDraft])).data ?? [], []);
+  });
 });
 
 describe('signed-out requests', () => {
@@ -379,9 +413,8 @@ describe('members of a bar', () => {
     assert.ok(otherBar);
   });
 
-  test('a drink creator sees the bar\'s drafts, cannot touch the shared catalog or bar settings', async () => {
+  test('a drink creator cannot touch the shared catalog or bar settings', async () => {
     const client = users.creator.client;
-    assert.equal((await client.from('drafts').select('id').eq('id', ids.ownerBarDraft)).data.length, 1);
     await client.from('items').update({ name: 'vandalised' }).eq('id', ids.legacyGlobal);
     assert.equal(await itemName(ids.legacyGlobal), `Legacy gin ${run}`);
     const { data } = await client.from('bars').update({ name: 'renamed' }).eq('id', ids.barOne).select('id');

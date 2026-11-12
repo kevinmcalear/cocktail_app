@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Body, Caption, Display, GlassButton, useBreakpoint, useDs, useGutter, type IconName } from '@/components/ds';
 import { ResultRow } from '@/components/search/ResultRows';
 import { space } from '@/constants/tokens';
-import { useAuth } from '@/ctx/AuthContext';
 import { useBars } from '@/hooks/useBars';
 import { useDrafts } from '@/hooks/useDrafts';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
@@ -34,7 +33,6 @@ export function DraftsScreen() {
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
   const sidebar = useIsWideWeb();
-  const userId = useAuth().user?.id ?? null;
   const { drafts, isLoading, deleteDraft } = useDrafts();
   const { data: bars } = useBars();
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -91,7 +89,6 @@ export function DraftsScreen() {
               const href = draftHref(d);
               const caption = [
                 DRAFT_KIND_LABEL[d.entity_type] ?? 'Draft',
-                d.user_id && d.user_id !== userId ? 'a teammate’s' : null,
                 d.updated_at && `${timeAgo(new Date(d.updated_at).getTime())} ago`,
               ]
                 .filter(Boolean)
