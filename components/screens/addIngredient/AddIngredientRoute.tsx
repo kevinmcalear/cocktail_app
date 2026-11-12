@@ -44,7 +44,7 @@ function AddIngredientRouteBody() {
   return (
     <VenueBrandProvider barId={place.ready ? barId : undefined}>
       {dialog ? (
-        <WizardDialog label="A bottle you buy" onClose={() => closeRef.current?.()}>
+        <WizardDialog label="A bottle you buy" onClose={() => (closeRef.current ?? goBack)()}>
           {wizard}
         </WizardDialog>
       ) : (
