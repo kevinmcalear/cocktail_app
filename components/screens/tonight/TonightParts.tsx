@@ -60,11 +60,15 @@ function useDrinkTint(itemId: string): string | null {
  * `cap`: its top edge only, unfaded, for ScrollSky's pull.
  */
 export function TonightSky({ ids, cap }: { ids: readonly string[]; cap?: boolean }) {
-  const ds = useDs();
   const a = useDrinkTint(ids[0] ?? '');
   const b = useDrinkTint(ids[1] ?? '');
   const c = useDrinkTint(ids[2] ?? '');
-  const tints = [a, b, c].filter((t): t is string => !!t);
+  return <TintSky tints={[a, b, c].filter((t): t is string => !!t)} cap={cap} />;
+}
+
+/** The same sky from paint colours already in hand (first run's Welcome draws drinks it carries itself). */
+export function TintSky({ tints, cap }: { tints: readonly string[]; cap?: boolean }) {
+  const ds = useDs();
   if (!tints.length) return null;
   const strength = ds.scheme === 'dark' ? 0.22 : 0.16;
   const colors = (tints.length === 1 ? [tints[0], tints[0]] : tints).map((t) => withAlpha(t, strength)) as [string, string, ...string[]];
