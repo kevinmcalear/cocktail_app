@@ -56,6 +56,8 @@ export function useSaveHouseMade() {
     mutationKey: SAVE_HOUSE_MADE,
     mutationFn: async ({ name, prep, barId, shelf }: SaveHouseMadeInput) => {
       const payload = houseMadePayload(name, prep);
+      // ponytail: still save_house_mades, which installed apps call too. It moves to an ingredient form of save_drink
+      // (with useIngredientEditor) once the update with save_drink has spread, and save_house_mades goes then.
       // p_bar is null at home: the function takes it (generated types call every argument required text).
       const { data, error } = await supabase.rpc('save_house_mades', { p_bar: barId as string, p_preps: payload as unknown as Json });
       if (error) throw error;

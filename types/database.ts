@@ -8777,6 +8777,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      save_drink: { Args: { p_key: string; p_save: Json }; Returns: Json }
       save_drink_spec:
         | {
             Args: {

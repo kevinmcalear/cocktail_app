@@ -41,9 +41,11 @@ const mockTakenNames = new Set<string>();
 const mockIngredientInserts: Record<string, unknown>[] = [];
 // Rows for other tables, by table.
 const mockOtherInserts: [string, Record<string, unknown>][] = [];
-// Every delete, by table; and save_house_mades refusing (a name taken) when set.
+// Every delete, by table; and save_house_mades or save_drink refusing (a name taken) or losing the connection when set.
 const mockDeletes: [string, string[]][] = [];
-const mockHouseMade: { refuse: string | null; deleteFails?: boolean } = { refuse: null };
+const mockHouseMade: { refuse: string | null; deleteFails?: boolean; drops?: boolean } = { refuse: null };
+type Ref = { house_made?: number; id?: string; name?: string; own?: boolean; allergens?: string[] };
+type Saved = { drink?: Record<string, unknown>; bar: string | null; preps: { name: string }[]; lines: { ingredient: Ref; amount: number; unit: string }[]; methods: string[]; credits?: unknown };
 jest.mock('@/lib/supabase', () => {
   const chain = (result: () => unknown) => {
     const q: Record<string, unknown> = {};
@@ -58,9 +60,20 @@ jest.mock('@/lib/supabase', () => {
     supabase: {
       rpc: async (fn: string, args: Record<string, unknown>) => {
         mockRpcs.push([fn, args]);
-        if (fn === 'save_house_mades') {
+        if (fn === 'save_house_mades' || fn === 'save_drink') {
           if (mockHouseMade.refuse) return { data: null, error: { code: 'P0001', message: mockHouseMade.refuse } };
-          return { data: (args.p_preps as unknown[]).map((_, i) => `made-${i}`), error: null };
+          if (mockHouseMade.drops) throw new TypeError('Network request failed');
+        }
+        if (fn === 'save_house_mades') return { data: (args.p_preps as unknown[]).map((_, i) => `made-${i}`), error: null };
+        // save_drink, as the database answers it: the drink (its draft id unless that's taken), each house-made, and each line's row.
+        if (fn === 'save_drink') {
+          const save = args.p_save as Saved;
+          const id = save.drink?.id as string | undefined;
+          if (save.drink) mockInserts.push(save.drink);
+          const row = (r: Ref) =>
+            r.house_made !== undefined ? { id: `made-${r.house_made}`, new: false } : r.id && LIVE.includes(r.id) ? { id: r.id, new: false } : r.name === 'Cupuacu' ? { id: 'cupuacu-kept', new: false } : { id: 'new-row', new: true };
+          const item = id && !mockTaken.has(id) ? id : 'db-made';
+          return { data: { item, version: 1, house_mades: save.preps.map((_, i) => `made-${i}`), lines: save.lines.map((l) => row(l.ingredient)) }, error: null };
         }
         return { data: args.p_name === 'Cupuacu' ? 'cupuacu-kept' : null, error: null };
       },
@@ -89,6 +102,8 @@ jest.mock('@/lib/supabase', () => {
 });
 
 type Fn = (input: CreateDrinkInput) => Promise<CreateDrinkResult>;
+const saveCalls = () => mockRpcs.filter(([fn]) => fn === 'save_drink');
+const lastSave = () => saveCalls().at(-1)![1].p_save as Saved;
 
 test('a picked ingredient merged away since is saved by its name, not its old id', async () => {
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
@@ -99,9 +114,9 @@ test('a picked ingredient merged away since is saved by its name, not its old id
     barId: null,
     myProfileId: null,
   });
-  const [, lines, methods] = mockSaveSpec.mock.calls[0];
-  expect(lines.map((l: { ingredient_item_id: string }) => l.ingredient_item_id)).toEqual(['lime', 'cupuacu-kept']);
-  expect(methods).toEqual(['shake']);
+  const save = lastSave();
+  expect(save.lines.map((l) => l.ingredient)).toEqual([{ id: 'lime', name: 'Lime' }, { name: 'Cupuacu', allergens: [] }]);
+  expect(save.methods).toEqual(['shake']);
 });
 
 test('the drink is saved under its draft id and shows the wizard\'s drawing at once', async () => {
@@ -133,8 +148,9 @@ test('an id the database already has saves under one of its own', async () => {
   mockTaken.add('draft-2');
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
   const { id } = await result.current.mutationFn({ draft: { ...EMPTY_DRAFT, id: 'draft-2', name: 'Sour', creator: 'nobody' }, barId: null, myProfileId: null });
+  // Sent under its draft id once; the database gives it one of its own.
   expect(id).toBe('db-made');
-  expect(mockInserts.map((r) => r.id)).toEqual(['draft-2', undefined]);
+  expect(mockInserts.map((r) => r.id)).toEqual(['draft-2']);
 });
 
 test('a new house prep made by a technique gets its prep card; one already on the shelf keeps its own', async () => {
@@ -155,7 +171,7 @@ test('a new house prep made by a technique gets its prep card; one already on th
 
 const houseMadeCalls = () => mockRpcs.filter(([fn]) => fn === 'save_house_mades');
 
-test('a house-made written in the drink saves with it: first, in one call with its parts, and the line uses it', async () => {
+test('a house-made written in the drink saves with it, in one save_drink call, and the line uses it', async () => {
   mockRpcs.length = 0;
   mockSaveSpec.mockClear();
   mockSavePrepCard.mockClear();
@@ -164,104 +180,76 @@ test('a house-made written in the drink saves with it: first, in one call with i
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
   const prep = startPrep('shrub', 'Pineapple chili shrub');
   const { created } = await result.current.mutationFn({
-    draft: { ...EMPTY_DRAFT, name: 'Pineapple Heat', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Pineapple chili shrub', amount: '20', unit: 'ml', prep }] },
+    draft: { ...EMPTY_DRAFT, id: 'd-heat', name: 'Pineapple Heat', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Pineapple chili shrub', amount: '20', unit: 'ml', prep }] },
     barId: 'bar-1',
     myProfileId: null,
   });
-  const calls = houseMadeCalls();
-  expect(calls).toHaveLength(1);
-  const [, args] = calls[0];
-  expect(args.p_bar).toBe('bar-1');
-  expect((args.p_preps as { name: string }[])[0].name).toBe('Pineapple chili shrub');
-  // Saved before the drink: the call comes ahead of every other.
-  expect(mockRpcs[0][0]).toBe('save_house_mades');
-  const [, lines] = mockSaveSpec.mock.calls[0];
-  expect(lines.map((l: { ingredient_item_id: string }) => l.ingredient_item_id)).toEqual(['made-0']);
-  // Not row by row afterwards, and no technique card.
+  expect(houseMadeCalls()).toHaveLength(0);
+  expect(saveCalls()).toHaveLength(1);
+  const [, args] = saveCalls()[0];
+  // Its key is the draft's id, kept on the device until the save goes through.
+  expect(args.p_key).toBe('d-heat');
+  const save = args.p_save as Saved;
+  expect(save.bar).toBe('bar-1');
+  expect(save.preps.map((p) => p.name)).toEqual(['Pineapple chili shrub']);
+  expect(save.lines.map((l) => l.ingredient)).toEqual([{ house_made: 0 }]);
+  expect(save.drink).toMatchObject({ id: 'd-heat', name: 'Pineapple Heat', item_type: 'cocktail', bar_id: 'bar-1' });
+  // Nothing row by row, no spec call of its own, and no technique card.
+  expect(mockSaveSpec).not.toHaveBeenCalled();
   expect(mockIngredientInserts).toHaveLength(0);
   expect(mockSavePrepRecipe).not.toHaveBeenCalled();
   expect(mockSavePrepCard).not.toHaveBeenCalled();
   expect(created).toEqual([{ id: 'made-0', name: 'Pineapple chili shrub' }]);
 });
 
-test('a house-made the database refuses (its name taken) saves nothing: no drink either', async () => {
-  mockInserts.length = 0;
-  mockSaveSpec.mockClear();
+test('a save the database refuses leaves nothing to take out, and the draft as it was', async () => {
+  mockDeletes.length = 0;
   mockHouseMade.refuse = 'Cupuacu is taken here';
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
-  await expect(
-    result.current.mutationFn({
-      draft: { ...EMPTY_DRAFT, name: 'Cupuacu Sour', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Cupuacu', amount: '20', unit: 'ml', prep: startPrep('other', 'Cupuacu') }] },
-      barId: 'bar-1',
-      myProfileId: null,
-    }),
-  ).rejects.toMatchObject({ message: 'Cupuacu is taken here' });
+  const draft: WizardDraft = { ...EMPTY_DRAFT, name: 'Cupuacu Sour', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Cupuacu', amount: '20', unit: 'ml', prep: startPrep('other', 'Cupuacu') }] };
+  const e = await result.current.mutationFn({ draft, barId: 'bar-1', myProfileId: null }).catch((x: unknown) => x);
   mockHouseMade.refuse = null;
-  expect(mockInserts).toHaveLength(0);
-  expect(mockSaveSpec).not.toHaveBeenCalled();
-});
-
-test('the drink can’t be saved: the house-mades saved for it go again, so neither is saved', async () => {
-  mockDeletes.length = 0;
-  mockSaveSpec.mockClear();
-  mockSaveSpec.mockRejectedValueOnce(new Error('spec refused'));
-  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
-  await expect(
-    result.current.mutationFn({
-      draft: { ...EMPTY_DRAFT, id: 'd-fails', name: 'Pineapple Heat', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Pineapple chili shrub', amount: '20', unit: 'ml', prep: startPrep('shrub', 'Pineapple chili shrub') }] },
-      barId: null,
-      myProfileId: null,
-    }),
-  ).rejects.toThrow('spec refused');
-  expect(mockDeletes).toEqual([
-    ['items', ['d-fails']],
-    ['items', ['made-0']],
-  ]);
+  expect(e).toMatchObject({ message: 'Cupuacu is taken here' });
+  expect(mockDeletes).toEqual([]);
+  expect(linesOnKeptHouseMades(e, draft)).toBeNull();
 });
 
 const pineDraft = (id: string): WizardDraft => ({ ...EMPTY_DRAFT, id, name: 'Pine Sour', creator: 'nobody', lines: [{ key: 'a', id: null, name: 'Pine syrup', amount: '20', unit: 'ml', prep: startPrep('syrup', 'Pine syrup') }] });
 
-test('the connection drops on the drink: the house-mades stay (the drink may be in), and the draft’s line points at them for the retry (review of #1187)', async () => {
+test('the connection drops on the save: trying again sends the same save under the same key, so the database hands back the same rows', async () => {
+  mockRpcs.length = 0;
   mockDeletes.length = 0;
-  mockSaveSpec.mockClear();
-  mockSaveSpec.mockRejectedValueOnce(new TypeError('Network request failed'));
+  mockHouseMade.drops = true;
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
   const draft = pineDraft('d-drops');
   const e = await result.current.mutationFn({ draft, barId: 'bar-1', myProfileId: null }).catch((x: unknown) => x);
+  mockHouseMade.drops = false;
   expect(e).toBeInstanceOf(TypeError);
-  // Only the half-made drink is taken out, never the house-made its lines would go with.
-  expect(mockDeletes).toEqual([['items', ['d-drops']]]);
-  const on = linesOnKeptHouseMades(e, draft)!;
-  expect(on.lines[0]).toMatchObject({ id: 'made-0', name: 'Pine syrup' });
-  expect(on.lines[0].prep).toBeUndefined();
+  expect(mockDeletes).toEqual([]);
+  await result.current.mutationFn({ draft, barId: 'bar-1', myProfileId: null });
+  const [first, again] = saveCalls();
+  expect(again[1]).toEqual(first[1]);
+  expect(first[1].p_key).toBe('d-drops');
 });
 
-test('a clean-up delete that fails leaves the house-mades saved, and the draft’s line points at them, so the retry isn’t refused by name', async () => {
+test('Bring in’s Update it: the house-mades save first, and a spec the drink refuses takes them out again', async () => {
+  mockRpcs.length = 0;
   mockDeletes.length = 0;
   mockSaveSpec.mockClear();
   mockSaveSpec.mockRejectedValueOnce(new Error('spec refused'));
-  mockHouseMade.deleteFails = true;
   const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
-  const draft = pineDraft('d-stuck');
-  const e = await result.current.mutationFn({ draft, barId: 'bar-1', myProfileId: null }).catch((x: unknown) => x);
-  mockHouseMade.deleteFails = false;
-  expect(mockDeletes.at(-1)).toEqual(['items', ['made-0']]);
-  const on = linesOnKeptHouseMades(e, draft)!;
-  // Tried again with those lines: no second save_house_mades, the drink uses the saved one.
-  mockRpcs.length = 0;
-  mockSaveSpec.mockClear();
-  LIVE.push('made-0');
-  await result.current.mutationFn({ draft: { ...draft, ...on }, barId: 'bar-1', myProfileId: null });
-  LIVE.pop();
-  expect(houseMadeCalls()).toHaveLength(0);
-  expect(mockSaveSpec.mock.calls[0][1].map((l: { ingredient_item_id: string }) => l.ingredient_item_id)).toEqual(['made-0']);
-});
-
-test('a refused drink with every house-made taken out again leaves the draft as it was', async () => {
-  mockSaveSpec.mockRejectedValueOnce(new Error('spec refused'));
-  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
-  const e = await result.current.mutationFn({ draft: pineDraft('d-clean'), barId: 'bar-1', myProfileId: null }).catch((x: unknown) => x);
-  expect(linesOnKeptHouseMades(e, pineDraft('d-clean'))).toBeNull();
+  const draft = { ...pineDraft('d-update'), methods: [{ id: 'shake', name: 'Shake' }] };
+  const e = await result.current.mutationFn({ draft, barId: 'bar-1', myProfileId: null, updateId: 'drink-1' }).catch((x: unknown) => x);
+  expect(e).toMatchObject({ message: 'spec refused' });
+  expect(houseMadeCalls()).toHaveLength(1);
+  expect(saveCalls()).toHaveLength(0);
+  expect(mockDeletes).toEqual([['items', ['made-0']]]);
+  expect(linesOnKeptHouseMades(e, draft)).toBeNull();
+  // It goes through: the drink takes the spec on the house-made's row.
+  const { id } = await result.current.mutationFn({ draft, barId: 'bar-1', myProfileId: null, updateId: 'drink-1' });
+  expect(id).toBe('drink-1');
+  expect(mockSaveSpec.mock.calls.at(-1)[0]).toBe('drink-1');
+  expect(mockSaveSpec.mock.calls.at(-1)[1].map((l: { ingredient_item_id: string }) => l.ingredient_item_id)).toEqual(['made-0']);
 });
 
 test('a house prep made for the finish saves with the drink too, as 3 drops after the pours', async () => {
@@ -280,9 +268,9 @@ test('a house prep made for the finish saves with the drink too, as 3 drops afte
     barId: null,
     myProfileId: null,
   });
-  expect(houseMadeCalls().map(([, a]) => (a.p_preps as { name: string }[]).map((p) => p.name))).toEqual([['Mint oil']]);
-  const [, lines] = mockSaveSpec.mock.calls[0];
-  expect(lines.map((l: { ingredient_item_id: string; amount: number; unit: string }) => [l.ingredient_item_id, l.amount, l.unit])).toEqual([['lime', 30, 'ml'], ['made-0', 3, 'drop']]);
+  const save = lastSave();
+  expect(save.preps.map((p) => p.name)).toEqual(['Mint oil']);
+  expect(save.lines.map((l) => [l.ingredient, l.amount, l.unit])).toEqual([[{ id: 'lime', name: 'Lime' }, 30, 'ml'], [{ house_made: 0 }, 3, 'drop']]);
 });
 
 const credited = () => mockRpcs.filter(([fn]) => fn === 'set_drink_credits' || fn === 'answer_item_credit');
@@ -294,17 +282,15 @@ test('at home, where and when it was first made are saved; another bar on it is 
   mockRpcs.length = 0;
   await run({ draft: { ...EMPTY_DRAFT, id: 'd-attaboy', name: 'Ash Garden', originYear: 2019, place: { id: 'bar-p-attaboy', name: 'Attaboy' } }, barId: null, myProfileId: 'p-me' });
   expect(mockInserts[0]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: 'bar-p-attaboy' });
-  // Who made it is set apart (item_credits), and you stay suggested while another bar is named.
-  expect(credited()).toEqual([['set_drink_credits', { p_item_id: 'd-attaboy', p_creator_profile_id: 'p-me', p_creator_names: [], p_add: [], p_remove: [] }]]);
+  // Who made it is set apart (item_credits) in the same call, and you stay suggested while another bar is named.
+  expect(lastSave().credits).toEqual({ creator: 'p-me', names: [], accept: false });
+  expect(credited()).toEqual([]);
 
   mockRpcs.length = 0;
   await run({ draft: { ...EMPTY_DRAFT, id: 'd-home', name: 'Ash Garden', originYear: 2019 }, barId: null, myProfileId: 'p-me' });
   expect(mockInserts[1]).toMatchObject({ origin_year: 2019, origin_bar_profile_id: null });
   // Your own credit: you say yes to it at once.
-  expect(credited()).toEqual([
-    ['set_drink_credits', { p_item_id: 'd-home', p_creator_profile_id: 'p-me', p_creator_names: [], p_add: [], p_remove: [] }],
-    ['answer_item_credit', { p_credit_id: 'lead-credit', p_accept: true }],
-  ]);
+  expect(lastSave().credits).toEqual({ creator: 'p-me', names: [], accept: true });
 });
 
 test('someone with no page is saved by name (tf-063); nobody credited saves no credit', async () => {
@@ -312,9 +298,10 @@ test('someone with no page is saved by name (tf-063); nobody credited saves no c
   const run = result.current.mutationFn;
   mockRpcs.length = 0;
   await run({ draft: { ...EMPTY_DRAFT, id: 'd-craddock', name: 'Corpse Reviver No. 2', creator: { id: null, name: 'Harry Craddock' } }, barId: null, myProfileId: 'p-me' });
-  expect(credited()).toEqual([['set_drink_credits', { p_item_id: 'd-craddock', p_creator_profile_id: null, p_creator_names: ['Harry Craddock'], p_add: [], p_remove: [] }]]);
+  expect(lastSave().credits).toEqual({ creator: null, names: ['Harry Craddock'], accept: false });
   mockRpcs.length = 0;
   await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', creator: 'nobody' }, barId: null, myProfileId: 'p-me' });
+  expect(lastSave().credits).toEqual({ creator: null, names: [], accept: false });
   expect(credited()).toEqual([]);
 });
 
@@ -326,10 +313,8 @@ test('people made with are asked through the same call, after the drink is saved
     barId: null,
     myProfileId: 'p-me',
   });
-  expect(credited()).toEqual([
-    ['set_drink_credits', { p_item_id: 'd-with', p_creator_profile_id: 'p-sam', p_creator_names: [], p_add: [], p_remove: [] }],
-    ['set_drink_credits', { p_item_id: 'd-with', p_creator_profile_id: 'p-sam', p_creator_names: [], p_add: ['p-kit'], p_remove: [] }],
-  ]);
+  expect(lastSave().credits).toEqual({ creator: 'p-sam', names: [], accept: false });
+  expect(credited()).toEqual([['set_drink_credits', { p_item_id: 'd-with', p_creator_profile_id: 'p-sam', p_creator_names: [], p_add: ['p-kit'], p_remove: [] }]]);
 });
 
 test('"Just me" notes are kept apart as yours, never on the drink', async () => {

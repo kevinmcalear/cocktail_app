@@ -8,6 +8,7 @@
 import { ingredientKey } from './ingredientNames';
 import { prepAmounts, prepYield, type PrepDraft } from './prepKinds';
 import { capitalizeFirst } from './stringUtils';
+import { prepFacts } from './techniques/template';
 
 /** The house-made, a part of it, and a part of that: no "Make here" past this (Add-parts, 3). */
 export const MOST_LEVELS = 3;
@@ -41,8 +42,8 @@ export function savesTogether(name: string, prep: PrepDraft): string | null {
   return `Saves ${names.length} house-mades together: ${namesList(names)}. If one can’t save, none do.`;
 }
 
-/** One line as save_house_mades takes it: a part (its index), an ingredient (its name too, in case it's gone since), or a name to find or add. */
-export type PayloadLine = ({ part: number } | { id: string; name?: string } | { name: string; bottle?: boolean }) & { amount: number | null; unit: string | null; note: string | null };
+/** One line as save_house_mades takes it: a part (its index), an ingredient (its name too, in case it's gone since), or a name to find or add (with the allergens in it, which save_drink stores on a new one). */
+export type PayloadLine = ({ part: number } | { id: string; name?: string } | { name: string; bottle?: boolean; allergens?: string[] }) & { amount: number | null; unit: string | null; note: string | null };
 
 export interface PayloadPrep {
   name: string;
@@ -80,7 +81,7 @@ export function houseMadePayload(name: string, prep: PrepDraft): PayloadPrep[] {
       const how = { amount, unit: line.unit || null, note: line.note?.trim() || null };
       if (line.key === p.baseKey) entry.base = entry.lines.length;
       // A part is added after the line that points at it is written, so its index is the next one.
-      entry.lines.push(line.prep ? { part: add(line.name, line.prep), ...how } : line.id ? { id: line.id, name: line.name.trim(), ...how } : { name: capitalizeFirst(line.name.trim()), ...(line.bottle ? { bottle: true } : null), ...how });
+      entry.lines.push(line.prep ? { part: add(line.name, line.prep), ...how } : line.id ? { id: line.id, name: line.name.trim(), ...how } : { name: capitalizeFirst(line.name.trim()), ...(line.bottle ? { bottle: true } : null), allergens: prepFacts([line.name]).allergens, ...how });
     }
     return at;
   };
