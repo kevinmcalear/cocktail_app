@@ -153,7 +153,9 @@ describe('drafts are their author\'s', () => {
   });
 
   test('signed out, there are no drafts to read', async () => {
-    assert.deepEqual((await anon.from('drafts').select('id').in('id', [ids.ownerBarDraft, ids.creatorBarDraft])).data ?? [], []);
+    const { data, error } = await anon.from('drafts').select('id').in('id', [ids.ownerBarDraft, ids.creatorBarDraft]);
+    assert.ifError(error);
+    assert.deepEqual(data, []);
   });
 });
 

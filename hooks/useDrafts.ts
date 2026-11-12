@@ -54,7 +54,6 @@ export function useDrafts() {
                 capitalizedData.menuName = capitalize(capitalizedData.menuName);
             }
 
-
             if (id) {
                 // Update existing draft
                 const { data, error } = await supabase
