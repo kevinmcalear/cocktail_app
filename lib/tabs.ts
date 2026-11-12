@@ -41,9 +41,12 @@ export const YOUR_DRINKS = 'Search your drinks';
 /** What a phone's search field says before you type (search2). */
 export const SEARCH_ANYTHING = 'Search or add anything';
 
+/** What a search from Discover looks through: Android's bar there, and the field on the page. */
+export const DISCOVER_SEARCH = 'Search bars, drinks, bottles';
+
 /** What Android's search bar says on each page (Prod-and): what search starts on from there. */
 export function searchBarLabel(segments: readonly string[]): string {
-  if (segments.includes('(3-discover)')) return 'Search bars, drinks, bottles';
+  if (segments.includes('(3-discover)')) return DISCOVER_SEARCH;
   if (segments.includes('(2-drinks)')) return YOUR_DRINKS;
   return SEARCH_ANYTHING;
 }

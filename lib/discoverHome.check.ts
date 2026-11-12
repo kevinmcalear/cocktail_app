@@ -40,6 +40,7 @@ const listed = (id: string, barId: string, name: string, locality: string | null
   ({ id, barId, name, distance, bar: { name: barId.toUpperCase(), handle: barId, logo: null, locality, city } }) as DiscoverDrink;
 const onMenus = onMenuRows([listed('d1', 'care', 'House Martini', 'Soho', 'London', 420), listed('d2', 'care', 'Dirty Martini', 'Soho', 'London', 420), listed('d3', 'moth', 'Gibson', null, 'Leeds', null)]);
 assert.deepEqual(onMenus.map((r) => [r.barId, r.name, r.drinkId, r.place, r.distanceM]), [['care', 'House Martini', 'd1', 'Soho', 420], ['moth', 'Gibson', 'd3', 'Leeds', null]], 'a bar shows once, its first drink; the city stands in for a missing neighbourhood');
+assert.equal(onMenuRows([listed('d1', 'care', 'House Martini', 'Soho', 'London', 420)], false)[0].distanceM, null, 'a searched map area: no distance, it is not from the person');
 assert.deepEqual(onMenuRows([]), []);
 
 // --- newMenus: on now, newest first, the month only when it's this month ---

@@ -88,7 +88,7 @@ export interface OnMenuRow {
   place: string | null;
   name: string;
   drinkId: string;
-  /** Metres away, when the list was asked from a point. */
+  /** Metres from the person, when the list was asked from where they are. */
   distanceM: number | null;
 }
 
@@ -97,13 +97,13 @@ export interface OnMenuRow {
  * now (the list is asked for on-now drinks), one a bar (its first, in the
  * list's order), so Discover still shows drinks. Kevin, 12 Nov 2026: "drinks on menus nearby" until rankings exist.
  */
-export function onMenuRows(drinks: readonly DiscoverDrink[]): OnMenuRow[] {
+export function onMenuRows(drinks: readonly DiscoverDrink[], fromMe = true): OnMenuRow[] {
   const seen = new Set<string>();
   const rows: OnMenuRow[] = [];
   for (const d of drinks) {
     if (seen.has(d.barId)) continue;
     seen.add(d.barId);
-    rows.push({ barId: d.barId, barHandle: d.bar.handle, barName: d.bar.name, place: d.bar.locality ?? d.bar.city, name: d.name, drinkId: d.id, distanceM: d.distance });
+    rows.push({ barId: d.barId, barHandle: d.bar.handle, barName: d.bar.name, place: d.bar.locality ?? d.bar.city, name: d.name, drinkId: d.id, distanceM: fromMe ? d.distance : null });
   }
   return rows;
 }

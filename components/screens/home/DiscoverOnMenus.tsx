@@ -12,9 +12,7 @@ import { STYLES } from '@/lib/drinkStyles';
 import { itemHref } from '@/lib/itemRoutes';
 import { formatDistance, usesMiles } from '@/lib/nearMe';
 import { MIN_RANKERS } from '@/lib/ranking';
-
-/** What the search field on Discover says: what a search from here looks through (lib/tabs.ts searchBarLabel). */
-const SEARCH_LABEL = 'Search bars, drinks, bottles';
+import { DISCOVER_SEARCH } from '@/lib/tabs';
 
 /**
  * The search field on Discover's page (Kevin, 12 Nov 2026): a door to the one
@@ -25,10 +23,10 @@ export function DiscoverSearchField() {
   const ds = useDs();
   const openSearch = useOpenSearch();
   return (
-    <PressableScale role="button" accessibilityLabel={SEARCH_LABEL} onPress={() => openSearch()} style={[styles.field, { backgroundColor: ds.c.raised }]}>
+    <PressableScale role="button" accessibilityLabel={DISCOVER_SEARCH} onPress={() => openSearch()} style={[styles.field, { backgroundColor: ds.c.raised }]}>
       <IconSymbol name="magnifyingglass" size={20} color={ds.c.muted} />
       <Body tone="muted" numberOfLines={1} style={styles.flex}>
-        {SEARCH_LABEL}
+        {DISCOVER_SEARCH}
       </Body>
     </PressableScale>
   );

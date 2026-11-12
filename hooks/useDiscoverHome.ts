@@ -126,7 +126,11 @@ export function useBestNear(area: Area, styleId: string, enabled: boolean) {
   const drinks = useDiscoverList(pickFilter({ kinds: [], search: '', area }, classic), { enabled: enabled && !!pick, pageSize: 300, onNow: true, from });
   const rows = useMemo(() => bestRows(rankings.data?.ranked ?? [], drinks.drinks, pick?.name ?? classic), [rankings.data, drinks.drinks, pick, classic]);
   // Nobody ranked here yet: the same drinks stand in, one a bar, until a bar has its rankers.
-  const onMenus = useMemo(() => (rows.length ? [] : onMenuRows(drinks.drinks)), [rows.length, drinks.drinks]);
+  // The list keeps its last results up while a new style loads: only this style's count, and a distance only from the person.
+  const onMenus = useMemo(
+    () => (rows.length ? [] : onMenuRows(drinks.drinks.filter((d) => !d.styles || d.styles.includes(style.id)), area.kind === 'point' && area.source === 'me')),
+    [rows.length, drinks.drinks, style.id, area]
+  );
   const waiting = rankings.isPending || (!rows.length && !rankings.error && drinks.isLoading);
   return { style, classic, classicId: pick?.id ?? null, rows, onMenus, isLoading: enabled && !!pick && waiting, error: rankings.error, refetch: rankings.refetch };
 }
