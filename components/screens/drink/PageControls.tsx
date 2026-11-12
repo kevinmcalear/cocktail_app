@@ -1,10 +1,11 @@
-import type { ReactNode } from 'react';
+import { use, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { interpolate, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
 import { DsText, GlassButton, useDs, useGutter } from '@/components/ds';
 import { displayFaces, layout, space, type BackbarScheme } from '@/constants/tokens';
 
+import { BarEndRoom } from './barEndRoom';
 import { useItemBack } from './useItemBack';
 
 /** How long Back runs: its circle, or the pill with where it goes (desktop board's measure). */
@@ -63,6 +64,8 @@ export function PageControls({ over, top, scrollY, tuck, smallAt = tuck, title, 
   const ds = useDs();
   const goBack = useItemBack();
   const gutter = useGutter();
+  // Drinks' Add on a desktop sits at the end of this row (NoDrinkPicked): the … and the small title stop short of it.
+  const end = gutter + use(BarEndRoom);
   const barHeight = top + space.sm * 2 + layout.minTapTarget;
   const small = useSmallTitle(scrollY, smallAt);
   const back = noBack ? (
@@ -80,12 +83,12 @@ export function PageControls({ over, top, scrollY, tuck, smallAt = tuck, title, 
     <>
       <BarBacking height={barHeight} scrollY={scrollY} tuck={tuck} />
       {children}
-      <Animated.View style={[styles.title, { top: top + space.sm, height: layout.minTapTarget, left: gutter + backWidth(backLabel) + space.sm + titleInset, right: gutter + barRoom(more) }, small]} aria-hidden>
+      <Animated.View style={[styles.title, { top: top + space.sm, height: layout.minTapTarget, left: gutter + backWidth(backLabel) + space.sm + titleInset, right: end + barRoom(more) }, small]} aria-hidden>
         <DsText variant="headline" numberOfLines={1} style={{ fontFamily: displayFaces[ds.displayFace].regular }}>
           {title}
         </DsText>
       </Animated.View>
-      <View style={[styles.row, { top: top + space.sm, left: gutter, right: gutter }]}>
+      <View style={[styles.row, { top: top + space.sm, left: gutter, right: end }]}>
         {back}
         {more}
       </View>
