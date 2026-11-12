@@ -64,13 +64,18 @@ export function isMissingColumn(error: DbError): boolean {
 }
 
 /**
- * A venue's switches from its read, never failing: the column not there means
- * none; any other error (offline, a timeout) keeps what was saved, or none. So
- * a read never throws, never retries, and the tabs never wait on it twice.
+ * A venue's switches from its read: the column not there means none; any other
+ * error (offline, a timeout) keeps what was saved. With nothing saved it throws,
+ * so a failed first read isn't kept (or saved between launches) as "no extras":
+ * the query sits in error, the tabs show none for now, and the next mount or
+ * reconnect reads again. useFeatureRow never retries, so the tabs never wait.
  */
 export function readFeatures(row: { enabled_features?: unknown } | null | undefined, error: DbError, saved?: string[]): string[] {
   if (isMissingColumn(error)) return [];
-  if (error) return saved ?? [];
+  if (error) {
+    if (saved) return saved;
+    throw error;
+  }
   return parseFeatures(row?.enabled_features);
 }
 

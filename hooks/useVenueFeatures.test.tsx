@@ -89,6 +89,22 @@ test('a read that fails never throws or retries: the column missing means none',
   expect(mockReads).toBe(1);
 });
 
+test('a failed first read with nothing saved is not kept as none: ready now, read again next time', async () => {
+  mockRead = { data: null, error: { code: 'PGRST301' } };
+  const client = newClient();
+  const first = await renderHook(() => useVenueFeatures(), { wrapper: wrapper(client) });
+  await waitFor(() => expect(first.result.current.ready).toBe(true));
+  expect(first.result.current.has('prep')).toBe(false);
+  expect(mockReads).toBe(1);
+  expect(client.getQueryData(venueFeaturesKey('rye'))).toBeUndefined();
+  await first.unmount();
+
+  mockRead = { data: { enabled_features: ['prep'] }, error: null };
+  const second = await renderHook(() => useVenueFeatures(), { wrapper: wrapper(client) });
+  await waitFor(() => expect(second.result.current.has('prep')).toBe(true));
+  expect(mockReads).toBe(2);
+});
+
 test('offline: a failed read keeps the saved switches', async () => {
   mockRead = { data: null, error: { code: 'PGRST301' } };
   const client = newClient();
