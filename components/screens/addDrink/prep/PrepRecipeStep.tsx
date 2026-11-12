@@ -8,7 +8,6 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Choice } from '@/components/screens/batch/BatchParts';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import type { IngredientAlias } from '@/lib/ingredientNames';
-import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
 import { MEASURE_UNITS, partsText, prepAmounts, prepSummary, prepYield, slotMessage, toFinishSummary, type PrepDraft, type PrepDraftLine } from '@/lib/prepKinds';
 import { formatQuantity, toQuantity } from '@/lib/quantity';
 import { capitalizeFirst } from '@/lib/stringUtils';
@@ -18,6 +17,7 @@ import { prepUnit } from '@/lib/unitGuess';
 
 import { IngredientSearch, type CatalogIngredient } from '../IngredientSearch';
 import { WizardChip } from '../WizardChrome';
+import { AllergenToggles, allergensValue } from './PrepRows';
 import { NumberField } from './RecipeBits';
 
 interface PrepRecipeStepProps {
@@ -71,9 +71,6 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, onMake,
   const base = draft.lines.find((l) => l.key === draft.baseKey);
   const makes = prepYield(draft);
   const waiting = slotMessage(draft);
-  const allergens = draft.allergens ?? [];
-  const toggleAllergen = (key: Allergen) => set({ allergens: allergens.includes(key) ? allergens.filter((k) => k !== key) : [...allergens, key], allergensSet: true });
-  const contains = [listAllergens(allergens), ...(draft.contains ?? []).map((c) => c.toLowerCase())].filter(Boolean).join(', ');
   const change = (key: string, c: Partial<PrepDraftLine>) => set({ lines: draft.lines.map((l) => (l.key === key ? { ...l, ...c } : l)) });
   const remove = (l: PrepDraftLine) => {
     const lines = draft.lines.filter((x) => x.key !== l.key);
@@ -238,28 +235,10 @@ export function PrepRecipeStep({ draft, view, set, ingredients, aliases, onMake,
       <ListGroup>
         {/* "750 ml >" (board Add-house, 2): it opens how the number is reached. */}
         <ListRow first title="Makes about" value={makes ? formatQuantity({ kind: 'ml', value: makes, unit: 'ml' }) : 'Set by your first batch'} expanded={makesOpen} onPress={() => setMakesOpen(!makesOpen)} />
-        <ListRow title="Allergens" value={contains ? contains[0].toUpperCase() + contains.slice(1) : draft.allergensSet ? 'None' : 'None found'} expanded={allergensOpen} onPress={() => setAllergensOpen(!allergensOpen)} />
+        <ListRow title="Allergens" value={allergensValue(draft)} expanded={allergensOpen} onPress={() => setAllergensOpen(!allergensOpen)} />
       </ListGroup>
       {makesOpen ? <ListNote icon="info.circle" text="A guess from the weights. Log your first batch and it uses the real number." /> : null}
-      {allergensOpen ? (
-        <View role="group" accessibilityLabel="Allergens in it" style={styles.toggles}>
-          {ALLERGENS.map((a) => {
-            const on = allergens.includes(a.key);
-            return (
-              <PressableScale
-                key={a.key}
-                role="checkbox"
-                aria-checked={on}
-                accessibilityLabel={a.label}
-                onPress={() => toggleAllergen(a.key)}
-                style={[styles.toggle, { backgroundColor: on ? ds.c.ink : ds.c.raised, borderColor: on ? ds.c.ink : ds.c.line }]}
-              >
-                <Caption color={on ? ds.c.ground : ds.c.ink}>{a.label}</Caption>
-              </PressableScale>
-            );
-          })}
-        </View>
-      ) : null}
+      {allergensOpen ? <AllergenToggles draft={draft} set={set} /> : null}
       {onMake ? <ListNote icon="info.circle" text="Any line can be made in-house too: tap it, and it opens one level in." /> : null}
         </>
       )}
@@ -279,8 +258,6 @@ const styles = StyleSheet.create({
   swapName: { minHeight: layout.minTapTarget, justifyContent: 'center' },
   noteButton: { minHeight: 32, justifyContent: 'center', alignSelf: 'flex-start' },
   note: { minHeight: layout.minTapTarget, borderWidth: 1, borderRadius: radius.control, paddingHorizontal: space.sm },
-  toggles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  toggle: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
   box: { flexDirection: 'row', alignItems: 'center', borderRadius: radius.pill, minHeight: 40, paddingHorizontal: space.xs },
   tap: { minWidth: layout.minTapTarget, minHeight: layout.minTapTarget, alignItems: 'center', justifyContent: 'center' },
   own: { flexDirection: 'row', alignItems: 'center', gap: space.xs },

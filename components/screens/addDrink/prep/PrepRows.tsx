@@ -1,15 +1,52 @@
 import { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Sheet, SheetScrollView } from '@/components/ds';
+import { Caption, PressableScale, Sheet, SheetScrollView, useDs } from '@/components/ds';
 import { FlowHead } from '@/components/ds/FlowHead';
 import { ListGroup, ListNote, ListRow } from '@/components/ds/ListGroup';
-import { space } from '@/constants/tokens';
-import { guessKind, keepsText, PREP_KINDS, prepYield, startPrep, tileOf, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
+import { layout, radius, space } from '@/constants/tokens';
+import { ALLERGENS, listAllergens, type Allergen } from '@/lib/allergens';
+import { guessKind, keepsText, partFacts, PREP_KINDS, prepYield, startPrep, tileOf, type PrepDraft, type PrepKindId } from '@/lib/prepKinds';
 import { formatQuantity } from '@/lib/quantity';
 
 import { PrepKindStep } from './PrepKindStep';
 import { PrepMethodStep } from './PrepMethodStep';
+
+/** The Allergens row's value (board Add-house, 2; Add-parts, 2): what's in it, "None" when set by hand to none, else "None found". */
+export function allergensValue(draft: PrepDraft): string {
+  const contains = [listAllergens(draft.allergens ?? []), ...(draft.contains ?? []).map((c) => c.toLowerCase())].filter(Boolean).join(', ');
+  return contains ? contains[0].toUpperCase() + contains.slice(1) : draft.allergensSet ? 'None' : 'None found';
+}
+
+/** The Allergens row opened in place: the 14, each a toggle. One a part carries stays on here: it changes in the part. */
+export function AllergenToggles({ draft, set }: { draft: PrepDraft; set: (change: Partial<PrepDraft>) => void }) {
+  const ds = useDs();
+  const allergens = draft.allergens ?? [];
+  const fromParts = partFacts(draft).allergens;
+  const toggle = (key: Allergen) => set({ allergens: allergens.includes(key) ? allergens.filter((k) => k !== key) : [...allergens, key], allergensSet: true });
+  return (
+    <View role="group" aria-label="Allergens in it" style={styles.toggles}>
+      {ALLERGENS.map((a) => {
+        const on = allergens.includes(a.key);
+        const fixed = fromParts.includes(a.key);
+        return (
+          <PressableScale
+            key={a.key}
+            role="checkbox"
+            aria-checked={on}
+            aria-disabled={fixed}
+            disabled={fixed}
+            accessibilityLabel={fixed ? `${a.label}, from a part` : a.label}
+            onPress={() => toggle(a.key)}
+            style={[styles.toggle, { backgroundColor: on ? ds.c.ink : ds.c.raised, borderColor: on ? ds.c.ink : ds.c.line }]}
+          >
+            <Caption color={on ? ds.c.ground : ds.c.ink}>{a.label}</Caption>
+          </PressableScale>
+        );
+      })}
+    </View>
+  );
+}
 
 const STORE_WORD: Record<string, string> = { Fridge: 'cold', Freezer: 'frozen' };
 // Short enough that a phone's row keeps its title (Method, Keeps) whole beside it.
@@ -29,19 +66,22 @@ interface PrepRowsProps {
   bar: { id: string; name: string } | null;
   /** Under its line on the web's dialog (Add-parts, Web): the rows open in place, not as sheets over the dialog. */
   inPlace?: boolean;
+  /** A part (Add-parts, 2 and 3, decided 12 Nov): a fifth row, Allergens, opening in place as on Add-house, 2. */
+  allergens?: boolean;
 }
 
 /**
  * A house-made's flat rows (boards Add-parts 2, Add-inside 2): What it is,
- * Method, Makes and Keeps, each with what it says now, Add in amber while
+ * Method, Makes and Keeps (and a part's Allergens), each with what it says now, Add in amber while
  * it's empty (Add-inside, Empty: a kind nothing says yet, keeping nobody
  * said). A kind read from the name says so ("Syrup · from the name").
  * Each opens its step as a sheet (Add-inside, 3): Method and
  * Keeps open How it's made (your kit first, the steps, a time in a step a
  * timer, then keeps), What it is the kinds.
  */
-export function PrepRows({ name, draft, set, version, phrase, onKind, onTechnique, bar, inPlace }: PrepRowsProps) {
+export function PrepRows({ name, draft, set, version, phrase, onKind, onTechnique, bar, inPlace, allergens }: PrepRowsProps) {
   const [open, setOpen] = useState<Row | null>(null);
+  const [allergensOpen, setAllergensOpen] = useState(false);
   // The sheet keeps what it shows while it slides away.
   const [sheet, setSheet] = useState(false);
   // Tapped here: Something else picked is an answer, not a gap.
@@ -88,7 +128,9 @@ export function PrepRows({ name, draft, set, version, phrase, onKind, onTechniqu
         <ListRow title="Method" value={method ?? 'Add'} warn={!method} expanded={inPlace && open === 'method'} onPress={() => toggle('method')} />
         <ListRow title="Makes" value={makes ? `About ${formatQuantity({ kind: 'ml', value: makes, unit: 'ml' })}` : 'Add'} warn={!makes} expanded={inPlace && open === 'makes'} onPress={() => toggle('makes')} />
         <ListRow title="Keeps" value={keeps ?? 'Add'} warn={!keeps} expanded={inPlace && open === 'keeps'} onPress={() => toggle('keeps')} />
+        {allergens ? <ListRow title="Allergens" value={allergensValue(draft)} expanded={allergensOpen} onPress={() => setAllergensOpen(!allergensOpen)} /> : null}
       </ListGroup>
+      {allergens && allergensOpen ? <AllergenToggles draft={draft} set={set} /> : null}
       {inPlace ? shown : (
         <Sheet visible={sheet} onClose={() => setSheet(false)} accessibilityLabel={title} keyboard header={<FlowHead title={title} done />}>
           <SheetScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
@@ -101,5 +143,7 @@ export function PrepRows({ name, draft, set, version, phrase, onKind, onTechniqu
 }
 
 const styles = StyleSheet.create({
+  toggles: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  toggle: { minHeight: layout.minTapTarget, justifyContent: 'center', paddingHorizontal: space.md, borderRadius: radius.pill, borderWidth: 1 },
   body: { gap: space.lg, padding: space.xl, paddingTop: space.sm, paddingBottom: space.xxxl },
 });

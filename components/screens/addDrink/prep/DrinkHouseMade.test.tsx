@@ -116,6 +116,8 @@ test('empty, with a name that says nothing: all four rows say Add (Add-inside, E
   await renderWithProviders(<DrinkHouseMade {...props({ name: 'Rvwa' })} />);
   await laidOut();
   for (const row of ['What it is', 'Method', 'Makes', 'Keeps']) expect(screen.getByText(row)).toBeTruthy();
+  // Add-inside draws four rows; the Allergens row is a part's (Add-parts, decided 12 Nov).
+  expect(screen.queryByText('Allergens')).toBeNull();
   expect(screen.getAllByText('Add')).toHaveLength(4);
 });
 

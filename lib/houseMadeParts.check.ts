@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 import { hasPart, houseMadePayload, houseMadesPayload, partsOf, savesTogether } from './houseMadeParts';
-import { startPrep, type PrepDraft, type PrepDraftLine } from './prepKinds';
+import { startPrep, withFacts, type PrepDraft, type PrepDraftLine } from './prepKinds';
 
 const line = (key: string, name: string, amount: string, unit: string, more: Partial<PrepDraftLine> = {}): PrepDraftLine => ({ key, id: null, name, parts: null, unit, amount, ...more });
 const recipe = (lines: PrepDraftLine[], more: Partial<PrepDraft> = {}): PrepDraft => ({ ...startPrep('other', 'x'), lines, baseKey: lines[0]?.key ?? '', baseAmount: 0, ...more });
@@ -54,5 +54,27 @@ const twice = houseMadesPayload([{ name: 'Pine syrup', prep: juice }, { name: 'p
 assert.deepEqual(twice.at, [0, 1, 0]);
 assert.equal(twice.payload.filter((p) => p.name === 'Pine syrup').length, 1);
 assert.equal(twice.payload.length, many.payload.length);
+
+// A part's allergens carry up (Kevin, 12 Nov, 3a: an Allergens row on a part). Found from a part's lines, or ticked on it by
+// hand, they're in the house-made that uses it and in the house-made above that, as drink_allergens rolls them up once saved.
+const sour = withFacts(recipe([line('e', 'Egg white', '30', 'ml'), line('l2', 'Lemon juice', '30', 'ml')]));
+assert.deepEqual(sour.allergens, ['eggs'], 'found from the part\'s own lines');
+const wine = withFacts(recipe([line('v', 'Verjus', '100', 'ml')], { allergens: ['sulphites'], allergensSet: true }));
+const mid = withFacts(recipe([line('m1', 'Sour mix', '50', 'ml', { prep: sour }), line('m2', 'Verjus syrup', '20', 'ml', { prep: wine })]));
+assert.deepEqual([...(mid.allergens ?? [])].sort(), ['eggs', 'sulphites'], 'a part\'s found and ticked allergens are in what it goes in');
+assert.equal(mid.vegan, false, 'egg white in a part: not vegan above it');
+const top = withFacts(recipe([line('t1', 'Gin', '500', 'ml', { id: 'gin' }), line('t2', 'House sour', '200', 'ml', { prep: mid })], { allergens: [], allergensSet: true }));
+assert.deepEqual([...(top.allergens ?? [])].sort(), ['eggs', 'sulphites'], 'two levels down, and past "None" set by hand on the top');
+assert.ok(top.allergensSet, 'set by hand stays set');
+// Saved with the part: a part's ticked ones go in its own entry, for save_house_mades to declare on it.
+const saved = houseMadePayload('House sour batch', top);
+assert.deepEqual(saved.map((p) => [p.name, p.allergens]), [
+  ['House sour batch', ['eggs', 'sulphites']],
+  ['House sour', null],
+  ['Sour mix', null],
+  ['Verjus syrup', ['sulphites']],
+]);
+// No parts: as before, only what its own lines say.
+assert.deepEqual(withFacts(recipe([line('h2', 'Honey', '100', 'g')])).allergens, []);
 
 console.log('houseMadeParts checks passed');
