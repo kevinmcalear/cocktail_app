@@ -8,6 +8,7 @@ process.env.TZ = 'UTC';
 assert.equal(nightLine('2026-10-22T19:00:00Z', '2026-10-23T02:00:00Z'), 'Thu 22 Oct · 7 pm to 2 am');
 assert.equal(nightLine('2026-10-22T19:30:00Z', null), 'Thu 22 Oct · 7:30 pm');
 assert.equal(nightLine('2026-10-22', null), 'Thu 22 Oct');
+assert.equal(nightLine('2026-11-12T00:00:00Z', null), 'Thu 12 Nov'); // on from the start of the day, not "12 am"
 assert.equal(nightLine(null, null), null);
 
 const input: Parameters<typeof buildRunSheet>[0] = {
