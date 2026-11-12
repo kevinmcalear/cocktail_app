@@ -37,7 +37,7 @@ export default function SearchBench() {
       <Caption>{results ? 'Search timings, ms' : 'Timing search…'}</Caption>
       {results?.map((r) => (
         <Caption key={r.docs} testID={`bench-${r.docs}`}>
-          {`${r.docs} items: build ${r.buildMs}; per letter p50 ${r.keystroke.p50}, p95 ${r.keystroke.p95}, max ${r.keystroke.max}; near p50 ${r.near.p50}, p95 ${r.near.p95}, max ${r.near.max}; plain match per letter p50 ${r.plain.p50}, p95 ${r.plain.p95}, max ${r.plain.max}`}
+          {`${r.docs} items: build ${r.buildMs}; per letter p50 ${r.keystroke.p50}, p95 ${r.keystroke.p95}, max ${r.keystroke.max}; near p50 ${r.near.p50}, p95 ${r.near.p95}, max ${r.near.max}${r.plain ? `; plain match per letter p50 ${r.plain.p50}, p95 ${r.plain.p95}, max ${r.plain.max}` : ''}`}
         </Caption>
       ))}
       <Caption testID="bench-typed">{typed ? `Typed in Search, ${typed.letters} letters to results on screen: p50 ${typed.p50}, p95 ${typed.p95}, max ${typed.max}` : 'Nothing typed in Search yet.'}</Caption>
