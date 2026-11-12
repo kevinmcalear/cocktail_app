@@ -7,7 +7,7 @@ import { AuthMessage } from '@/components/auth/AuthShell';
 import { BackbarTheme, Body, Button, Head, useDs, useGutter } from '@/components/ds';
 import { DrinkDrawing } from '@/components/ds/DrinkDrawing';
 import { DrawingTrio } from '@/components/ds/DrawingTrio';
-import { TintSky } from '@/components/screens/tonight/TonightParts';
+import { TintSky } from '@/components/ds/TintSky';
 import { WELCOME_HERO, WELCOME_SKY } from '@/constants/firstRun';
 import { space } from '@/constants/tokens';
 import { readClipboard } from '@/lib/clipboardPeek';
@@ -15,7 +15,7 @@ import { readSketchInputs, type SketchInputs } from '@/lib/sketch/types';
 import { staffLinkHref } from '@/lib/staffDoor';
 
 /** The three drinks over Welcome, from the catalog's drawing inputs carried in constants/firstRun. */
-const HERO = WELCOME_HERO.flatMap(({ seed, raw }) => {
+export const HERO = WELCOME_HERO.flatMap(({ seed, raw }) => {
   const inputs = readSketchInputs(raw);
   return inputs ? [{ seed, inputs }] : [];
 });
@@ -45,9 +45,15 @@ function Frame({ onEmail }: { onEmail: () => void }) {
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const [linkHelp, setLinkHelp] = useState(false);
+  const [reading, setReading] = useState(false);
 
   const barLink = async () => {
-    const href = staffLinkHref((await readClipboard()) ?? '');
+    if (reading) return;
+    setReading(true);
+    // Read on the tap: iOS and the browser may ask first.
+    const clip = await readClipboard();
+    setReading(false);
+    const href = staffLinkHref(clip ?? '');
     if (href) router.push(href as never);
     else setLinkHelp(true);
   };
@@ -70,7 +76,7 @@ function Frame({ onEmail }: { onEmail: () => void }) {
           </View>
           <View style={styles.spacer} />
           {linkHelp ? (
-            <AuthMessage tone="info">Open the link your bar sent you, from its email or message, on this phone. Or copy the link, then tap here again.</AuthMessage>
+            <AuthMessage tone="info">Open the link your bar sent you, in its email or message, on this device. Or copy the link and tap again.</AuthMessage>
           ) : null}
           <View style={styles.buttons}>
             <Button label="Continue with email" icon="envelope" variant="ink" size="lg" onPress={onEmail} />

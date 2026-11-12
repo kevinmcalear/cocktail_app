@@ -18,8 +18,14 @@ export async function peekClipboard(): Promise<string | null> {
 /** Native only (iOS reads on tap); on the web the card already has the text. */
 export const UNREAD_CLIP = '\u0000unread';
 
+/** Read on a tap ("Join a bar with a link", Welcome's "I have a link from my bar"): the browser may ask first, which a tap allows. */
 export async function readClipboard(): Promise<string | null> {
-  return peekClipboard();
+  try {
+    const text = (await navigator.clipboard?.readText?.())?.trim();
+    return text ? text.slice(0, 20_000) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Puts text on the clipboard. False when the browser refuses. */
