@@ -37,8 +37,12 @@ assert.equal(takenWords('Campari', false, { since: null, drinks: 0 }).title, 'Ca
 assert.equal(kindHelp('Islay Scotch', 'label'), 'Drinks that call for Islay Scotch can use it. Picked from the label; change it here.');
 assert.equal(kindHelp('Gin', 'name'), 'Drinks that call for gin can use it. Picked from the name; change it here.');
 assert.equal(kindHelp('Gin', 'catalog'), 'Drinks that call for gin can use it.');
-assert.equal(savedDetail(true, 'Gin'), 'It’s on Bottles, and any drink that calls for gin can use it.');
-assert.equal(savedDetail(false, null), 'It’s on your shelf.');
+assert.equal(savedDetail('bottles', 'Gin'), 'It’s on Bottles, and any drink that calls for gin can use it.');
+assert.equal(savedDetail('shelf', null), 'It’s on your shelf.');
+// A bar without its Bottles list (More drink filters off) isn't told it's on Bottles.
+assert.equal(savedDetail('bar', 'Gin'), 'Any drink that calls for gin can use it.');
+assert.equal(savedDetail('bar', null), 'Drinks here can use it now.');
+assert.ok(!savedDetail('bar', 'Gin').includes('Bottles'));
 
 assert.equal(abvNumber('40,5'), 40.5);
 assert.equal(abvNumber(''), null);
