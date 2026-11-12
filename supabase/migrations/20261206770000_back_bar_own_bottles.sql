@@ -14,8 +14,9 @@
 -- bought bottle. Left out: house-mades ('prep'), kinds ('generic'), bar
 -- items with no role (lines typed into a spec, garnishes, older house-mades:
 -- the role is what says they're a bottle, and their names don't say it
--- reliably), cocktails, beers and wines (their own item types), and merged
--- items (private.item_merges; the merge already deleted those rows).
+-- reliably), and cocktails, beers and wines (their own item types). Merged
+-- and deleted items need no test: a merge deletes the merged item's row
+-- (private.item_merges keeps only a snapshot), so they aren't in items.
 --
 -- Each row is shaped as sendBottle writes it: source 'back_bar', no
 -- from_name, added by whoever made the bottle (null when unknown), and dated
@@ -28,5 +29,4 @@ where i.item_type = 'ingredient'
   and i.ingredient_role = 'product'
   and i.bar_id is not null
   and not exists (select 1 from public.back_bar_items b where b.bar_id = i.bar_id and b.item_id = i.id)
-  and not exists (select 1 from private.item_merges m where m.from_id = i.id)
 on conflict (bar_id, item_id) do nothing;
