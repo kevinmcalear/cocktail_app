@@ -11,6 +11,8 @@ const mockSaved = jest.fn();
 let mockBarGlasses: unknown[] = [];
 let mockVenueIce: unknown[] = [];
 // The paper band's View as pill reads the signed-in person's prefs; off here.
+jest.mock('@/hooks/useUnsentWrites', () => ({ useUnsentWrites: () => [] }));
+jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: true }) }));
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [], useNearIngredientsChecked: () => ({ near: [], checking: false }) }));
 jest.mock('./NearNameCard', () => ({ NearNameCard: () => null }));

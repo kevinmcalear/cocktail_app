@@ -5,6 +5,7 @@ import { useWindowDimensions } from 'react-native';
 
 import { menuCover } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
+import { BAR_WRITES, type MenuLayoutWrite } from '@/hooks/barWrites';
 import { dropdownKeys } from '@/hooks/useDropdowns';
 import { MENU_DRINK_COLUMNS, menuKeys, publishedMenuDrink, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
 import { fetchPublished } from '@/hooks/usePublished';
@@ -59,24 +60,34 @@ function useInvalidateMenus() {
     ]);
 }
 
-/** Saves a menu's name, cover, cover credit and whole layout in one transaction (save_menu). */
-export function useSaveMenu(menuId: string) {
-  const invalidate = useInvalidateMenus();
-  return useMutation({
-    mutationFn: (layout: MenuLayout) =>
-      rpc('save_menu', {
-        p_menu_id: menuId,
-        p_name: layout.name,
-        p_cover_url: layout.coverUrl,
-        p_cover_position: layout.coverPosition,
-        p_sections: savePayload(layout),
-        // Only when the editor says the credit changed ('' for none). Left out, it stays,
-        // and a new cover drops the old one in the database.
-        p_cover_credit: layout.coverCredit === undefined ? undefined : (creditOf(layout) ?? ''),
-      }),
-    onSuccess: invalidate,
-    onError: () => {},
-  });
+/**
+ * Saves a menu's name, cover, cover credit and whole layout in one
+ * transaction (save_menu), then the prices typed in it. With no signal it
+ * waits on the phone, through a relaunch, and sends in order (hooks/barWrites.ts).
+ */
+export function useSaveMenuLayout() {
+  return useMutation({ mutationKey: BAR_WRITES.menuLayout.key, mutationFn: BAR_WRITES.menuLayout.send });
+}
+
+/** What the editor's layout saves as: the credit only when it changed (left out, it stays; '' for none). */
+export function menuLayoutWrite(menuId: string, layout: MenuLayout, creditChanged: boolean, queued: boolean): MenuLayoutWrite {
+  return {
+    menuId,
+    name: layout.name,
+    args: {
+      p_menu_id: menuId,
+      p_name: layout.name,
+      // Null takes the cover off; the generated types don't say an argument can be null.
+      p_cover_url: layout.coverUrl as string,
+      p_cover_position: layout.coverPosition,
+      p_sections: savePayload(layout),
+      // A new cover drops the old credit in the database.
+      ...(creditChanged ? { p_cover_credit: creditOf(layout) ?? '' } : {}),
+    },
+    prices: layout.prices ?? {},
+    layout,
+    queued,
+  };
 }
 
 /** A home menu's night: the date and how many are coming. */
@@ -116,7 +127,8 @@ export function useCreateMenu() {
         await rpc('save_menu', {
           p_menu_id: data.id,
           p_name: layout.name,
-          p_cover_url: layout.coverUrl,
+          // Null takes the cover off; the generated types don't say an argument can be null.
+      p_cover_url: layout.coverUrl as string,
           p_cover_position: layout.coverPosition,
           p_sections: savePayload(layout),
         });

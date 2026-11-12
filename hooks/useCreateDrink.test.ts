@@ -1,7 +1,9 @@
 import { renderHook } from '@testing-library/react-native';
 
 import type { CreateDrinkInput, CreateDrinkResult } from '@/hooks/useCreateDrink';
-import { useCreateDrink } from '@/hooks/useCreateDrink';
+import { newDrinkSaved, useCreateDrink } from '@/hooks/useCreateDrink';
+import { specFingerprint } from '@/lib/offlineWrites';
+import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { linesOnKeptHouseMades } from '@/hooks/specLineSave';
 import { EMPTY_DRAFT, sketchLook, type WizardDraft } from '@/lib/drinkWizard';
 import { startPrep } from '@/lib/prepKinds';
@@ -342,4 +344,28 @@ test('at a venue the notes go to the picked role and up; at home always to every
   mockOtherInserts.length = 0;
   await run({ draft: { ...EMPTY_DRAFT, name: 'Ash Garden', notes: 'Stir longer.', notesLevel: 35, notesPrivate: false }, barId: null, myProfileId: null });
   expect(mockOtherInserts).toContainEqual(['item_notes', { item_id: 'db-made', body: 'Stir longer.', read_level: null }]);
+});
+
+// A draft saved with no signal stays in Add until its save lands, wherever the person is by then (the wizard closed or reopened).
+describe('once a waiting save is in', () => {
+  const qc = { getMutationCache: () => ({ findAll: () => [], remove: jest.fn() }) } as never;
+  const result = { id: 'd1', warnings: [], created: [], later: [] };
+
+  test('the draft it came from goes, even picked up again since', () => {
+    useDrinkWizardStore.getState().patch('bar-1', { id: 'd1', name: 'Pine Fizz' });
+    const kept = useDrinkWizardStore.getState().kept['bar-1'].draft;
+    newDrinkSaved(qc, result, { draft: { ...EMPTY_DRAFT, ...kept }, barId: 'bar-1', myProfileId: null, keptPrint: specFingerprint(kept) });
+    expect(useDrinkWizardStore.getState().kept['bar-1']).toBeUndefined();
+  });
+
+  test('changed since Save, it stays with a fresh id: nothing typed is lost, and saving it makes a drink', () => {
+    useDrinkWizardStore.getState().patch('bar-1', { id: 'd1', name: 'Pine Fizz' });
+    const kept = useDrinkWizardStore.getState().kept['bar-1'].draft;
+    const keptPrint = specFingerprint(kept);
+    useDrinkWizardStore.getState().patch('bar-1', { name: 'Pine Fizz No. 2' });
+    newDrinkSaved(qc, result, { draft: { ...EMPTY_DRAFT, ...kept }, barId: 'bar-1', myProfileId: null, keptPrint });
+    const now = useDrinkWizardStore.getState().kept['bar-1']?.draft;
+    expect(now?.name).toBe('Pine Fizz No. 2');
+    expect(now?.id).not.toBe('d1');
+  });
 });

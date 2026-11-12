@@ -1,13 +1,17 @@
+import { onlineManager } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useToast } from '@/components/ds';
 import { itemHref } from '@/lib/itemRoutes';
-import { useSetDrinkPrices } from '@/hooks/useDrinkCost';
 import { useBarDrinks } from '@/hooks/useHomeBar';
-import { useMenuLibrary, usePickMenuCover, useSaveMenu } from '@/hooks/useMenuMutations';
+import type { MenuLayoutWrite } from '@/hooks/barWrites';
+import { menuLayoutWrite, useMenuLibrary, usePickMenuCover, useSaveMenuLayout } from '@/hooks/useMenuMutations';
+import { useUnsentWrites } from '@/hooks/useUnsentWrites';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { confirmDiscardChanges } from '@/lib/dialogs';
+import { MENU_LAYOUT } from '@/lib/offlineWrites';
+import { saveErrorWords } from '@/lib/saveErrorWords';
 import { useDeleteDrink } from '@/components/screens/drink/useDeleteDrink';
 import {
   addDrink,
@@ -36,6 +40,17 @@ import type { MenuDetail, MenuDrink } from '@/types/menus';
 
 export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key: string } | { kind: 'paste'; key: string | null } | { kind: 'golive' } | { kind: 'share' } | { kind: 'night' } | { kind: 'ends' } | { kind: 'row'; key: string; drinkId: string } | null;
 
+/**
+ * A layout's save to wait for, or with no signal one kept on the phone to go
+ * on from: a refusal after waiting is kept and shown on Tonight
+ * (components/UnsentWrites.tsx), not in the editor.
+ */
+function sentOrKept(sent: Promise<void>, kept: boolean): Promise<void> {
+  if (!kept) return sent;
+  void sent.catch(() => undefined);
+  return Promise.resolve();
+}
+
 /** How long after the last change the builder saves (b27: no save button). */
 const AUTOSAVE_MS = 800;
 
@@ -46,7 +61,10 @@ const AUTOSAVE_MS = 800;
  */
 export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: boolean } = {}) {
   const router = useRouter();
-  const [layout, setLayout] = useState<MenuLayout>(() => layoutFromMenu(menu));
+  // This menu's saves still on the phone (no signal, or refused): the newest is where the editor starts, not the older menu.
+  const unsent = useUnsentWrites<MenuLayoutWrite>(MENU_LAYOUT).filter((w) => w.variables.menuId === menu.id);
+  const kept = unsent.at(-1)?.variables.layout;
+  const [layout, setLayout] = useState<MenuLayout>(() => (kept ? { ...kept, prices: {} } : layoutFromMenu(menu)));
   const [saved, setSaved] = useState<MenuLayout>(layout);
   // New menu's "Paste a list" opens the builder on the paste sheet.
   const [sheet, setSheet] = useState<EditorSheet>(paste ? { kind: 'paste', key: null } : null);
@@ -56,8 +74,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const [coverError, setCoverError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [now] = useState(() => Date.now());
-  const save = useSaveMenu(menu.id);
-  const prices = useSetDrinkPrices();
+  const save = useSaveMenuLayout();
   const cover = usePickMenuCover(menu.id);
   const libraryQuery = useMenuLibrary(menu.barId);
   const library = libraryQuery.data ?? [];
@@ -118,9 +135,8 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   };
 
   /** Saves if anything changed. Resolves false (with the error shown) when it couldn't. */
-  const saveLayout = save.mutateAsync;
-  const savePrices = prices.mutateAsync;
-  const persist = useCallback(async (): Promise<boolean> => {
+  const send = save.mutateAsync;
+  const persist = async (): Promise<boolean> => {
     const problem = layoutProblem(layout);
     if (problem) {
       setError(problem);
@@ -129,25 +145,28 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     if (!changed) return true;
     // What this save writes: edits made while it's on the way save after it.
     const snapshot = outgoing;
+    // The credit only when it changed, so an editor opened from older data can't clear someone's credit.
+    // Prices are the drinks' own: written once the menu holds them.
+    const offline = !onlineManager.isOnline();
+    const write = menuLayoutWrite(menu.id, snapshot, creditOf(snapshot) !== creditOf(saved), offline);
     try {
-      // The credit only when it changed, so an editor opened from older data can't clear someone's credit.
-      await saveLayout(creditOf(snapshot) === creditOf(saved) ? { ...snapshot, coverCredit: undefined } : snapshot);
-      // Prices are the drinks' own: written once the menu holds them.
-      if (Object.keys(snapshot.prices ?? {}).length) await savePrices(snapshot.prices!);
+      // No signal: kept on the phone and sent when there is (Sta-menu: "Edits wait on this phone and go up when you're back").
+      await sentOrKept(send(write), offline);
       setSaved({ ...snapshot, prices: {} });
       setLayout((l) => (l.prices === snapshot.prices ? { ...l, prices: {} } : l));
       setSavedAt(Date.now());
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Couldn’t save. Your changes are still here; try again.');
+      setError(`${saveErrorWords(e)} Your changes are still here; try again.`);
       return false;
     }
-  }, [layout, outgoing, saved, changed, saveLayout, savePrices]);
+  };
 
   // Autosave: a moment after the last change, one save at a time. A layout that
   // can't be saved (a section with no name), or a save that failed (a price
   // the caller can't change), waits with the problem shown until the next edit.
-  const saving = save.isPending || prices.isPending;
+  // One waiting for signal isn't saving: the next change queues after it.
+  const saving = save.isPending && !save.isPaused;
   useEffect(() => {
     if (!changed || saving || error || layoutProblem(layout)) return;
     const timer = setTimeout(() => void persist(), AUTOSAVE_MS);
@@ -161,6 +180,10 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
     changed,
     saving,
     savedAt,
+    /** Saves of this menu kept on the phone: waiting for signal, or refused (then listed on Tonight to send again). */
+    waiting: unsent.some((w) => !w.failed),
+    /** A save of this menu the database refused after it waited: kept, and sent again from Tonight. */
+    unsentFailed: unsent.some((w) => !!w.failed),
     error,
     library,
     canMake,

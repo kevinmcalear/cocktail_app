@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { refreshIngredients, useDropdowns, useIngredientExtras } from '@/hooks/useDropdowns';
@@ -13,19 +13,23 @@ import { supabase } from '@/lib/supabase';
 /** After a bulk write: the lists it touches, the pages of the drinks it changed, and the ingredients it added or removed. */
 export function useRefreshSpecs() {
   const queryClient = useQueryClient();
-  return ({ drinkIds = [], ingredientIds = [] }: { drinkIds?: string[]; ingredientIds?: string[] } = {}) =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['cocktails'] }),
-      ...drinkIds.map((id) => queryClient.invalidateQueries({ queryKey: ['cocktail', id] })),
-      queryClient.invalidateQueries({ queryKey: ['ingredients'] }),
-      queryClient.invalidateQueries({ queryKey: ['ingredient'] }),
-      queryClient.invalidateQueries({ queryKey: ['menu-library'] }),
-      queryClient.invalidateQueries({ queryKey: ['swap-source'] }),
-      // The back bar's Waiting for a spot reads what the menus pour.
-      queryClient.invalidateQueries({ queryKey: ['menu-ingredients'] }),
-      queryClient.invalidateQueries({ queryKey: ['item-versions'] }),
-      refreshIngredients(queryClient, ingredientIds),
-    ]);
+  return (changed: { drinkIds?: string[]; ingredientIds?: string[] } = {}) => refreshSpecs(queryClient, changed);
+}
+
+/** useRefreshSpecs without a screen: for a write that sends after its screen has gone. */
+export function refreshSpecs(queryClient: QueryClient, { drinkIds = [], ingredientIds = [] }: { drinkIds?: string[]; ingredientIds?: string[] } = {}) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['cocktails'] }),
+    ...drinkIds.map((id) => queryClient.invalidateQueries({ queryKey: ['cocktail', id] })),
+    queryClient.invalidateQueries({ queryKey: ['ingredients'] }),
+    queryClient.invalidateQueries({ queryKey: ['ingredient'] }),
+    queryClient.invalidateQueries({ queryKey: ['menu-library'] }),
+    queryClient.invalidateQueries({ queryKey: ['swap-source'] }),
+    // The back bar's Waiting for a spot reads what the menus pour.
+    queryClient.invalidateQueries({ queryKey: ['menu-ingredients'] }),
+    queryClient.invalidateQueries({ queryKey: ['item-versions'] }),
+    refreshIngredients(queryClient, ingredientIds),
+  ]);
 }
 
 function toNamed(rows: unknown): NamedItem[] {

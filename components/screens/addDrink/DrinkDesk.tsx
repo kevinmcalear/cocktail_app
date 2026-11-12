@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ComponentRef, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 
 import { Button, Caption, TextLink, useDs } from '@/components/ds';
@@ -78,6 +78,9 @@ export interface DrinkDeskProps {
   resumed: boolean;
   onStartOver: () => void;
   saving: boolean;
+  /** Offline (Add-entry Offline: Save on this phone), or a save already waiting on the phone: the button's words and the amber line. */
+  saveLabel?: string;
+  notice?: ReactNode;
   canSave: boolean;
   onSave: () => void;
   onClose: () => void;
@@ -165,7 +168,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
   const sketch = deskSketch(sketchLook(p.drawn, p.barVariants, p.barIceKinds));
   const eyebrow = menu ? ['New drink for ' + menu, place?.section].filter(Boolean).join(' · ') : barId ? `New drink at ${p.venueName}` : 'New drink';
   const trail = drinkTrail(draft.name, { menu, venueName: barId ? p.venueName : null, onClose: p.onClose });
-  const saveLabel = p.saving ? 'Saving…' : menu ? `Add to ${menu}` : 'Save drink';
+  const saveLabel = p.saveLabel ?? (p.saving ? 'Saving…' : menu ? `Add to ${menu}` : 'Save drink');
 
   return (
     <SidePanelContext value={{ el: panelEl, onUse: onPanelUse }}>
@@ -178,7 +181,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
         <View style={styles.flex}>
           {trail ? <Trail items={trail} /> : <Eyebrow>{eyebrow}</Eyebrow>}
         </View>
-        {waitNote ? <Caption tone="muted">{waitNote}</Caption> : hasContent(draft) ? <Caption tone="muted">Draft saved</Caption> : null}
+        {p.notice ?? (waitNote ? <Caption tone="muted">{waitNote}</Caption> : hasContent(draft) ? <Caption tone="muted">Draft saved</Caption> : null)}
         <Button label={saveLabel} onPress={p.onSave} disabled={!p.canSave || p.saving} />
         <Caption tone="muted" aria-hidden>
           ⌘ ↵

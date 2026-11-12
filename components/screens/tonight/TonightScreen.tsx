@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { PencilState, useDs } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
+import { UnsentWrites } from '@/components/UnsentWrites';
 import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
@@ -56,6 +57,8 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
         <ScreenHeader />
         <View style={[column, styles.body]}>
           <TonightHead eyebrow={eyebrow} />
+          {/* Under the title (Sta-errors, Didn't send): what's saved on this phone and not in yet. */}
+          <UnsentWrites />
           {children}
         </View>
       </TonightScroll>

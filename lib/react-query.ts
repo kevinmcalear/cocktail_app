@@ -7,6 +7,8 @@ import { dehydrate, focusManager, type Mutation, MutationCache, type QueryKey, n
 import { AppState, Platform } from 'react-native';
 
 import { coalesceTimer } from '@/lib/coalesceTimer';
+import { loadDrinkSave } from '@/lib/drinkSaveLoader';
+import { hasWaited, isKeptWrite, markWaited, setQuerySaver, type AnyWrite } from '@/lib/keptWrites';
 import { fileStore } from '@/lib/fileStore';
 import {
   createCachePersister,
@@ -19,7 +21,8 @@ import {
 } from '@/lib/queryCachePersist';
 import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
 import { retryDelay, retryQuery } from '@/lib/queryRetry';
-import { retryBarWrite } from '@/lib/offlineWrites';
+import { BAR_WRITE, NEW_DRINK, OFFLINE_SCOPE, retryBarWrite } from '@/lib/offlineWrites';
+import type { CreateDrinkInput, CreateDrinkResult } from '@/hooks/useCreateDrink';
 import { loadSavedSpecBooks } from '@/lib/specBookFile';
 
 // Setup network listener for TanStack Query
@@ -54,6 +57,8 @@ const queryCache = new QueryCache();
 /** Queries saved in a file each (lib/queryCachePersist.ts savedIn), on the phone or in the browser's IndexedDB. */
 export const savedQueryFiles = fileStore('query-cache');
 const queryFiles = createFilePersister(savedQueryFiles, queryCache, SAVED);
+// A change made on the phone to a query kept in a file is saved at once (lib/keptWrites.ts saveQueryNow).
+setQuerySaver((queryKey) => queryFiles.persistQueryByKey(queryKey, queryClient).catch(() => undefined));
 
 // A write of yours changes what the venues' spec books hold: refresh them
 // once the writes go quiet (hooks/useSpecBook.ts).
@@ -63,9 +68,24 @@ const refreshSpecBooksSoon = () => {
   bookRefresh = setTimeout(() => void queryClient.invalidateQueries({ queryKey: ['spec-book'] }), 2000);
 };
 
+// Behind-the-bar writes that waited are kept until they're in, even refused (lib/keptWrites.ts); the rest go once settled.
+const isBarWrite = (write: AnyWrite) => write.options.mutationKey?.[0] === BAR_WRITE;
+const later = (fn: () => void) => setTimeout(fn, 0);
+
+const mutationCache = new MutationCache({
+  onSuccess: (_data, _v, _ctx, write) => {
+    refreshSpecBooksSoon();
+    // Bar writes are kept until they're in (gcTime: Infinity below): once in, they go.
+    if (isBarWrite(write as AnyWrite)) later(() => mutationCache.remove(write));
+  },
+  onError: (_e, _v, _ctx, write) => {
+    if (isBarWrite(write as AnyWrite) && !hasWaited(write as AnyWrite)) later(() => mutationCache.remove(write));
+  },
+});
+
 export const queryClient = new QueryClient({
   queryCache,
-  mutationCache: new MutationCache({ onSuccess: refreshSpecBooksSoon }),
+  mutationCache,
   defaultOptions: {
     queries: {
       // Run once even with no signal, so a query saved in a file reads it back
@@ -143,7 +163,7 @@ export const persistOptions = {
  */
 export function canResendAfterRelaunch(write: Mutation<unknown, Error, unknown, unknown>): boolean {
   const key = write.options.mutationKey;
-  return write.state.isPaused && !!key && !!queryClient.getMutationDefaults(key).mutationFn;
+  return isKeptWrite(write) && !!key && !!queryClient.getMutationDefaults(key).mutationFn;
 }
 
 /**
@@ -178,10 +198,13 @@ queryClient.setMutationDefaults(['deleteCocktail'], { mutationFn: deleteCocktail
 // on a dropped connection, and survive the app closing.
 for (const write of Object.values(BAR_WRITES)) {
   // What a write does once it's in, or refused (a bottle's label photo, its toast): from its variables, so a restored one does it too.
-  const after = write as { saved?: (qc: QueryClient, data: unknown, v: unknown) => Promise<void>; failed?: (e: Error, v: unknown) => Promise<void> };
+  const after = write as { saved?: (qc: QueryClient, data: unknown, v: unknown) => Promise<void>; failed?: (e: Error, v: unknown) => Promise<void>; scope?: { id: string } };
   queryClient.setMutationDefaults(write.key, {
     mutationFn: write.send as (v: unknown) => Promise<unknown>,
     retry: retryBarWrite,
+    // Kept until it's in, even refused (mutationCache above).
+    gcTime: Infinity,
+    scope: after.scope,
     onSuccess: after.saved && ((data, v) => after.saved!(queryClient, data, v)),
     onError: after.failed && ((e, v) => void after.failed!(e as Error, v).catch(() => undefined)),
     onSettled: (_data, _error, v) => {
@@ -190,11 +213,26 @@ for (const write of Object.values(BAR_WRITES)) {
   });
 }
 
+// A new drink (hooks/useCreateDrink.ts): its save is loaded when it sends, not in every page's first load.
+const drinkSave = loadDrinkSave;
+queryClient.setMutationDefaults(NEW_DRINK, {
+  mutationFn: (v: unknown) => drinkSave().then((m) => m.createDrink(v as CreateDrinkInput, queryClient)),
+  retry: retryBarWrite,
+  gcTime: Infinity,
+  scope: OFFLINE_SCOPE,
+  onSuccess: (r: unknown, v: unknown) => drinkSave().then((m) => m.newDrinkSaved(queryClient, r as CreateDrinkResult, v as CreateDrinkInput)),
+  onError: (e: Error, v: unknown) => void drinkSave().then((m) => m.newDrinkFailed(e, v as CreateDrinkInput), () => undefined),
+});
+
 // The row saves every 5 seconds at most; a write that starts waiting for
-// signal is saved at once, so closing the app straight after can't lose it.
+// signal, or is refused after waiting, is saved at once, so closing the app straight after can't lose it.
 let saving: ReturnType<typeof setTimeout> | undefined;
 queryClient.getMutationCache().subscribe((event) => {
-  if (event.type !== 'updated' || !event.mutation.state.isPaused || saving) return;
+  if (event.type !== 'added' && event.type !== 'updated') return;
+  const write = event.mutation as AnyWrite;
+  // One restored from a relaunch (waiting or refused) or one waiting now: a refusal keeps it.
+  if (write.state.isPaused || (event.type === 'added' && write.state.status === 'error')) markWaited(write);
+  if (!isKeptWrite(write) || saving) return;
   saving = setTimeout(() => {
     saving = undefined;
     const clientState = dehydrate(queryClient, persistOptions.dehydrateOptions);

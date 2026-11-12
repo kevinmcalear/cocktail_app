@@ -1,0 +1,100 @@
+import { useNetInfo } from '@react-native-community/netinfo';
+import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { Button, Sheet, SheetScrollView, Title } from '@/components/ds';
+import { ListGroup, ListRow } from '@/components/ds/ListGroup';
+import { Prompt } from '@/components/screens/addDrink/Prompt';
+import { space } from '@/constants/tokens';
+import { useUnsentWrites, type UnsentWrite } from '@/hooks/useUnsentWrites';
+import { confirmAsync } from '@/lib/dialogs';
+import { discardWrite, resendWrite } from '@/lib/keptWrites';
+import { didntSendWords, unsentDetail, unsentTitle, waitingWords } from '@/lib/unsentWords';
+
+const timeOf = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+/**
+ * What's saved on this phone and not in yet (Sta-errors, Didn't send and
+ * Waiting to send): an amber card, "2 changes didn't send" or "2 changes
+ * waiting to send", what they are, Send now and See them. See them lists each
+ * with Send, and Discard all (asked first). Nothing shows when all is in.
+ */
+export function UnsentWrites() {
+  const unsent = useUnsentWrites();
+  const offline = useNetInfo().isConnected === false;
+  const [open, setOpen] = useState(false);
+  const client = useQueryClient();
+  if (!unsent.length) return null;
+  const failed = unsent.filter((w) => w.failed).length;
+  const names = unsent.map((w) => unsentTitle(w.write.options.mutationKey, w.variables));
+  const sendAll = () => unsent.forEach((w) => resendWrite(client, w.write));
+  return (
+    <>
+      <Prompt
+        warn
+        ink
+        icon="exclamationmark.triangle"
+        title={failed ? didntSendWords(failed) : waitingWords(unsent.length)}
+        body={`${names.slice(0, 3).join(', ')}${names.length > 3 ? ` and ${names.length - 3} more` : ''}. ${offline ? 'They’re kept on this phone and send when you’re back.' : 'They’re kept on this phone.'}`}
+        actions={[
+          { label: 'Send now', onPress: sendAll, disabled: offline },
+          { label: 'See them', onPress: () => setOpen(true) },
+        ]}
+      />
+      <UnsentSheet visible={open} unsent={unsent} offline={offline} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+function UnsentSheet({ visible, unsent, offline, onClose }: { visible: boolean; unsent: UnsentWrite[]; offline: boolean; onClose: () => void }) {
+  const client = useQueryClient();
+  const discardAll = async () => {
+    const n = unsent.length;
+    const ok = await confirmAsync({
+      title: n === 1 ? 'Discard this change?' : `Discard ${n} changes?`,
+      message: 'They haven’t sent, and they can’t be got back.',
+      confirmText: 'Discard',
+      destructive: true,
+    });
+    if (!ok) return;
+    unsent.forEach((w) => discardWrite(client, w.write));
+    onClose();
+  };
+  return (
+    <Sheet
+      visible={visible && unsent.length > 0}
+      onClose={onClose}
+      accessibilityLabel="Waiting to send"
+      header={
+        <View style={styles.head}>
+          <Title role="heading">Waiting to send</Title>
+        </View>
+      }
+    >
+      <SheetScrollView>
+        <View style={styles.body}>
+          <ListGroup>
+            {unsent.map((w, i) => (
+              <ListRow
+                key={w.write.mutationId}
+                first={i === 0}
+                icon={w.failed ? 'exclamationmark.triangle' : 'clock'}
+                warn={!!w.failed}
+                title={unsentTitle(w.write.options.mutationKey, w.variables)}
+                detail={unsentDetail(w.failed, w.at, timeOf)}
+                end={<Button label="Send" size="sm" variant="secondary" disabled={offline} onPress={() => resendWrite(client, w.write)} />}
+              />
+            ))}
+          </ListGroup>
+          <Button label={unsent.length === 1 ? 'Discard it' : 'Discard all'} variant="plain" onPress={() => void discardAll()} />
+        </View>
+      </SheetScrollView>
+    </Sheet>
+  );
+}
+
+const styles = StyleSheet.create({
+  head: { paddingHorizontal: space.lg, paddingBottom: space.sm },
+  body: { gap: space.lg, padding: space.lg },
+});

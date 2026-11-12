@@ -12,16 +12,25 @@ const drink = (id: string): MenuDrink => ({ id, name: id, kind: 'cocktail', line
 // The library before the new drink is saved, then after (what a refetch returns).
 let mockLibrary: MenuDrink[] = [drink('old')];
 const mockSaveMenu = jest.fn(async (_layout: MenuLayout) => {});
+const mockSavePrices = jest.fn(async (_prices: Record<string, string | null>) => {});
 const mockPickCover = jest.fn(async (): Promise<string | null> => null);
 jest.mock('@/hooks/useMenuMutations', () => ({
   useMenuLibrary: () => ({ data: mockLibrary, refetch: async () => ({ data: mockLibrary }) }),
-  useSaveMenu: () => ({ isPending: false, mutateAsync: mockSaveMenu }),
+  // One write: the layout, then the prices typed in it (hooks/barWrites.ts menuLayout).
+  useSaveMenuLayout: () => ({
+    isPending: false,
+    isPaused: false,
+    mutateAsync: async (w: { layout: MenuLayout; prices: Record<string, string | null> }) => {
+      await mockSaveMenu(w.layout);
+      if (Object.keys(w.prices).length) await mockSavePrices(w.prices);
+    },
+  }),
+  menuLayoutWrite: (menuId: string, layout: MenuLayout) => ({ menuId, layout, prices: layout.prices ?? {} }),
   usePickMenuCover: () => ({ isPending: false, mutateAsync: mockPickCover }),
 }));
 jest.mock('@/hooks/useMenus', () => ({ useVenueMenus: () => ({ data: [] }) }));
 jest.mock('@/hooks/useHomeBar', () => ({ useBarDrinks: () => ({ canMake: [] }) }));
-const mockSavePrices = jest.fn(async (_prices: Record<string, string | null>) => {});
-jest.mock('@/hooks/useDrinkCost', () => ({ useSetDrinkPrices: () => ({ isPending: false, mutateAsync: mockSavePrices }) }));
+jest.mock('@/hooks/useUnsentWrites', () => ({ useUnsentWrites: () => [] }));
 jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), replace: jest.fn(), canGoBack: () => true }) }));
 const mockDeleteForGood = jest.fn();
 jest.mock('@/components/screens/drink/useDeleteDrink', () => ({ useDeleteDrink: () => mockDeleteForGood }));

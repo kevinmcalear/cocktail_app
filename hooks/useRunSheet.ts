@@ -7,6 +7,7 @@ import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { houseMadeUnder, purchasingFor, recipesFor, toLines } from '@/hooks/usePrepList';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { readParts } from '@/lib/drinkParts';
+import { saveQueryNow } from '@/lib/keptWrites';
 import type { HouseMade, Purchasing } from '@/lib/prep';
 import type { BrandBottle, ItemFacts, RunDrink, RunParty, RunSwap } from '@/lib/runSheet';
 import { supabase } from '@/lib/supabase';
@@ -204,6 +205,8 @@ export function useRunSheet(menuId: string | null | undefined) {
     queryKey: runSheetKey(menuId ?? '', userId),
     enabled: !!menuId && !!userId,
     queryFn: () => fetchRunSheet(menuId!),
+    // Saved in a file of its own (lib/queryCachePersist.ts): the run sheet opens behind the bar with no signal, after a relaunch too.
+    meta: { persist: true },
   });
 }
 
@@ -252,9 +255,15 @@ function useRunSheetBarWrite<W extends { menuId: string }>(
       await queryClient.cancelQueries({ queryKey: key });
       const before = queryClient.getQueryData<RunSheetData>(key);
       if (before) queryClient.setQueryData<RunSheetData>(key, patch(before, w));
+      // The sheet's file holds the change too, so a relaunch before it sends shows it.
+      if (before) void saveQueryNow(key);
       return { before };
     },
-    onError: (_e, _w, ctx) => ctx?.before && queryClient.setQueryData(key, ctx.before),
+    onError: (_e, _w, ctx) => {
+      if (!ctx?.before) return;
+      queryClient.setQueryData(key, ctx.before);
+      void saveQueryNow(key);
+    },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['run-sheet', menuId] }),
   });
 }
