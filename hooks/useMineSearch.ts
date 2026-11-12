@@ -29,9 +29,9 @@ export function useMineCatalog(mine: SearchMine) {
 export function useMineSearch(mine: SearchMine, query: string) {
   const { items, isLoading } = useMineCatalog(mine);
   const barIds = useMemo(() => (mine.venueId ? [mine.venueId] : NO_BARS), [mine.venueId]);
-  const book = useSpecSearch(mine.venueId ? query : '', { barIds, limit: Infinity });
-  const local = book.books.length > 0;
   const hidden = useMemo(() => new Set(mine.hiddenIds), [mine.hiddenIds]);
+  const book = useSpecSearch(mine.venueId ? query : '', { barIds, limit: Infinity, hidden });
+  const local = book.books.length > 0;
   const found = useMemo(() => mineGroups(items, query, local ? book.hits : null, book.books, hidden), [items, query, local, book.hits, book.books, hidden]);
   useEffect(searchShown, [query]);
   // The book answers at once; without one, wait for it or for the lists.
