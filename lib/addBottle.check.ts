@@ -17,6 +17,23 @@ assert.deepEqual(bottleMatches('laphroaig', rows, 'bar').map((r) => r.id), ['l10
 assert.deepEqual(bottleMatches('house', rows, 'bar').map((r) => r.id), ['mine']);
 assert.deepEqual(bottleMatches('house', rows, null), []);
 assert.deepEqual(bottleMatches('l', rows, null), []);
+// "Tanq": the bottle called plain "Tanqueray" comes first, not the two shortest names (walk 12 Nov).
+{
+  const tanq = [
+    { id: 'zero', name: 'Tanqueray 0.0%', ingredient_role: 'product' },
+    { id: 'ten', name: 'Tanqueray No. Ten', ingredient_role: 'product' },
+    { id: 'ldg', name: 'Tanqueray London Dry Gin', ingredient_role: 'product' },
+    { id: 'rangpur', name: 'Tanqueray Rangpur Lime', ingredient_role: 'product' },
+  ];
+  const aliases = [
+    { key: 'tanqueray', item_id: 'ldg' },
+    { key: 'tanqueray gin', item_id: 'ldg' },
+    { key: 'tanqueray 10', item_id: 'ten' },
+    { key: 'tanqueray rangpur', item_id: 'rangpur' },
+  ];
+  assert.deepEqual(bottleMatches('Tanq', tanq, 'bar', { aliases }).map((r) => r.id), ['ldg', 'ten']);
+  assert.deepEqual(bottleMatches('Tanq', tanq, 'bar').map((r) => r.id), ['zero', 'ten']); // no aliases: shortest names, as before
+}
 
 // A venue's own bottle by name, which the shared check can't see.
 assert.equal(ownBottle('house gin', rows, 'bar')?.id, 'mine');
