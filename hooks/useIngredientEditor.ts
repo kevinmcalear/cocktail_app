@@ -212,6 +212,7 @@ export function useIngredientEditor(id: string) {
             // One transaction: a failed save keeps the recipe it had, and each line keeps its row. Skipped when the lines didn't change.
             // A name typed here that isn't an ingredient yet is found or added the way New does it.
             // House-mades written inside it save with it or not at all (board Add-inside): saveEditItems takes them back if this fails.
+            // ponytail: the two-step save, until an ingredient form of save_drink replaces it (see saveEditItems).
             const spec = await saveEditItems(f.recipeItems, f.barId || null, editor.setRecipeItems, async (items) => {
                 const lines = recipeLines(items);
                 if (JSON.stringify(lines) === JSON.stringify(recipeLines(loaded.recipeItems))) return;
@@ -307,6 +308,7 @@ export function useIngredientDraftEditor({ draftId, barId: initialBarId, initial
         try {
             // A drafted ingredient in its recipe is published first. House-mades written inside it save with it
             // or not at all (board Add-inside): saveEditItems takes them back if any of this fails.
+            // ponytail: the two-step save, until an ingredient form of save_drink replaces it (see saveEditItems).
             const spec = await saveEditItems(withoutSelfRecipeRefs(form.recipeItems, draftId), form.barId || null, editor.setRecipeItems, async (items) => {
                 const lines = [];
                 for (const item of items) {
