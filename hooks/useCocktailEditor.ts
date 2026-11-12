@@ -271,7 +271,7 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
     const baseOf = ({ stepNotes: _words, ...form }: SpecForm) => specFingerprint(form);
     /** `lines`: the lines as a failed save left them (on the house-mades it saved), when this render's are older. */
     const keepOffline = (lines?: SortableRecipeItem[]) => {
-        useOfflineEdits.getState().keep(id, { at: Date.now(), base: loadedBase.current, form: { ...specForm(), ...(lines ? { recipeItems: lines } : {}) } });
+        useOfflineEdits.getState().keep(id, { at: Date.now(), base: loadedBase.current, form: { ...specForm(), ...(lines ? { recipeItems: lines } : {}), saveKey: saveKey.current } });
         showMessage("Kept on this phone", "There’s no signal, so your edit is saved here as a draft. Open this drink’s editor with signal and save to send it.");
     };
     useEffect(() => {
@@ -281,7 +281,10 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
         if (!kept) return;
         const when = new Date(kept.at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
         const apply = () => {
-            applyForm(kept.form as SpecForm);
+            const form = kept.form as SpecForm & { saveKey?: string };
+            // Its save's key too: a save that went through but never answered is sent again as the same save, not refused as a copy.
+            if (form.saveKey) saveKey.current = form.saveKey;
+            applyForm(form);
             showMessage("Your edit is back", `Kept on this phone ${when}. Save to send it.`);
         };
         if (kept.base === loadedBase.current) return apply();
@@ -506,8 +509,9 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             const byPartMethods = parted ? parted.flatMap((p, i) => idsOf(p.methods).map((mid) => ({ id: mid, part: i + 1 }))) : null;
             // Lines, methods and every line typed, combined or made in-house here (house-mades written inside it too,
             // board Add-inside) in one save_drink call: all or none, and a version of the spec (History on the drink page).
+            const sent = orderByPart(parted, recipeItems);
             const spec = await saveDrinkItems(
-                orderByPart(parted, recipeItems),
+                sent,
                 barId || null,
                 saveKey.current,
                 {
@@ -531,7 +535,8 @@ export function useCocktailEditor(id: string, { enabled = true }: { enabled?: bo
             );
             // On their rows now, so trying again after a later step fails doesn't make them twice.
             const ordered = (lines = spec.items);
-            setRecipeItems(ordered);
+            // The editor keeps its own order; only the write goes by part.
+            setRecipeItems(recipeItems.map((item) => ordered[sent.indexOf(item)] ?? item));
             // The words on its steps, by the steps it has now: a step gone takes its words with it.
             // A Float step gone because its lines moved into a part hands its words to that part's step.
             const steps = draftSteps(ordered, parted, null);

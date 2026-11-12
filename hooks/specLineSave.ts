@@ -220,8 +220,9 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
   const saveDrink = async (key: string, lines: readonly WizardLine[], rest: Record<string, unknown>, specOf: (l: WizardLine, i: number) => Omit<SpecLineInput, 'ingredient_item_id'>) => {
     const house = lines.filter(isHouseMade);
     const { payload, at } = houseMadesPayload(house.map((l) => ({ name: l.name, prep: l.prep! })));
-    const refs = lines.map((l) => {
-      const h = house.indexOf(l);
+    const houseAt = lines.map((l) => house.indexOf(l));
+    const refs = lines.map((l, i) => {
+      const h = houseAt[i];
       if (h >= 0) return { house_made: at[h] };
       if (isLive(l)) return { id: l.id, name: l.name };
       const name = capitalizeFirst(l.name);
@@ -236,7 +237,7 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
     house.forEach((l, h) => madeHouse(l, out.house_mades![at[h]]));
     const ids = lines.map((l, i) => {
       const r = out.lines[i];
-      if (house.includes(l)) return r.id;
+      if (houseAt[i] >= 0) return r.id;
       const name = capitalizeFirst(l.name);
       const yours = `You already have “My ${name}”, so the drink uses it. Change its recipe on its page.`;
       if (r.yours && !warnings.includes(yours)) warnings.push(yours);
