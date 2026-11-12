@@ -9,8 +9,9 @@ export const venueFeaturesKey = (barId: string | null) => ['venue-features', bar
 
 /**
  * A venue's switches (bars.enabled_features), in a query of their own so the
- * venue list never asks for the column. The read never throws
- * (lib/venueFeatures.ts readFeatures), so there's nothing to retry. Saved
+ * venue list never asks for the column. A failed read keeps what was saved;
+ * with nothing saved it fails (lib/venueFeatures.ts readFeatures) and isn't
+ * retried, so the tabs don't wait and the next mount reads again. Saved
  * between launches.
  */
 export function useFeatureRow(barId: string | null) {
@@ -19,6 +20,7 @@ export function useFeatureRow(barId: string | null) {
     queryKey: venueFeaturesKey(barId),
     enabled: !!barId,
     meta: { persist: true },
+    retry: false,
     queryFn: async (): Promise<string[]> => {
       const { data, error } = await supabase.from('bars').select('enabled_features').eq('id', barId!).maybeSingle();
       return readFeatures(data, error, client.getQueryData<string[]>(venueFeaturesKey(barId)));
@@ -42,13 +44,13 @@ export function useVenueFeatures() {
   const { mode } = useMode();
   const { active, isLoading } = useActiveVenue();
   const venue = mode === 'venue' ? active : null;
-  const { data } = useFeatureRow(venue?.id ?? null);
+  const { data, isError } = useFeatureRow(venue?.id ?? null);
   // Advanced options has its own home (bars.advanced_options): read it with useBarFeature, so every
   // page doesn't load it. Here it is never on.
   const list = venue ? withAdvanced(data ?? [], false) : null;
   const has = (key: VenueFeatureKey) => (mode === 'home' ? featureShown(key, null) : !!list && featureShown(key, list));
   return {
-    ready: mode === 'home' || (venue ? data !== undefined : !isLoading),
+    ready: mode === 'home' || (venue ? data !== undefined || isError : !isLoading),
     has,
     home: venueHome(has),
   };

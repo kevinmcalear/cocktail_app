@@ -24,7 +24,7 @@ assert.equal(featureShown('history', ['history']), true);
 // --- a read never throws ---
 assert.deepEqual(readFeatures(null, { code: '42703' }, ['tonight']), [], 'no column: none');
 assert.deepEqual(readFeatures(null, { code: 'PGRST301' }, ['tonight']), ['tonight'], 'offline or a timeout keeps what was saved');
-assert.deepEqual(readFeatures(null, { code: '08006' }), [], 'and none when nothing was saved');
+assert.throws(() => readFeatures(null, { code: '08006' }), 'nothing saved: a failed read throws, so [] is never kept');
 assert.deepEqual(readFeatures({ enabled_features: null }, null), [], 'a null value: none');
 assert.deepEqual(readFeatures({ enabled_features: ['tonight', 'disco'] }, null), ['tonight', 'disco']);
 assert.ok(isMissingColumn({ code: '42703' }) && !isMissingColumn(null) && !isMissingColumn({ code: '42501' }));
