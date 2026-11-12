@@ -1,5 +1,5 @@
-import { Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { Stack, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,16 +19,18 @@ import { runSearchBench, type BenchResult } from '@/lib/specSearchBench';
 export default function SearchBench() {
   const insets = useSafeAreaInsets();
   const [results, setResults] = useState<BenchResult[] | null>(null);
-  const [typed] = useState(searchTimings);
+  const [typed, setTyped] = useState(searchTimings);
+  // Read again on coming back: this screen may still be open under Search.
+  useFocusEffect(useCallback(() => setTyped(searchTimings()), []));
   useEffect(() => {
     // After the first paint, so the screen shows before the run holds the thread.
     const id = setTimeout(() => {
       const runs = [runSearchBench(1000, () => performance.now()), runSearchBench(3000, () => performance.now())];
-      console.log('search-bench', JSON.stringify({ runs, typed }));
+      console.log('search-bench', JSON.stringify({ runs, typed: searchTimings() }));
       setResults(runs);
     }, 500);
     return () => clearTimeout(id);
-  }, [typed]);
+  }, []);
   return (
     <ScrollView contentContainerStyle={[styles.page, { paddingTop: insets.top + space.lg }]}>
       <Stack.Screen options={{ headerShown: false }} />
