@@ -21,7 +21,7 @@ import {
 } from '@/lib/queryCachePersist';
 import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
 import { retryDelay, retryQuery } from '@/lib/queryRetry';
-import { BAR_WRITE, NEW_DRINK, OFFLINE_SCOPE, retryBarWrite } from '@/lib/offlineWrites';
+import { BAR_WRITE, isNetworkError, NEW_DRINK, OFFLINE_SCOPE, retryBarWrite } from '@/lib/offlineWrites';
 import type { CreateDrinkInput, CreateDrinkResult } from '@/hooks/useCreateDrink';
 import { loadSavedSpecBooks } from '@/lib/specBookFile';
 
@@ -78,7 +78,9 @@ const mutationCache = new MutationCache({
     // Bar writes are kept until they're in (gcTime: Infinity below): once in, they go.
     if (isBarWrite(write as AnyWrite)) later(() => mutationCache.remove(write));
   },
-  onError: (_e, _v, _ctx, write) => {
+  onError: (e, _v, _ctx, write) => {
+    // Out of tries on a dropped connection: kept like one that waited, never lost.
+    if (isBarWrite(write as AnyWrite) && isNetworkError(e)) markWaited(write as AnyWrite);
     if (isBarWrite(write as AnyWrite) && !hasWaited(write as AnyWrite)) later(() => mutationCache.remove(write));
   },
 });

@@ -10,7 +10,7 @@ import { menuLayoutWrite, useMenuLibrary, usePickMenuCover, useSaveMenuLayout } 
 import { useUnsentWrites } from '@/hooks/useUnsentWrites';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { confirmDiscardChanges } from '@/lib/dialogs';
-import { MENU_LAYOUT } from '@/lib/offlineWrites';
+import { isNetworkError, MENU_LAYOUT } from '@/lib/offlineWrites';
 import { saveErrorWords } from '@/lib/saveErrorWords';
 import { useDeleteDrink } from '@/components/screens/drink/useDeleteDrink';
 import {
@@ -45,9 +45,13 @@ export type EditorSheet = { kind: 'add'; key: string } | { kind: 'section'; key:
  * on from: a refusal after waiting is kept and shown on Tonight
  * (components/UnsentWrites.tsx), not in the editor.
  */
-function sentOrKept(sent: Promise<void>, kept: boolean): Promise<void> {
-  if (!kept) return sent;
-  void sent.catch(() => undefined);
+function sentOrKept(sent: Promise<void>, offline: boolean): Promise<void> {
+  // Out of tries on a dropped connection (bar wifi with no internet): kept on the phone as well (lib/react-query.ts), listed to send again.
+  const done = sent.catch((e: unknown) => {
+    if (!isNetworkError(e)) throw e;
+  });
+  if (!offline) return done;
+  void done.catch(() => undefined);
   return Promise.resolve();
 }
 
