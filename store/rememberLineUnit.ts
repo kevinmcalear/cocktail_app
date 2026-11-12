@@ -12,8 +12,9 @@ import { unitIn, useSettingsStore } from '@/store/useSettingsStore';
 export function rememberLineUnit(unit: string | null | undefined): void {
   const s = useSettingsStore.getState();
   // The bar's own first (getLineUnit reads it before yours), then yours, as before.
-  const here = s.barId ? stickyUnit(unit, lineUnitAt(s.lineUnits, s.barId, unitIn(s))) : null;
-  if (here && s.barId) s.setLineUnit(s.barId, here);
+  // Kept even when it's already the start unit, so a pick at another bar can't move this one's.
+  const metric = (u: string | null | undefined) => u === 'ml' || u === 'oz';
+  if (s.barId && metric(unit) && metric(lineUnitAt(s.lineUnits, s.barId, unitIn(s))) && s.lineUnits[s.barId] !== unit) s.setLineUnit(s.barId, unit!);
   const next = stickyUnit(unit, unitIn(s));
   if (next) s.setUnits(next);
 }

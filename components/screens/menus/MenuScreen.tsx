@@ -65,7 +65,7 @@ export function MenuScreen({ menuId }: { menuId: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const gutter = useGutter();
-  const { data: menu, isLoading, error } = useMenu(menuId);
+  const { data: menu, isLoading, error, dataUpdatedAt } = useMenu(menuId);
   if (!menu) {
     const back = () => (router.canGoBack() ? router.back() : router.replace('/menus/all'));
     return (
@@ -76,10 +76,10 @@ export function MenuScreen({ menuId }: { menuId: string }) {
     );
   }
   // Only a home menu reads your shelf; drinks draw in the bar's glassware (a home menu's in stock glasses).
-  return <DrawingBar barId={menu.barId}>{menu.barId ? <MenuPage menu={menu} shelf={null} /> : <HomeMenuPage menu={menu} />}</DrawingBar>;
+  return <DrawingBar barId={menu.barId}>{menu.barId ? <MenuPage menu={menu} shelf={null} fetchedAt={dataUpdatedAt} /> : <HomeMenuPage menu={menu} fetchedAt={dataUpdatedAt} />}</DrawingBar>;
 }
 
-function HomeMenuPage({ menu }: { menu: MenuDetail }) {
+function HomeMenuPage({ menu, fetchedAt }: { menu: MenuDetail; fetchedAt: number }) {
   const router = useRouter();
   const shelf = useMyBar();
   const shopping = useShoppingEdit();
@@ -90,17 +90,17 @@ function HomeMenuPage({ menu }: { menu: MenuDetail }) {
     if (needs.length) shopping.add.mutate(needs.map((a) => ({ ...a, source: 'menu' as const })));
     router.push('/shopping' as Href);
   };
-  return <MenuPage menu={menu} shelf={shelf.isLoading ? null : { match: shelf, toShopping, toBuy: needs.length }} />;
+  return <MenuPage menu={menu} fetchedAt={fetchedAt} shelf={shelf.isLoading ? null : { match: shelf, toShopping, toBuy: needs.length }} />;
 }
 
-type PageProps = { menu: MenuDetail; shelf: { match: ShelfMatch; toShopping: () => void; toBuy: number | null } | null };
+type PageProps = { menu: MenuDetail; /** When the menu last arrived (useMenu's dataUpdatedAt). */ fetchedAt: number; shelf: { match: ShelfMatch; toShopping: () => void; toBuy: number | null } | null };
 
 // A bar's menu that's on or coming up leads with its cover photo, which sets light or dark
 // for the page (Menu-g-photo-dark, Menu-g-photo-bright). Drafts, past and home menus are drawn.
 function MenuPage(props: PageProps) {
   const [openedAt] = useState(() => Date.now());
   // Read against the latest fetch too, so a menu put on from this page reads On now at once.
-  const now = menuPageNow(openedAt, useMenu(props.menu.id).dataUpdatedAt);
+  const now = menuPageNow(openedAt, props.fetchedAt);
   const status = menuStatus(props.menu, now);
   const cover = props.menu.barId && status !== 'draft' && status !== 'previous' ? props.menu.coverUrl : null;
   const [tone, focused] = [usePhotoTone(cover), useIsFocused()];

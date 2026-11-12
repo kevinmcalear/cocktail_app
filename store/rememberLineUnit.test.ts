@@ -28,3 +28,13 @@ test('ml or oz picked on a line is where the next drink starts, at each bar', ()
   expect(getLineUnit()).toBe('oz');
   expect(useSettingsStore.getState().lineUnits).toEqual({ rye: 'oz', moth: 'ml' });
 });
+
+test('a pick that is already the start unit still holds that bar', () => {
+  useSettingsStore.setState({ units: 'oz', lineUnits: {} });
+  at('rye', 'ml');
+  rememberLineUnit('oz'); // already oz: kept for rye all the same
+  at('moth', 'oz');
+  rememberLineUnit('ml');
+  at('rye', 'ml');
+  expect(getLineUnit()).toBe('oz');
+});
