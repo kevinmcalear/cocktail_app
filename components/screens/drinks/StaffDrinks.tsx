@@ -25,13 +25,13 @@ import { NearResults } from '@/components/search/NearResultsLazy';
 import { SearchField } from '@/components/search/SearchField';
 import { space } from '@/constants/tokens';
 import { useDrinksFirstRow } from '@/components/screens/drinks/firstRow';
+import { useViewSearch } from '@/hooks/useMineSearch';
 import { useOpenSearch } from '@/hooks/useSearchFrom';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { usePrefetchCocktail } from '@/hooks/useCocktails';
 import { CAPSULE_SHOW } from '@/lib/drinksTab';
 import { itemHref, newDrinkHref, type ItemCategory } from '@/lib/itemRoutes';
 import { capitalize } from '@/lib/stringUtils';
-import { matchesQuery } from '@/lib/publicDrinks';
 import type { SearchItem } from '@/types/search';
 
 // The staff list drags to reorder, with gesture and animation code the rest of
@@ -84,7 +84,8 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
   const q = phone ? '' : find.trim().toLowerCase();
   const bottles = useBottleFacts(activeId, d.published);
   const inView = show === 'bottles' ? bottlesFor(d.inView, params.kind, bottles.low) : d.inView;
-  const shown = inView.filter((i) => !q || matchesQuery(i, q)).sort((a, b) => a.name.localeCompare(b.name));
+  // What's typed is found by the venue's spec book on this device, not by reading down the list (lib/mineSearch.ts).
+  const { shown, near } = useViewSearch(activeId, inView, q);
   const shownIds = shown.map((i) => i.id);
   const { data: classicList } = useDrinkLists(!!q);
   const staffView = show === 'staff' && !!activeId;
@@ -141,7 +142,7 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
 
   const found = find.trim();
   // Did you mean (whole-app canvas, Search page): nothing here asks about the closest name, here or everywhere; "No" adds it here.
-  const ask = <NearResults query={found} found={0} shown={NO_IDS} yours={inView} yoursCaption="Here" classics={classicList} server={EVERYWHERE} title={`Nothing here called “${found}”`} miss={<Caption tone="muted">{`Nothing here called “${found}”.`}</Caption>} add={canEdit ? { label: `add ${capitalize(found)}`, onPress: () => router.push(newDrinkHref(capitalize(found), activeId) as never) } : undefined} />;
+  const ask = <NearResults query={found} found={0} shown={NO_IDS} yours={near} yoursCaption="Here" classics={classicList} server={EVERYWHERE} title={`Nothing here called “${found}”`} miss={<Caption tone="muted">{`Nothing here called “${found}”.`}</Caption>} add={canEdit ? { label: `add ${capitalize(found)}`, onPress: () => router.push(newDrinkHref(capitalize(found), activeId) as never) } : undefined} />;
   const failed = !!d.error && !d.published.length;
   const empty = failed ? (
     <PencilState kind="error" title="Drinks didn’t load" detail="The connection dropped halfway." action={{ label: 'Try again', onPress: () => void client.refetchQueries({ type: 'active' }) }} />
@@ -163,7 +164,7 @@ export function StaffDrinks({ beside = false }: { beside?: boolean }) {
           <Button label="Swap a bottle" variant="secondary" onPress={() => setSwap(true)} />
         </View>
       ) : null}
-      {q && shown.length ? <NearResults query={found} found={shown.length} shown={shownIds} yours={inView} yoursCaption="Here" title="" miss={null} /> : null}
+      {q && shown.length ? <NearResults query={found} found={shown.length} shown={shownIds} yours={near} yoursCaption="Here" title="" miss={null} /> : null}
       {q ? <Button label={`Search everywhere for “${found}”`} icon="magnifyingglass" variant="secondary" onPress={() => openSearch({ query: found, scope: 'everywhere' })} /> : null}
       {offline && shown.length ? <Caption tone="muted">Search works offline too.</Caption> : null}
     </View>

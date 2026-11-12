@@ -53,5 +53,6 @@ export function useSpecSearch(query: string, { barIds, limit = 50 }: { barIds?: 
   const onNow = useMemo(() => onNowIds(books), [books]);
   const hits: SearchHit[] = useMemo(() => rankHits([...named, ...near], onNow, limit), [named, near, onNow, limit]);
   // Ready once every book has loaded or failed; no venues (home) is ready with nothing to search.
-  return { hits, ready: !loading };
+  // `books`: the ones in memory. None means nothing here can answer, and the caller falls back to its own lists.
+  return { hits, ready: !loading, books };
 }

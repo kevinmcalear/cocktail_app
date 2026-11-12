@@ -6,7 +6,8 @@ import { useAllIngredients, useDropdowns, useVenueIngredients } from '@/hooks/us
 import { useWines } from '@/hooks/useWines';
 import { inSelectedContext, PERSONAL_CONTEXT } from '@/lib/barContextFilter';
 import { draftMethodIds } from '@/lib/drinkMethods';
-import { batchedDrinkKey, heroPicture, nameKey, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
+import { batchedDrinkKey, nameKey, withDrinkPhotos, type ItemImageLink } from '@/lib/itemImages';
+import { toCocktailSearchItem, toIngredientSearchItem, toPourSearchItem } from '@/lib/searchCards';
 import { isHiddenFromSearch } from '@/lib/searchVisibility';
 import { capitalize, capitalizeFirst } from '@/lib/stringUtils';
 import { useMemo } from 'react';
@@ -18,30 +19,6 @@ const DRAFT_CATEGORY: Record<string, SearchItem['category']> = {
   ingredient: 'Ingredient',
   menu: 'Menu',
 };
-
-/** A search card's picture: photos before sketches, tagged when it's a sketch. */
-function searchImage(links: ItemImageLink[] | null | undefined): Pick<SearchItem, 'image' | 'imageIsSketch'> {
-  const hero = heroPicture(links);
-  return hero ? { image: { uri: hero.url }, imageIsSketch: hero.isSketch } : {};
-}
-
-/** A drink from a useCocktails-shaped row, as a search card. */
-export function toCocktailSearchItem(c: any): SearchItem {
-  return {
-    id: c.id,
-    name: c.name,
-    description: c.description,
-    category: 'Cocktail',
-    serviceStyle: c.service_style ?? null,
-    recipes: c.recipes,
-    item_images: c.item_images,
-    ...searchImage(c.item_images),
-    item_categories: c.item_categories,
-    method_id: c.item_methods?.[0]?.method_item_id ?? null,
-    glassware_id: c.glassware_id,
-    ice_id: c.ice_id,
-  };
-}
 
 function draftSearchId(entityType: string, id: string) {
   if (entityType === 'beer') return `beer-${id}`;
@@ -91,29 +68,11 @@ export function useSearchCatalog(selectedContextIds: string[], { ingredients = t
 
     const mappedBeers: SearchItem[] = (beersData || [])
       .filter((b: any) => inSelectedContext(b.bar_id, selectedContextIds))
-      .map((b: any) => ({
-        id: `beer-${b.id}`,
-        name: b.name,
-        description: b.description,
-        category: 'Beer' as const,
-        price: b.price,
-        glassware_id: b.glassware_id ?? null,
-        item_categories: b.item_categories,
-        ...searchImage(b.item_images),
-      }));
+      .map((b: any) => toPourSearchItem('Beer', b));
 
     const mappedWines: SearchItem[] = (winesData || [])
       .filter((w: any) => inSelectedContext(w.bar_id, selectedContextIds))
-      .map((w: any) => ({
-        id: `wine-${w.id}`,
-        name: w.name,
-        description: w.description,
-        category: 'Wine' as const,
-        price: w.price,
-        glassware_id: w.glassware_id ?? null,
-        item_categories: w.item_categories,
-        ...searchImage(w.item_images),
-      }));
+      .map((w: any) => toPourSearchItem('Wine', w));
 
     // A batch shows its drink's photo until it has its own ("Aperol Fizz Batch" shows the Aperol Fizz).
     type Pictured = { name: string | null; bar_id: string | null; item_images?: ItemImageLink[] | null };
@@ -130,14 +89,7 @@ export function useSearchCatalog(selectedContextIds: string[], { ingredients = t
         (i: any) =>
           !isHiddenFromSearch(i) && inSelectedContext(i.bar_id, selectedContextIds)
       )
-      .map((i: any) => ({
-        id: i.id,
-        name: i.name,
-        description: i.description,
-        category: 'Ingredient' as const,
-        item_categories: i.item_categories,
-        ...searchImage(batchImages(i)),
-      }));
+      .map((i: any) => toIngredientSearchItem(i, batchImages(i)));
 
     const mappedMenus: SearchItem[] = (dropdowns?.menus || [])
       .filter((m: any) => inSelectedContext(m.bar_id, selectedContextIds))

@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, useBreakpoint, useDs } from '@/components/ds';
@@ -7,14 +6,13 @@ import { DrinkRow } from '@/components/screens/DrinkRow';
 import { OfflineNote, SavedChip } from '@/components/screens/home/OfflineParts';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { space } from '@/constants/tokens';
+import { useMineSearch } from '@/hooks/useMineSearch';
 import type { SearchMine } from '@/hooks/useSearchMine';
 import { heroPicture } from '@/lib/itemImages';
 import { fallbackGlass, type ItemCategory } from '@/lib/itemRoutes';
 import { openSearchItem } from '@/lib/openSearchItem';
-import { groupCatalog } from '@/lib/searchScope';
 import type { SearchItem } from '@/types/search';
 
-import { useMineCatalog } from './MineResults';
 import { ResultRow } from './ResultRows';
 
 /**
@@ -26,9 +24,8 @@ export function SearchOffline({ query, mine }: { query: string; mine: SearchMine
   const ds = useDs();
   const router = useRouter();
   const phone = useBreakpoint() === 'phone';
-  const { items } = useMineCatalog(mine);
   const q = query.trim();
-  const groups = useMemo(() => groupCatalog(items, q), [items, q]);
+  const { groups } = useMineSearch(mine, q);
   const open = (item: SearchItem) => openSearchItem(item, (href) => router.push(href as never));
   const where = phone ? 'phone' : 'device';
   const chevron = <IconSymbol name="chevron.right" size={16} color={ds.c.muted} />;
