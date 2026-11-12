@@ -12,7 +12,7 @@ import { readHouse, type HouseReading } from '@/lib/makeItHouse';
 import { typedPour, type TypedPour } from '@/lib/paste';
 import { guessKind, PREP_KINDS } from '@/lib/prepKinds';
 import { looksMadeInHouse } from '@/lib/techniques/makeIt';
-import { getPreferredUnit } from '@/store/useSettingsStore';
+import { getLineUnit } from '@/store/useSettingsStore';
 
 import { KindResults } from './KindResults';
 import { ResultRow, UseCaption } from './ResultRow';
@@ -237,7 +237,7 @@ export function IngredientSearch(props: IngredientSearchProps) {
           {takeover.caption}
         </Caption>
       ) : null}
-      {pour && q && !reading ? <Caption tone="muted">{`${pour.amount} ${typedUnit(q, pour.unit, getPreferredUnit())} of the one you pick`}</Caption> : null}
+      {pour && q && !reading ? <Caption tone="muted">{`${pour.amount} ${typedUnit(q, pour.unit, getLineUnit())} of the one you pick`}</Caption> : null}
       {reading ? (
         <TypedLineCard
           reading={reading}

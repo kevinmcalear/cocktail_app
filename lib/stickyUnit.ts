@@ -11,3 +11,4 @@ export function stickyUnit(picked: string | null | undefined, current: string): 
   const metric = (u: string | null | undefined) => u === 'ml' || u === 'oz';
   return metric(picked) && metric(current) && picked !== current ? (picked ?? null) : null;
 }
+

@@ -1,5 +1,5 @@
 import type { MapsApp } from '@/lib/directions';
-import { DEFAULT_UNIT, followBarUnit, savedUnit } from '@/lib/units';
+import { DEFAULT_UNIT, followBarUnit, lineUnitAt, savedUnit } from '@/lib/units';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -44,6 +44,12 @@ interface SettingsState {
      */
     barUnit: string | null;
     setBarUnit: (unit: string | null) => void;
+    /** The bar you work at (the one barUnit is from), kept by useBarUnitSync; null with none. */
+    barId: string | null;
+    setBarId: (barId: string | null) => void;
+    /** Per bar, the ml or oz last picked on a spec line there (store/rememberLineUnit): new lines there start in it. */
+    lineUnits: Record<string, string>;
+    setLineUnit: (barId: string, unit: string) => void;
     /** False for a unit saved before bars had one, until lib/units followBarUnit has looked at it. */
     unitsChecked: boolean;
     /** This device's freezer, in °C, for the Batch sheet's "will it freeze" check. */
@@ -80,6 +86,10 @@ export const useSettingsStore = create<SettingsState>()(
                     return { barUnit: unit, units: next.units, unitsChecked: next.checked };
                 }),
             unitsChecked: true,
+            barId: null,
+            setBarId: (barId) => set({ barId }),
+            lineUnits: {},
+            setLineUnit: (barId, unit) => set((s) => ({ lineUnits: { ...s.lineUnits, [barId]: unit } })),
             freezerC: -18,
             setFreezerC: (c) => set({ freezerC: c }),
             setThemeMode: (mode) => set({ themeMode: mode }),
@@ -111,4 +121,10 @@ export function useUnits(): { unit: string; specUnit: SpecUnit } {
 /** Read preferred unit outside React (merge, handoff defaults). */
 export function getPreferredUnit(): string {
     return unitIn(useSettingsStore.getState());
+}
+
+/** The unit a new spec line starts in: the ml or oz last picked at the bar you work at, else yours (lib/stickyUnit lineUnitAt). */
+export function getLineUnit(): string {
+    const s = useSettingsStore.getState();
+    return lineUnitAt(s.lineUnits, s.barId, unitIn(s));
 }
