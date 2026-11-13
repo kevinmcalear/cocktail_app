@@ -9,7 +9,7 @@ import { useSetBarCurrency } from '@/hooks/usePricing';
 import { useProfile } from '@/hooks/useProfiles';
 import { useVenueBrand } from '@/hooks/useVenueBrand';
 import type { ProfileClaim } from '@/hooks/useProfiles';
-import { useCreateSetupVenue, usePushHeldSetup, useStartingBarUnit, useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
+import { useCreateSetupVenue, usePushHeldSetup, useVenueClaim, useVenuePage } from '@/hooks/useVenueSetup';
 import { faceFromDb, normalizeHex, usableGroundTint } from '@/lib/brand';
 import { nextScreen, openRun, previousScreen, venueProgress, type ClaimState, type VenueScreen, type VenueStep } from '@/lib/venueSetup';
 import { useAppMode } from '@/store/useAppMode';
@@ -89,7 +89,6 @@ function VenueSetupScreenBody() {
   const brand = useVenueBrand(barId ?? '').data ?? null;
   const logo = brand?.logo_url ?? null;
   const createVenue = useCreateSetupVenue();
-  const startingUnit = useStartingBarUnit();
   const saveCurrency = useSetBarCurrency();
   const pushHeld = usePushHeldSetup();
   const enterVenue = useAppMode((s) => s.enterVenue);
@@ -105,7 +104,7 @@ function VenueSetupScreenBody() {
   // The venue setup works on: made once, from the bar's name, when the claim goes (or is skipped).
   const ensureVenue = async (): Promise<string> => {
     if (barId) return barId;
-    const id = await createVenue.mutateAsync(name || 'My bar');
+    const id = await createVenue.mutateAsync({ name: name || 'My bar', country: profile?.country_code ?? null });
     rekey(keyRef.current, id);
     save(id, { barId: id, profileId, name });
     keyRef.current = id;
@@ -204,9 +203,9 @@ function VenueSetupScreenBody() {
           onHold={(c) => hold(keyRef.current, c)}
           venueError={(createVenue.error ?? saveCurrency.error)?.message ?? null}
           making={createVenue.isPending || saveCurrency.isPending}
-          onDone={(currency, country) =>
+          onDone={(currency) =>
             void ensureVenue()
-              .then((id) => (startingUnit.mutate({ barId: id, country }), currency ? saveCurrency.mutateAsync({ barId: id, currency }) : undefined))
+              .then((id) => (currency ? saveCurrency.mutateAsync({ barId: id, currency }) : undefined))
               .then(() => finish('place'), () => {})
           }
         />

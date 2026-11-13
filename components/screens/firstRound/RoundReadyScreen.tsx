@@ -37,7 +37,9 @@ function Ready() {
   const insets = useSafeAreaInsets();
   const r = useStaffRound(useActiveVenue().active?.id ?? null);
   const trio = r.ids.slice(0, 3);
-  const to = readyDestination(useVenueFeatures().has('tonight'));
+  // Until the bar's switches are read, no button: a Tonight bar mustn't flash Go to Drinks.
+  const features = useVenueFeatures();
+  const to = readyDestination(features.has('tonight'));
   const tonight = () => router.replace(to.href as Href);
   const title = readyTitle(r.day);
   return (
@@ -55,7 +57,7 @@ function Ready() {
               {[r.rota, to.where].filter(Boolean).join(' ')}
             </Body>
           </View>
-          <Button label={to.label} variant="ink" size="lg" onPress={tonight} />
+          {features.ready ? <Button label={to.label} variant="ink" size="lg" onPress={tonight} /> : null}
         </View>
       </ScrollView>
     </View>

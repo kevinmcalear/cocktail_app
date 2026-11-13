@@ -92,8 +92,7 @@ interface Props {
   venueError?: string | null;
   making?: boolean;
   /** `currency`: the one to save onto the venue as it's made, when it isn't its currency already. */
-  /** With the currency picked here (null: unchanged) and the bar's country, when it's known. */
-  onDone: (currency: string | null, country: string | null) => void;
+  onDone: (currency: string | null) => void;
 }
 
 /**
@@ -139,7 +138,7 @@ export function WhereWhenStep({ profileId, barId, name, claim, writable, held: k
   const place = [facts?.city ?? facts?.locality, country ? countryName(country) : null].filter(Boolean).join(', ');
   const fromPhone = !picked && currency !== null && currency !== setCurrency && !fromCountry;
   const currencySource = picked ? null : currency === setCurrency && setCurrency ? 'Set in Venue settings › Pricing' : fromCountry ? `From the address${place ? `: ${place}` : ''}` : fromPhone ? 'From this phone, as there’s no address. Check it’s right.' : null;
-  const finish = () => onDone(currency && currency !== setCurrency ? currency : null, country);
+  const finish = () => onDone(currency && currency !== setCurrency ? currency : null);
   const error = problem ?? (saveFacts.error ?? saveSetup.error ?? saveInstagram.error)?.message ?? venueError ?? null;
 
   // Saved: close the editor, or open the next field (Return: phone, then website, then Instagram).
@@ -178,7 +177,7 @@ export function WhereWhenStep({ profileId, barId, name, claim, writable, held: k
   const address = facts ? [...new Set([facts.address_line, facts.locality, facts.city].filter(Boolean))].join(', ') : '';
 
   return (
-    <SetupPage footer={<SetupFooter label="Looks right" pending={saveInstagram.isPending || making} onPress={looksRight} skipLabel="Skip" onSkip={() => onDone(null, country)} />}>
+    <SetupPage footer={<SetupFooter label="Looks right" pending={saveInstagram.isPending || making} onPress={looksRight} skipLabel="Skip" onSkip={() => onDone(null)} />}>
       {/* The facts in one card (canvas make-venue-place, and the Instagram row from eddie-oct22-wave1). */}
       <View style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.c.line }]}>
       <FactRow icon="mappin.and.ellipse" label="Address" canEdit={false} editing={false} onEdit={() => {}} editor={null}>

@@ -115,22 +115,6 @@ export function useVenuePage(barId: string | null) {
 }
 
 /**
- * Where and when knows the bar's country: the bar takes that country's unit
- * (lib/units startingBarUnit), unless its owner picked their own Units.
- */
-export function useStartingBarUnit() {
-  return useMutation({
-    mutationFn: async ({ barId, country }: { barId: string; country: string | null }) => {
-      const own = useSettingsStore.getState().units;
-      if (own || !country) return;
-      const { error } = await supabase.from('bars').update({ spec_unit: startingBarUnit(null, country) }).eq('id', barId);
-      if (error) throw error;
-    },
-    onError: () => {},
-  });
-}
-
-/**
  * The venue setup works on: a private venue with the person as its Admin
  * (create_new_bar, as Settings always allowed). The claim then links it to
  * the bar page once a person approves it.
@@ -138,7 +122,7 @@ export function useStartingBarUnit() {
 export function useCreateSetupVenue() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (name: string): Promise<string> => {
+    mutationFn: async ({ name, country }: { name: string; country?: string | null }): Promise<string> => {
       const { data, error } = await supabase.rpc('create_new_bar', {
         p_name: name.trim(),
         p_visibility: 10,
@@ -149,13 +133,16 @@ export function useCreateSetupVenue() {
       });
       if (error) throw error;
       const id = (data as { id: string }).id;
-      // A new venue starts on its owner's unit, else this phone's country's (Where and when sets the bar's own
-      // country's, useStartingBarUnit). It's made by now, so a miss here leaves ml, which they can change in its settings.
-      const unit = startingBarUnit(useSettingsStore.getState().units, getLocales()[0]?.regionCode);
+      // A new venue starts on its owner's own unit, else its bar page's country's, else this phone's (a United
+      // States bar on oz). Only here, as it's made: a bar that has a unit keeps it, whatever setup does after.
+      // It's made by now, so a miss here leaves ml, which its Admins change in its settings.
+      const unit = startingBarUnit(useSettingsStore.getState().units, country ?? getLocales()[0]?.regionCode);
       if (unit !== DEFAULT_UNIT) await supabase.from('bars').update({ spec_unit: unit }).eq('id', id);
       return id;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['bars'] }),
+    // After the unit is written, so the venue the app keeps (useBars, the bar, its spec unit) reads it.
+    onSuccess: (id) =>
+      Promise.all([['bars'], ['bar', id], ['venue-spec-unit', id]].map((queryKey) => qc.invalidateQueries({ queryKey }))),
     onError: () => {},
   });
 }
