@@ -21,6 +21,9 @@ export const PAIRS = 3;
 /** Then ten drinks to swipe Want or Not for me on (board Loop-want, "In onboarding"). */
 export const SWIPES = 10;
 
+/** How far a swipe card goes before letting go answers it. */
+export const FLING = 110;
+
 export interface PickedDrink {
   id: string;
   /** stir, shake, build…: from its drawing inputs, when it has them. */

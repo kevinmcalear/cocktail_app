@@ -2,6 +2,7 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithProviders } from '@/jest.setup';
 import { LABEL, type Dimension, type Profile } from '@/lib/flavor';
+import { usePendingWants } from '@/store/usePendingWants';
 import { useSettingsStore } from '@/store/useSettingsStore';
 
 import { FirstRunTaste } from './FirstRunPicks';
@@ -62,6 +63,7 @@ beforeEach(() => {
   useSettingsStore.setState({ units: null });
   mockOffered = mockDrinks;
   mockAge = 'confirmed';
+  usePendingWants.getState().clear();
   mockRegion = 'US';
   mockDeckNow = mockDeck;
   mockSaveSwipes.mockImplementation(({ wants }: { wants: string[] }) => {
@@ -198,23 +200,30 @@ test('the ten swipes save passes and Wants apart, the Wants count in the saved t
   expect(mockSaveTaste.mock.calls[0][0].bitter).toBeGreaterThan(without);
 });
 
-test('with no confirmed age the Wants wait for the age check; passes save either way; a refusal saves no Wants', async () => {
+// Second look 12 Nov: Wants held for the age check lived only in the screen. They wait on the device
+// (store/usePendingWants) and are saved or dropped by the answer (lib/swipes.test.ts).
+test('with no confirmed age the Wants wait on the device for the age check; passes save either way; under age keeps none', async () => {
   mockAge = 'unknown';
   await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
   await toSwipes();
   await swipeTen();
   expect(mockSaveSwipes).toHaveBeenCalledTimes(1);
   expect(mockSaveSwipes).toHaveBeenCalledWith({ wants: [], passes: ['w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9'] });
+  expect(usePendingWants.getState().ids).toEqual(['w0', 'w1', 'w2']);
   await fireEvent.press(screen.getByRole('button', { name: 'Not now, age' }));
   expect(mockSaveSwipes).toHaveBeenCalledTimes(1);
+  expect(usePendingWants.getState().ids).toEqual(['w0', 'w1', 'w2']);
   expect(screen.getByRole('button', { name: 'Start' })).toBeTruthy();
 
+  usePendingWants.getState().clear();
   mockSaveSwipes.mockClear();
+  mockAge = 'under_age';
   await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
   await toSwipes();
   await swipeTen();
-  await fireEvent.press(screen.getByRole('button', { name: 'Confirm my age' }));
-  expect(mockSaveSwipes).toHaveBeenLastCalledWith({ wants: ['w0', 'w1', 'w2'], passes: [] });
+  expect(mockSaveSwipes).toHaveBeenCalledTimes(1);
+  expect(usePendingWants.getState().ids).toEqual([]);
+  expect(screen.queryByRole('button', { name: 'Confirm my age' })).toBeNull();
 });
 
 test('the system back steps back a step, does nothing on Your taste, and lets setup go once it ends', async () => {

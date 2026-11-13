@@ -17,6 +17,7 @@ import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useLastPlace } from '@/store/useLastPlace';
 import { useNoteDrafts } from '@/store/useNoteDrafts';
 import { useOfflineEdits } from '@/store/useOfflineEdits';
+import { usePendingWants } from '@/store/usePendingWants';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
 import { useRecentSearches } from '@/store/useRecentSearches';
 import { useVenueSetup } from '@/store/useVenueSetup';
@@ -49,6 +50,8 @@ export async function clearUserData(): Promise<void> {
   useRecentActivityStore.setState({ items: [] });
   useRecentSearches.setState({ terms: [] });
   useLastPlace.getState().clear();
+  // First run's Wants waiting for the age check: never saved as the next person.
+  usePendingWants.getState().clear();
   useAppMode.getState().forgetVenue();
   useDraftSyncStore.setState({ seen: [] });
   // Glasses held for a venue's page stay: they're the venue's list, not the person's, and only someone with

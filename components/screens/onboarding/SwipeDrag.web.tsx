@@ -1,15 +1,25 @@
-import type { ReactNode } from 'react';
-import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { lazy, Suspense, type ComponentProps } from 'react';
+import { View } from 'react-native';
+
+import type { SwipeDragPan } from './SwipeDragPan';
+
+const Lazy = lazy(() => import('./SwipeDragPan').then((m) => ({ default: m.SwipeDragPan })));
 
 /**
- * The web's swipe card: no drag. Not for me and Want answer it (board note
- * loops-n4: the buttons do what swiping does, for Voice Control and the web),
- * and the web bundle doesn't carry Gesture Handler and Reanimated for it.
+ * The web's swipe card: the drag (SwipeDragPan.tsx) loads when the swipe
+ * step first shows, as AgeGateSheetLazy.web.tsx does. Until it's in, the
+ * card shows still, and Not for me and Want always answer it (board note
+ * loops-n4: the buttons do what swiping does).
  */
-export function SwipeDrag({ label, style, children }: { onSwipe: (want: boolean) => void; tag: ReactNode; label: string; style: StyleProp<ViewStyle>; children: ReactNode }) {
-  return (
-    <View role="img" accessibilityLabel={label} style={style}>
-      {children}
+export function SwipeDrag(props: ComponentProps<typeof SwipeDragPan>) {
+  const still = (
+    <View role="img" accessibilityLabel={props.label} style={props.style}>
+      {props.children}
     </View>
+  );
+  return (
+    <Suspense fallback={still}>
+      <Lazy {...props} />
+    </Suspense>
   );
 }

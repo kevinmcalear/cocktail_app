@@ -10,6 +10,7 @@ import { useSaveSwipes, useWantDeck, type DeckDrink } from '@/hooks/useWantDeck'
 import { withAlpha } from '@/lib/color';
 import { SWIPES, tasteFrom } from '@/lib/firstRun';
 import { matchPercent, type Profile, type Taste } from '@/lib/flavor';
+import { usePendingWants } from '@/store/usePendingWants';
 
 import { FirstRunPage } from './FirstRunPage';
 import { SwipeDrag } from './SwipeDrag';
@@ -24,9 +25,11 @@ type Answer = { id: string; want: boolean; profile: Profile | null };
  * loops-n4): drinks they haven't picked, each Want or Not for me. Each answer
  * keeps its drink's flavours, so the Wants count in the taste whatever the
  * deck does after. At the tenth, the passes save (drink_passes); the Wants
- * (want_list) need a confirmed age like all collecting, so with none yet the
- * age check asks first, and Wants it doesn't confirm are not saved. Then
- * `onDone` with the Wants' flavours. With nothing to swipe it goes straight on.
+ * (want_list) need a confirmed age like all collecting, so with none yet they
+ * wait on this device (store/usePendingWants) and the age check asks: they
+ * save when it's confirmed, now or later, and drop if it's under age
+ * (lib/swipes settlePendingWants). Then `onDone` with the Wants' flavours.
+ * With nothing to swipe it goes straight on.
  */
 export function SwipesStep({ picks, winners, onBack, onDone }: { picks: readonly FirstRunDrink[]; winners: readonly string[]; onBack: () => void; onDone: (wanted: (Profile | null)[]) => void }) {
   const deck = useWantDeck(SWIPES, picks.map((p) => p.id));
@@ -45,6 +48,9 @@ export function SwipesStep({ picks, winners, onBack, onDone }: { picks: readonly
       save.mutate({ wants, passes: [] });
       return onDone(wantedOf(list));
     }
+    // Under age: Wants can't be kept. Otherwise held here until the age check answers.
+    if (age === 'under_age') return onDone(wantedOf(list));
+    usePendingWants.getState().hold(wants);
     setAsking(list);
   };
   const at = answers.length;
@@ -67,14 +73,8 @@ export function SwipesStep({ picks, winners, onBack, onDone }: { picks: readonly
     <FirstRunPage onBack={back} barTitle={`${Math.min(at + 1, deck.drinks.length || SWIPES)} of ${deck.drinks.length || SWIPES}`}>
       {card ? <SwipeCard key={card.id} drink={card} taste={tasteFrom(picks, winners, wantedOf(answers))} onAnswer={answer} /> : <Caption tone="muted">One moment…</Caption>}
       {asking ? (
-        <AgeGateSheet
-          onClose={() => (setAsking(null), onDone(wantedOf(asking)))}
-          onConfirmed={() => {
-            save.mutate({ wants: asking.filter((a) => a.want).map((a) => a.id), passes: [] });
-            setAsking(null);
-            onDone(wantedOf(asking));
-          }}
-        />
+        // Confirming saves the held Wants (useConfirmAge); Not now keeps them held.
+        <AgeGateSheet onClose={() => (setAsking(null), onDone(wantedOf(asking)))} onConfirmed={() => (setAsking(null), onDone(wantedOf(asking)))} />
       ) : null}
     </FirstRunPage>
   );

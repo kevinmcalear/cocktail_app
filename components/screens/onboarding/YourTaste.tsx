@@ -91,7 +91,7 @@ function Page({ picks, winners, wanted, home, pending, error, onDone }: Props) {
     if (busy) return;
     setStarted(true);
     // The same rule as a new bar's unit (lib/units startingBarUnit): oz in the United States, ml in Britain.
-    if (home && !units) setUnits(startingBarUnit(null, getLocales()[0]?.regionCode));
+    if (home && !units) setUnits(startingBarUnit(getLocales()[0]?.regionCode));
     // A taste that won't save is no reason to hold them here: You's taste page asks again.
     if (Object.keys(taste).length) save.mutate(taste, { onSettled: () => onDone(to) });
     else onDone(to);

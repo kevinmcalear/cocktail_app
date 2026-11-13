@@ -4,14 +4,14 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-/** How far a card goes before letting go answers it. */
-const FLING = 110;
+import { FLING } from '@/lib/firstRun';
 
 /**
- * A swipe card's drag (phones): right is Want, left is Not for me; short of
- * FLING it springs back. `tag` shows as it goes right (the board's "Want").
- * The web has its own file with no drag: the buttons answer there, so the
- * web bundle doesn't carry Gesture Handler and Reanimated for it.
+ * A swipe card's drag on phones: right is Want, left is Not for me; short
+ * of FLING it springs back. `tag` shows as it goes right (the board's
+ * "Want"). The web has the same drag on the web's own pointer handling
+ * (SwipeDragPan.tsx, loaded lazily by SwipeDrag.web.tsx): Gesture Handler
+ * there would add its own 0.9 MB copy to the web export.
  */
 export function SwipeDrag({ onSwipe, tag, label, style, children }: { onSwipe: (want: boolean) => void; tag: ReactNode; label: string; style: StyleProp<ViewStyle>; children: ReactNode }) {
   const x = useSharedValue(0);

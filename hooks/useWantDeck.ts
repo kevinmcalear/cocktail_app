@@ -6,6 +6,7 @@ import { useItemSketches } from '@/hooks/useItemSketch';
 import type { Profile } from '@/lib/flavor';
 import { liquidOf } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
+import { saveSwipes } from '@/lib/swipes';
 
 export interface DeckDrink {
   id: string;
@@ -73,19 +74,7 @@ export function useWantDeck(count: number, skip: readonly string[], enabled = tr
 export function useSaveSwipes() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ wants, passes }: { wants: readonly string[]; passes: readonly string[] }) => {
-      if (passes.length) {
-        const { error } = await supabase.from('drink_passes').upsert(
-          passes.map((id) => ({ item_id: id })),
-          { onConflict: 'user_id,item_id', ignoreDuplicates: true }
-        );
-        if (error) throw error;
-      }
-      if (wants.length) {
-        const { error } = await supabase.from('want_list').insert(wants.map((id) => ({ kind: 'drink', item_id: id, source: 'swipe' })));
-        if (error && error.code !== '23505') throw error;
-      }
-    },
+    mutationFn: saveSwipes,
     onSettled: () => void qc.invalidateQueries({ queryKey: ['collection'] }),
     onError: () => {},
   });
