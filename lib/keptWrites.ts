@@ -77,14 +77,19 @@ export function resendWrite(client: QueryClient, write: AnyWrite): void {
  */
 export function discardWrite(client: QueryClient, write: AnyWrite): void {
   const undo = write.state.context as { key?: QueryKey; before?: unknown } | undefined;
+  let saved = Promise.resolve();
   if (undo?.key && undo.before !== undefined) {
     client.setQueryData(undo.key, undo.before);
-    void saveQueryNow(undo.key);
+    saved = saveQueryNow(undo.key);
   }
-  refetchAfterDiscard(client, write);
   client.getMutationCache().remove(write);
-  // Writes queued behind it go now, not at the next reconnect.
-  void client.resumePausedMutations();
+  // Fetched again only once the file holds the copy put back: the refetch changes the query's state, and the
+  // file saver skips a state that's no longer the query's, which left the change in the file for the next launch.
+  void saved.finally(() => {
+    refetchAfterDiscard(client, write);
+    // Writes queued behind it go now, not at the next reconnect.
+    void client.resumePausedMutations();
+  });
 }
 
 let refetchAfterDiscard: (client: QueryClient, write: AnyWrite) => void = () => undefined;

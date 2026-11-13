@@ -5,7 +5,7 @@ import { persistQueryClientRestore, persistQueryClientSave, type PersistedClient
 
 import { dropUnsentWrites } from '@/lib/authCache';
 import { discardWrite, isKeptWrite, resendWrite, setWriteOwner } from '@/lib/keptWrites';
-import { persistOptions, queryClient, resumeSavedWrites } from '@/lib/react-query';
+import { persistOptions, queryClient, resumeSavedWrites, savedQueryFiles } from '@/lib/react-query';
 
 let sent = 0;
 let mockFailures: Error[] = [];
@@ -28,7 +28,7 @@ jest.mock('@/hooks/useCocktails', () => ({ updateCocktailFn: () => mockSend(), d
 const mockSaved = jest.fn(() => Promise.resolve());
 jest.mock('@/hooks/barWrites', () => ({
   BAR_WRITES: {
-    zoneCount: { key: ['bar-write', 'zone-count'], send: () => mockSend(), refresh: () => [] },
+    zoneCount: { key: ['bar-write', 'zone-count'], send: () => mockSend(), refresh: () => [['run-sheet', 'm1']] },
     menuLayout: {
       key: ['bar-write', 'menu-layout'],
       send: (v: { id: string; args?: unknown }) => {
@@ -349,7 +349,12 @@ test('discarding a waiting run sheet change puts the sheet back as it was', asyn
   await tick();
   expect(queryClient.getQueryData(key)).toBe('swapped');
   const [waiting] = queryClient.getMutationCache().getAll().filter(isKeptWrite);
+  const written = jest.spyOn(savedQueryFiles, 'write').mockResolvedValue();
   discardWrite(queryClient, waiting);
   expect(queryClient.getQueryData(key)).toBe('before');
   expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
+  // The sheet's file gets the copy put back too (the refetch after it once stopped that), so a relaunch shows it.
+  await tick();
+  expect(written.mock.calls.map(([, v]) => (v as { state: { data: unknown } }).state.data)).toContain('before');
+  written.mockRestore();
 });

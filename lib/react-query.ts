@@ -19,6 +19,7 @@ import {
   setDiscardRefetch,
   setQuerySaver,
   stampOwner,
+  writeOwner,
   type AnyWrite,
 } from '@/lib/keptWrites';
 import { fileStore } from '@/lib/fileStore';
@@ -268,8 +269,16 @@ export function canResendAfterRelaunch(write: Mutation<unknown, Error, unknown, 
 export async function resumeSavedWrites(): Promise<void> {
   const restored = queryClient.getMutationCache().getAll().filter((write) => write.state.status === 'pending');
   if (!restored.length) return;
-  // Stamped with who made them: checked against who's signed in once that's known, and anyone else's dropped.
-  if (restored.some((write) => ownerOf(write as AnyWrite) !== undefined)) await ownerKnown();
+  // Stamped with who made them: sent once who's signed in is known, anyone else's dropped. Not awaited here
+  // when it isn't known yet: the restore waits on this, and auth only settles after it (hooks/useUserCacheSync.ts).
+  if (writeOwner() === undefined && restored.some((write) => ownerOf(write as AnyWrite) !== undefined)) {
+    void ownerKnown().then(() => sendRestored(restored));
+    return;
+  }
+  await sendRestored(restored);
+}
+
+async function sendRestored(restored: Mutation<unknown, Error, unknown, unknown>[]): Promise<void> {
   for (const write of restored) if (madeBySomeoneElse(write as AnyWrite)) queryClient.getMutationCache().remove(write);
   // onlineManager says online until NetInfo's first event, which can land
   // after the restore: ask first, or a write sent with no signal fails and is lost.
