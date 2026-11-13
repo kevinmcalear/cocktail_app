@@ -137,8 +137,6 @@ function RootLayoutNav() {
             <Stack.Screen name="r/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="m/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="e/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="run/[token]" options={{ headerShown: false, title: 'Your run sheet' }} />
-            <Stack.Screen name="takeover/[id]" options={{ headerShown: false, title: 'Takeover' }} />
             <Stack.Screen name="week/index" options={{ headerShown: false }} />
             <Stack.Screen name="week/review" options={{ headerShown: false }} />
             <Stack.Screen name="add-cocktail" options={{ presentation: "modal", headerShown: false }} />

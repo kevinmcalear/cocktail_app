@@ -1,4 +1,5 @@
 import { useRouter, type Href } from 'expo-router';
+import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { PencilState } from '@/components/ds';
@@ -8,7 +9,7 @@ import { WarnNote } from '@/components/screens/takeover/parts';
 import { space } from '@/constants/tokens';
 import { useGuestDrinkAllergens } from '@/hooks/useGuestAllergies';
 import { useMenu } from '@/hooks/useMenus';
-import type { TakeoverGuest } from '@/hooks/useTakeoverGuest';
+import { useTakeoverGuest, type TakeoverGuest } from '@/hooks/useTakeoverGuest';
 import { useTakeoverPlaces, type TakeoverPlace } from '@/hooks/useTakeoverPage';
 import { BACK_BAR_SHOWN } from '@/lib/backBar';
 import { serviceTag } from '@/lib/drinksTab';
@@ -18,6 +19,13 @@ import { TonightHead, TonightLabel } from './TonightParts';
 
 const PLACE_ICON = { house: 'flask', glass: 'wineglass', ice: 'snowflake', bottle: 'place.backbar' } as const satisfies Record<TakeoverPlace['kind'], string>;
 
+/** Tonight for someone on one of the bar's own roles: a takeover's guest gets theirs (in `frame`), anyone else the team's (`children`). */
+export function GuestGate({ barId, barName, roleId, wait, frame, children }: { barId: string; barName: string; roleId: string; wait: ReactNode; frame: (page: ReactNode) => ReactNode; children: ReactNode }) {
+  const { data: guest, isLoading } = useTakeoverGuest(barId, roleId);
+  if (isLoading) return wait;
+  return guest ? frame(<GuestTonight guest={guest} barId={barId} barName={barName} />) : children;
+}
+
 /**
  * The guest bartender's Tonight (Keep-phone guestview): how long they're a
  * guest here, their list for the night (each drink with what's in it and its
@@ -26,7 +34,7 @@ const PLACE_ICON = { house: 'flask', glass: 'wineglass', ice: 'snowflake', bottl
  * (item_locations), while the guest role has that permission and the back
  * bar isn't parked (BACK_BAR_SHOWN).
  */
-export function GuestTonight({ guest, barId, barName }: { guest: TakeoverGuest; barId: string; barName: string }) {
+function GuestTonight({ guest, barId, barName }: { guest: TakeoverGuest; barId: string; barName: string }) {
   const router = useRouter();
   const menu = useMenu(guest.menuId);
   const drinks = (menu.data?.sections ?? []).flatMap((s) => s.drinks);

@@ -186,7 +186,8 @@ export function useInviteProfile(barId: string) {
         p_bar_id: barId,
         p_role_level: p.roleLevel,
         ...(p.roleId ? { p_role_id: p.roleId } : {}),
-        ...(p.note ? { p_note: p.note } : {}),
+        // Left out when empty (undefined isn't sent).
+        p_note: p.note || undefined,
       });
       if (error) throw error;
       return data === true;
