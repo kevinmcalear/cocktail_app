@@ -135,7 +135,7 @@ describe('YouScreen', () => {
     expect(mockPush).toHaveBeenLastCalledWith('/saved');
     await fireEvent.press(screen.getByRole('link', { name: 'Drinks you’ve had. 4' }));
     expect(mockPush).toHaveBeenLastCalledWith('/your-drinks');
-    await fireEvent.press(screen.getByRole('link', { name: 'Credits. 1 drink names you as their maker' }));
+    await fireEvent.press(screen.getByRole('link', { name: 'Credits. 1 drink names you as its maker' }));
     expect(mockPush).toHaveBeenLastCalledWith('/your-drinks?tab=originals');
     await fireEvent.press(screen.getByRole('button', { name: 'Settings' }));
     expect(mockPush).toHaveBeenLastCalledWith('/settings');

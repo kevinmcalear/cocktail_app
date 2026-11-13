@@ -1,11 +1,11 @@
 import { useRouter, type Href } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DsText, Headline, PressableScale, TextLink, useDs } from '@/components/ds';
 import { DrinkThumb, MenuRowFrame } from '@/components/screens/menus/MenuRows';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, space } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { FIFTY_BEST_READ, useBarMenusForYou, useFiftyBest, type BarMenuForYou } from '@/hooks/useBarMenusForYou';
 import { useSavedMenus } from '@/hooks/useKept';
 import { useMyHadDrinks } from '@/hooks/useRankings';
@@ -53,7 +53,7 @@ export function BarMenusForYou({ wide }: { wide: boolean }) {
   const router = useRouter();
   const had = useMyHadDrinks().data ?? [];
   const saved = useSavedMenus().data ?? [];
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow();
   const atBars: ForYouHad[] = had.flatMap((h) => (h.venue ? [{ itemId: h.itemId, name: h.name, score: h.score, barId: h.venue.id }] : []));
   const savedIds = new Set(saved.map((m) => m.editionId));
   const editions = useBarMenusForYou(atBars.map((h) => h.barId)).data ?? [];

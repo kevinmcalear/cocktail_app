@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useCurrentMenuDrinks } from '@/hooks/useCurrentMenuDrinks';
 import { toMenuDrink, useVenueMenus } from '@/hooks/useMenus';
 import { fallbackGlass, type ItemCategory } from '@/lib/itemRoutes';
@@ -43,8 +44,8 @@ export const categoryOf = (kind: string): ItemCategory => CATEGORY[kind] ?? 'Coc
  * the back bar and Study.
  */
 export function useTonight(venueId: string | null) {
-  const { data: venueMenus, isLoading: menusLoading } = useVenueMenus(venueId);
-  const [now] = useState(() => Date.now());
+  const { data: venueMenus, isLoading: menusLoading, dataUpdatedAt: menusAt } = useVenueMenus(venueId);
+  const now = useMenuNow(menusAt);
   const { menus, previous } = useMemo(() => {
     const groups = groupMenus((venueMenus ?? []).filter((m) => !!venueId && m.barId === venueId), now);
     return { menus: groups.on.sort((a, b) => a.createdAt.localeCompare(b.createdAt)), previous: groups.previous };

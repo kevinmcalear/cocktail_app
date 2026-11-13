@@ -1,10 +1,11 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, useBreakpoint, useDs, useGutter } from '@/components/ds';
 import { DRAWN_LIST_WINDOW } from '@/components/ds/SketchDrawing';
 import { space } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import type { MenuLensData } from '@/hooks/useMenuLens';
 import type { MenuDetail } from '@/types/menus';
 
@@ -77,7 +78,7 @@ export function GuestMenuPage({
   const gutter = useGutter();
   const wide = useBreakpoint() !== 'phone';
   const { width } = useWindowDimensions();
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow();
   const drinks = menu.sections.flatMap((s) => s.drinks);
   const model: MenuPageModel = menuPageModel({
     menu,

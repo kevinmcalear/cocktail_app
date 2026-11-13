@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, DateField } from '@/components/ds';
 import { space } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useScheduleMenu } from '@/hooks/useMenuMutations';
 import { menuReadiness, menuStatus, plural } from '@/lib/menus';
 import type { MenuDetail, MenuSummary } from '@/types/menus';
@@ -46,7 +47,7 @@ function startFor(when: When, date: string, now: number): Date | null {
  */
 export function GoLiveSheet({ visible, onClose, menu, others, onDone }: GoLiveSheetProps) {
   const router = useRouter();
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow();
   const planned = menu.plannedStartsAt && Date.parse(menu.plannedStartsAt) > now ? new Date(menu.plannedStartsAt) : null;
   const [when, setWhen] = useState<When>(planned ? 'date' : 'now');
   const [date, setDate] = useState(() => ymd(planned ?? new Date(Date.now() + 7 * 86_400_000)));

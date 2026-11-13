@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cocktailQuery } from '@/hooks/useCocktails';
 import { useViewAs } from '@/hooks/useViewAs';
 import { draftFromSpec, type SourceSpec, type WizardDraft } from '@/lib/drinkWizard';
-import { getPreferredUnit } from '@/store/useSettingsStore';
+import { getLineUnit } from '@/store/useSettingsStore';
 
 /**
  * Loads a classic's spec (the drink page's query, so a page seen before is
@@ -17,7 +17,7 @@ export function useStartFromClassic() {
     mutationFn: async (classicId: string): Promise<Partial<WizardDraft>> => {
       const item = await client.fetchQuery({ ...cocktailQuery(classicId, viewAsRoleLevel), staleTime: 60 * 1000 });
       if (!item) throw new Error('Couldn’t load that spec.');
-      return draftFromSpec(item as SourceSpec, getPreferredUnit());
+      return draftFromSpec(item as SourceSpec, getLineUnit());
     },
   });
 }
@@ -33,6 +33,6 @@ export function useClassicPreview(classicId: string | null) {
     ...cocktailQuery(classicId ?? undefined, viewAsRoleLevel),
     enabled: !!classicId,
     staleTime: 60 * 1000,
-    select: (item) => (item ? draftFromSpec(item as SourceSpec, getPreferredUnit()) : null),
+    select: (item) => (item ? draftFromSpec(item as SourceSpec, getLineUnit()) : null),
   });
 }

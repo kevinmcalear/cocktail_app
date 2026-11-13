@@ -8,6 +8,7 @@ import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { InviteTeamCard, useOpenTeam, useTeamCard } from '@/components/nav/TeamCard';
 import { font, space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
@@ -37,11 +38,11 @@ export function MenusScreen() {
   const { active, isLoading: venuesLoading } = useActiveVenue();
   const home = useMode().mode === 'home';
   const barId = home ? null : (active?.id ?? null);
-  const { data: menus = [], isLoading, error } = useVenueMenus(barId);
+  const { data: menus = [], isLoading, error, dataUpdatedAt: menusAt } = useVenueMenus(barId);
   const caps = useCapabilities(barId);
   const canBuild = Array.isArray(caps.data) && caps.data.includes('menus');
   const { data: opensAt } = useCapabilityOpensAt(barId, 'menus');
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow(menusAt);
   // New → Menu arrives with ?new=1 and opens straight into the new menu sheet.
   const [creating, setCreating] = useState(useLocalSearchParams<{ new?: string }>().new === '1');
   // Anyone can make their own menu; a venue's needs Drink Creator or up.

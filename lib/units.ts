@@ -143,3 +143,12 @@ const OZ_COUNTRIES = new Set(['US', 'LR', 'MM']);
 export function startingBarUnit(country: string | null | undefined): string {
   return country && OZ_COUNTRIES.has(country.toUpperCase()) ? 'oz' : DEFAULT_UNIT;
 }
+
+/**
+ * The unit a new spec line starts in at a bar: the ml or oz you last picked
+ * writing a drink there (Kevin, 12 Nov: per bar, so an oz bar and an ml bar
+ * each keep theirs), else your own Units (`usual`).
+ */
+export function lineUnitAt(lineUnits: Readonly<Record<string, string>> | undefined, barId: string | null | undefined, usual: string): string {
+  return (barId ? lineUnits?.[barId] : undefined) ?? usual;
+}

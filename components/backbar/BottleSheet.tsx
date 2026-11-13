@@ -5,6 +5,7 @@ import { Body, Button, Caption, IngredientThumb } from '@/components/ds';
 import { MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { SettingsRow } from '@/components/screens/settings/SettingsParts';
 import { space } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useBottleSpots } from '@/hooks/useBackBar';
 import { useApplySwap, useSpecCatalog, useSwapSource } from '@/hooks/useBulk';
 import { useVenueMenus } from '@/hooks/useMenus';
@@ -41,7 +42,7 @@ export function BottleSheet({ barId, location, canEditDrinks, onMove, onEdit, on
   const { catalog } = useSpecCatalog();
   const apply = useApplySwap();
   const spots = useBottleSpots(barId);
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow(menus.dataUpdatedAt);
   const [step, setStep] = useState<Step>('menu');
   // Replace puts the new bottle in the old one's spots; Take it off clears them.
   const [goal, setGoal] = useState<'replace' | 'off'>('replace');
