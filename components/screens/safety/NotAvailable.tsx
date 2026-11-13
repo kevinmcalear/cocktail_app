@@ -31,7 +31,7 @@ export function NotAvailable({ what }: { what: keyof typeof WHY }) {
         {signedIn ? (
           <Button label="Discover drinks" onPress={() => router.replace('/discover')} />
         ) : (
-          <Button label="Sign in to find more" onPress={() => router.replace('/auth/login')} />
+          <Button label="Sign in to find more" onPress={() => router.replace('/auth/login?step=email')} />
         )}
       </View>
     </SafetyPage>

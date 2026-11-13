@@ -32,7 +32,7 @@ export function useDrinkActions(item: ActionItem, picture: ItemPicture | null, l
   const start = (sheet: 'rank' | 'made') => {
     if (signedIn) return ageGate.gate(() => setOpen(sheet));
     if (sheet === 'rank') noteRankedSignedOut();
-    router.push('/auth/login');
+    router.push('/auth/login?step=email');
   };
   return {
     rank: () => start('rank'),

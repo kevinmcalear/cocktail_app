@@ -20,7 +20,7 @@ export default function AuthCallback() {
     <EmailLinkGate
       cleanPath="/auth/callback"
       ready={!!session}
-      retryHref="/auth/login"
+      retryHref="/auth/login?step=email"
       retryLabel="Get a new code"
       waitingTitle="Sign in"
       waitingSubtitle="Tap continue to finish signing in."

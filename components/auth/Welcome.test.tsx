@@ -53,3 +53,15 @@ test('I have a link from my bar opens a copied staff link, or says where the lin
   await fireEvent.press(screen.getByRole('button', { name: 'I have a link from my bar' }));
   expect(mockPush).toHaveBeenCalledWith('/v/caretakers?join=abc123');
 });
+
+test('every Sign in in the app goes to the email step; only a first open (and sign-up) shows Welcome', () => {
+  const fs = jest.requireActual<typeof import('fs')>('fs');
+  // Review 12 Nov: every Sign in landed on Welcome. These four mean Welcome on purpose.
+  const welcome = ['app/auth/login.tsx', 'app/auth/sign-up.tsx', 'components/auth/SignInScreen.tsx', 'lib/onboarding.ts'];
+  const files = (dir: string): string[] =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(`${dir}/${e.name}`) : /\.tsx?$/.test(e.name) ? [`${dir}/${e.name}`] : []));
+  const hits = ['app', 'components', 'hooks', 'lib']
+    .flatMap(files)
+    .filter((f) => !/\.(test|check)\./.test(f) && !welcome.includes(f) && /['"]\/auth\/login['"]/.test(fs.readFileSync(f, 'utf8')));
+  expect(hits).toEqual([]);
+});

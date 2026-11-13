@@ -102,7 +102,7 @@ function IngredientPage({ ingredient, lines, drinks, bottles, pictures: batchPic
   const { data: shelf } = useShelf();
   const shelfEdit = useShelfEdit();
   const onShelf = !!shelf?.includes(ingredient.id);
-  const toggleShelf = () => (!userId ? router.push('/auth/login') : onShelf ? shelfEdit.remove.mutate(ingredient.id) : shelfEdit.add.mutate(ingredient.id));
+  const toggleShelf = () => (!userId ? router.push('/auth/login?step=email') : onShelf ? shelfEdit.remove.mutate(ingredient.id) : shelfEdit.add.mutate(ingredient.id));
   // Pairs with's own query: with pairings there's a map to open, from the … (Kevin's C12, 3 Nov).
   const paired = (usePairings([ingredient.id], { limit: 8 }).data?.length ?? 0) > 0;
   const flavorMapOn = useVenueFeature('flavorMap');

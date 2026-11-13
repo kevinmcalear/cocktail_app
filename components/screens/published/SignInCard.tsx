@@ -16,7 +16,7 @@ export function SignInCard({ title = 'Want to see more?', text, replace = false 
       <Headline role="heading">{title}</Headline>
       <Body tone="muted">{text}</Body>
       <View style={styles.actions}>
-        <Button label="Sign in" onPress={() => (replace ? router.replace('/auth/login') : router.push('/auth/login'))} />
+        <Button label="Sign in" onPress={() => (replace ? router.replace('/auth/login?step=email') : router.push('/auth/login?step=email'))} />
       </View>
     </Surface>
   );

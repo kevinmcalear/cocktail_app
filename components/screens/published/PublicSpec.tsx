@@ -159,7 +159,7 @@ function Teaser({ names, parts }: { names: string[]; parts?: ReactNode }) {
             The spec shows when you sign in. It’s free, and it saves the drink and your ranks too.
           </Body>
         </View>
-        <Button label="Sign in to see the full spec" size="lg" onPress={() => router.push('/auth/login')} />
+        <Button label="Sign in to see the full spec" size="lg" onPress={() => router.push('/auth/login?step=email')} />
       </Surface>
     </View>
   );

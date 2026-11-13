@@ -70,7 +70,7 @@ function PublicActions({ id, name, barId, picture, releaseId }: { id: string; na
         onPress={() => {
           if (signedIn) return ageGate.gate(() => setRanking(true));
           noteRankedSignedOut();
-          router.push('/auth/login');
+          router.push('/auth/login?step=email');
         }}
       />
       {ranking ? <RankFlow item={{ id, name, bar_id: barId }} picture={picture} onClose={() => setRanking(false)} /> : null}

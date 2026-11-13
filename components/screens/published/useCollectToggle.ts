@@ -29,7 +29,7 @@ export function useCollectToggle(target: CollectTarget, live = true) {
 
   const toggle = () => {
     setError(null);
-    if (!signedIn) return router.push('/auth/login');
+    if (!signedIn) return router.push('/auth/login?step=email');
     // Letting go of a drink keeps your day and note (a had): saving it again brings them back.
     if (mine) return collect.mutate({ kind: target.kind === 'drink' ? 'remove-drink' : 'remove-release', id: mine.id });
     if (age.underAge) return setError('Saving drinks needs you to be of drinking age where you live.');
