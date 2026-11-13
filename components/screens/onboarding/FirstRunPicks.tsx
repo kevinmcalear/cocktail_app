@@ -1,18 +1,18 @@
 import type { Href } from 'expo-router';
-import { useMemo, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { BackbarTheme, Body, Button, Caption, DrinkDrawingFor, DsText, GlassButton, Head, PressableScale, Title, useDs, useGutter } from '@/components/ds';
+import { Button, Caption, DrinkDrawingFor, DsText, PressableScale, useDs } from '@/components/ds';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { displayFaces, layout, radius, space } from '@/constants/tokens';
+import { displayFaces, radius, space } from '@/constants/tokens';
 import { useFirstRunDrinks, type FirstRunDrink } from '@/hooks/useFirstRunDrinks';
 import { withAlpha } from '@/lib/color';
-import { useSaveSwipes, useWantDeck } from '@/hooks/useWantDeck';
-import { flavourWords, methodWord, pairsFor, PICKS, SWIPES, tasteFrom } from '@/lib/firstRun';
+import { flavourWords, methodWord, pairsFor, PICKS } from '@/lib/firstRun';
+import type { Profile } from '@/lib/flavor';
 
+import { FirstRunPage } from './FirstRunPage';
 import { COPY } from './onboardingCopy';
-import { SwipeCard } from './TenSwipes';
+import { SwipesStep } from './TenSwipes';
 import { YourTasteStep } from './YourTaste';
 
 /** The board's tile drawing, 86 tall, from the 160 tile drawing. */
@@ -20,9 +20,10 @@ const TILE_ART = 86;
 
 /**
  * First run's taste, in place of the old questions (canvas Prod-first 3 to 5,
- * decided 31 Oct): Which have you had? (pick five), Which do you like more?
- * (three pairs from the five), then Your taste. Back steps through them, and
- * from the first leaves for the step before. The five and their pairs are
+ * decided 31 Oct, with Loop-want's ten swipes after the pairs): Which have you
+ * had? (pick five), Which do you like more? (three pairs from the five), ten
+ * swipes, then Your taste. Back, and the system back, step through them; from
+ * the first, Back leaves for the step before. The five and their pairs are
  * fixed at Next, so nothing that loads later moves a pair under them.
  */
 export function FirstRunTaste({
@@ -43,27 +44,19 @@ export function FirstRunTaste({
   const [winners, setWinners] = useState<string[]>([]);
   const [chosen, setChosen] = useState<{ picks: FirstRunDrink[]; pairs: [string, string][] } | null>(null);
   const [stage, setStage] = useState<'five' | 'pairs' | 'swipes' | 'taste'>('five');
+  const [wanted, setWanted] = useState<(Profile | null)[]>([]);
+  // Setup is ending: the system back stops stepping back so setup's own way out can go.
+  const [leaving, setLeaving] = useState(false);
+  const leave = (to?: Href) => {
+    setLeaving(true);
+    onDone(to);
+  };
   const byId = useMemo(() => new Map((chosen?.picks ?? []).map((d) => [d.id, d])), [chosen]);
-  // The ten swipes: drinks they haven't picked, each answered Want (true) or Not for me.
-  const pickedIds = useMemo(() => (chosen?.picks ?? []).map((d) => d.id), [chosen]);
-  const deck = useWantDeck(SWIPES, pickedIds, !!chosen);
-  const [answers, setAnswers] = useState<{ id: string; want: boolean }[]>([]);
-  const saveSwipes = useSaveSwipes();
-  const wanted = useMemo(() => answers.filter((a) => a.want).map((a) => deck.drinks.find((d) => d.id === a.id)?.profile ?? null), [answers, deck.drinks]);
-  const noDeck = !!deck.error || (deck.ready && !deck.drinks.length);
+  const swiped = useCallback((w: (Profile | null)[]) => (setWanted(w), setStage('taste')), []);
 
-  if ((stage === 'taste' || (stage === 'swipes' && noDeck)) && chosen)
-    return (
-      <YourTasteStep
-        picks={chosen.picks}
-        winners={winners}
-        wanted={wanted}
-        home={home}
-        pending={pending}
-        error={finishError}
-        onDone={onDone}
-      />
-    );
+  if (stage === 'taste' && chosen)
+    return <YourTasteStep picks={chosen.picks} winners={winners} wanted={wanted} home={home} pending={pending} error={finishError} onDone={leave} />;
+  if (stage === 'swipes' && chosen) return <SwipesStep picks={chosen.picks} winners={winners} onBack={() => (setWinners((w) => w.slice(0, -1)), setStage('pairs'))} onDone={swiped} />;
   if (stage === 'pairs' && chosen) {
     const at = winners.length;
     const [a, b] = chosen.pairs[at] ?? [];
@@ -71,7 +64,6 @@ export function FirstRunTaste({
     const choose = (id: string) => {
       setWinners((w) => [...w, id]);
       if (at + 1 < chosen.pairs.length) return;
-      setAnswers([]);
       setStage('swipes');
     };
     const left = a ? byId.get(a) : undefined;
@@ -88,25 +80,6 @@ export function FirstRunTaste({
       </FirstRunPage>
     );
   }
-  if (stage === 'swipes' && chosen) {
-    const at = answers.length;
-    const card = deck.drinks[at];
-    const back = () => (at ? setAnswers((a) => a.slice(0, -1)) : (setWinners((w) => w.slice(0, -1)), setStage('pairs')));
-    const answer = (want: boolean) => {
-      if (!card) return;
-      const next = [...answers, { id: card.id, want }];
-      setAnswers(next);
-      if (next.length < deck.drinks.length) return;
-      // Kept as they go on to Your taste: a miss here costs the deck, not their taste.
-      saveSwipes.mutate({ wants: next.filter((a) => a.want).map((a) => a.id), passes: next.filter((a) => !a.want).map((a) => a.id) });
-      setStage('taste');
-    };
-    return (
-      <FirstRunPage onBack={back} barTitle={`${Math.min(at + 1, deck.drinks.length)} of ${deck.drinks.length || SWIPES}`}>
-        {card ? <SwipeCard key={card.id} drink={card} taste={tasteFrom(chosen.picks, winners, wanted)} onAnswer={answer} /> : <Caption tone="muted">One moment…</Caption>}
-      </FirstRunPage>
-    );
-  }
   const full = picked.length >= PICKS && ready;
   const next = () => {
     if (!full) return;
@@ -119,14 +92,7 @@ export function FirstRunTaste({
   const stuck = !!error || (!isLoading && drinks.length < PICKS);
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= PICKS ? p : [...p, id]));
   return (
-    <FirstRunPage
-      onBack={onBack}
-      onNext={next}
-      nextReady={full}
-      size="head"
-      title={COPY.taste.title}
-      sub={COPY.taste.intro ?? ''}
-    >
+    <FirstRunPage onBack={onBack} held={!leaving} onNext={next} nextReady={full} size="head" title={COPY.taste.title} sub={COPY.taste.intro ?? ''}>
       {error ? <Button label="Try again" variant="secondary" onPress={() => void refetch()} /> : null}
       {isLoading ? <Caption tone="muted">One moment…</Caption> : null}
       <View style={styles.grid}>
@@ -135,71 +101,9 @@ export function FirstRunTaste({
         ))}
       </View>
       <Button label={full ? 'Next' : `${picked.length} of ${PICKS}`} variant={full ? 'ink' : 'secondary'} size="lg" disabled={!full} onPress={next} />
-      {stuck ? <Button label={pending ? 'Saving…' : 'Not now'} variant="ghost" disabled={pending} onPress={() => onDone()} /> : null}
+      {stuck ? <Button label={pending ? 'Saving…' : 'Not now'} variant="ghost" disabled={pending} onPress={() => leave()} /> : null}
       {stuck && finishError ? <Caption tone="accent">{finishError}</Caption> : null}
     </FirstRunPage>
-  );
-}
-
-/**
- * The board's page for these steps: a glass Back, the round Next when there is
- * one (drawn filled even before it can go, as the board draws it), the title
- * and its line, left. The board's 38 and 36 titles take the nearest type
- * steps: head (40) and title (34).
- */
-function FirstRunPage({
-  onBack,
-  onNext,
-  nextReady,
-  size = 'title',
-  barTitle,
-  title,
-  sub,
-  children,
-}: {
-  onBack?: () => void;
-  onNext?: () => void;
-  nextReady?: boolean;
-  size?: 'head' | 'title';
-  /** The top bar's own title ("3 of 10"), for a page with no big title. */
-  barTitle?: string;
-  title?: string;
-  sub?: string;
-  children: ReactNode;
-}) {
-  const Heading = size === 'head' ? Head : Title;
-  const ds = useDs();
-  const gutter = useGutter();
-  const insets = useSafeAreaInsets();
-  return (
-    <BackbarTheme>
-      <View style={[styles.fill, { backgroundColor: ds.c.ground }]}>
-        <ScrollView contentContainerStyle={{ paddingTop: insets.top + space.sm, paddingBottom: insets.bottom + space.xxl, paddingHorizontal: gutter }}>
-          <View style={styles.column}>
-            <View style={styles.top}>
-              {onBack ? <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={onBack} /> : <View />}
-              {barTitle ? (
-                <DsText variant="headline" role="heading" align="center" pointerEvents="none" style={styles.barTitle}>
-                  {barTitle}
-                </DsText>
-              ) : null}
-              {onNext ? (
-                <PressableScale role="button" accessibilityLabel="Next" aria-disabled={!nextReady} onPress={onNext} style={[styles.next, { backgroundColor: ds.accentFill.fill }]}>
-                  <IconSymbol name="checkmark" size={20} color={ds.accentFill.text} />
-                </PressableScale>
-              ) : null}
-            </View>
-            {title ? (
-              <View style={styles.head}>
-                <Heading>{title}</Heading>
-                {sub ? <Body tone="muted">{sub}</Body> : null}
-              </View>
-            ) : null}
-            {children}
-          </View>
-        </ScrollView>
-      </View>
-    </BackbarTheme>
   );
 }
 
@@ -275,12 +179,6 @@ function OrDisc() {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  column: { width: '100%', maxWidth: 560, alignSelf: 'center', gap: space.lg },
-  top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: layout.minTapTarget },
-  barTitle: { position: 'absolute', left: 0, right: 0 },
-  next: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  head: { gap: space.md, paddingTop: space.xl, paddingBottom: space.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm + 2 },
   tile: { flexBasis: '30%', flexGrow: 1, alignItems: 'center', gap: space.xs + 2, paddingTop: space.sm, paddingBottom: space.sm + 2, paddingHorizontal: space.xs, borderRadius: radius.card },
   tileArt: { width: '100%', height: TILE_ART, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },

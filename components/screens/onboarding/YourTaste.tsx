@@ -16,8 +16,11 @@ import { STYLES } from '@/lib/drinkStyles';
 import type { Profile } from '@/lib/flavor';
 import { tasteFrom, tasteLine } from '@/lib/firstRun';
 import { formatDistance, nearMeArea, usesMiles } from '@/lib/nearMe';
+import { startingBarUnit } from '@/lib/units';
 import { useLastPlace } from '@/store/useLastPlace';
 import { useSettingsStore } from '@/store/useSettingsStore';
+
+import { useStepBack } from './FirstRunPage';
 
 /** Bars the board lists under the line. */
 const BARS = 3;
@@ -29,7 +32,9 @@ const BARS = 3;
  * found, else anywhere: first run never asks for location), and Start. Start
  * saves the taste (user_prefs.taste_answers, what the old questions saved)
  * and, with no unit picked yet, takes oz where the phone's region measures in
- * miles and ml elsewhere (units are asked later, when they matter).
+ * ounces (lib/units startingBarUnit, as a new bar's unit) and ml elsewhere
+ * (units are asked later, when they matter). The system back does nothing
+ * here: the board draws no Back.
  */
 type Props = {
   picks: readonly FirstRunDrink[];
@@ -81,10 +86,12 @@ function Page({ picks, winners, wanted, home, pending, error, onDone }: Props) {
   // One tap ends setup: Start and a bar row can't both run it, nor one twice.
   const [started, setStarted] = useState(false);
   const busy = save.isPending || pending || (started && !error);
+  useStepBack(!started, undefined);
   const start = (to?: Href) => {
     if (busy) return;
     setStarted(true);
-    if (home && !units) setUnits(miles ? 'oz' : 'ml');
+    // The same rule as a new bar's unit (lib/units startingBarUnit): oz in the United States, ml in Britain.
+    if (home && !units) setUnits(startingBarUnit(null, getLocales()[0]?.regionCode));
     // A taste that won't save is no reason to hold them here: You's taste page asks again.
     if (Object.keys(taste).length) save.mutate(taste, { onSettled: () => onDone(to) });
     else onDone(to);

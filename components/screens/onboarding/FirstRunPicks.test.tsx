@@ -24,13 +24,33 @@ jest.mock('@/hooks/useFirstRunDrinks', () => ({ useFirstRunDrinks: () => ({ drin
 jest.mock('@/hooks/useFlavor', () => ({ useSaveTasteAnswers: () => ({ mutate: mockSaveTaste, isPending: false }) }));
 const mockSaveSwipes = jest.fn();
 const mockDeck = Array.from({ length: 10 }, (_, i) => ({ id: `w${i}`, name: `Swipe ${i}`, ingredients: 'Gin, lime', tint: null, profile: profile({ bitter: 0.9 }) }));
+// The live deck drops a drink once it's wanted, as want_deck does after a save.
+let mockDeckNow = mockDeck;
 jest.mock('@/hooks/useWantDeck', () => ({
-  useWantDeck: () => ({ drinks: mockDeck, ready: true, error: null, refetch: jest.fn() }),
+  useWantDeck: () => ({ drinks: mockDeckNow, ready: true, error: null, refetch: jest.fn() }),
   useSaveSwipes: () => ({ mutate: mockSaveSwipes, isPending: false }),
 }));
 jest.mock('@/hooks/useDiscoverHome', () => ({
   useBestNear: () => ({ rows: [{ barId: 'b1', barHandle: 'attaboy', barName: 'Attaboy', name: 'Negroni', distanceKm: 1.2 }], onMenus: [] }),
 }));
+let mockRegion = 'US';
+jest.mock('expo-localization', () => ({ getLocales: () => [{ regionCode: mockRegion }] }));
+let mockAge = 'confirmed';
+jest.mock('@/hooks/useAgeCheck', () => ({ useAgeCheck: () => ({ data: mockAge }) }));
+jest.mock('@/components/screens/safety/AgeGateSheetLazy', () => {
+  const { Pressable } = jest.requireActual('react-native');
+  return {
+    AgeGateSheet: ({ onClose, onConfirmed }: { onClose: () => void; onConfirmed: () => void }) => (
+      <>
+        <Pressable role="button" accessibilityLabel="Confirm my age" onPress={onConfirmed} />
+        <Pressable role="button" accessibilityLabel="Not now, age" onPress={onClose} />
+      </>
+    ),
+  };
+});
+// The system back: the latest page's handler, held or not.
+let mockSystemBack: { held: boolean; back: () => void } = { held: false, back: () => {} };
+jest.mock('expo-router', () => ({ usePreventRemove: (held: boolean, back: () => void) => void (mockSystemBack = { held, back }) }));
 jest.mock('@/components/screens/tonight/TonightParts', () => ({ TonightSky: () => null }));
 jest.mock('@/components/screens/home/BarMark', () => ({ BarMark: () => null }));
 jest.mock('@/components/ds', () => ({ ...jest.requireActual('@/components/ds'), DrinkDrawingFor: () => null }));
@@ -41,6 +61,12 @@ beforeEach(() => {
   mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSettled?.());
   useSettingsStore.setState({ units: null });
   mockOffered = mockDrinks;
+  mockAge = 'confirmed';
+  mockRegion = 'US';
+  mockDeckNow = mockDeck;
+  mockSaveSwipes.mockImplementation(({ wants }: { wants: string[] }) => {
+    if (wants.length) mockDeckNow = mockDeck.filter((d) => !wants.includes(d.id));
+  });
 });
 
 /** The ten swipes after the pairs: Want on the first three, Not for me on the rest. */
@@ -134,17 +160,30 @@ test('Your taste has no Back (the board draws none); a bartender gets no unit gu
   const skip = jest.fn();
   await renderWithProviders(<FirstRunTaste home pending={false} onDone={skip} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
-  expect(skip).toHaveBeenCalledWith();
+  expect(skip).toHaveBeenCalledWith(undefined);
 });
 
-test('the ten swipes save Wants and passes, count Wants in the taste, and Back undoes the last', async () => {
-  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+async function toSwipes() {
   await pickFive();
   await fireEvent.press(screen.getAllByRole('button', { name: 'Next' })[0]);
   for (let i = 0; i < 3; i++) {
     const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
     await fireEvent.press(cards[0]);
   }
+}
+
+test('the ten swipes save passes and Wants apart, the Wants count in the saved taste, and Back undoes the last', async () => {
+  // The same picks and pairs with no Wants: the taste without them.
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  for (let i = 0; i < 10; i++) await fireEvent.press(screen.getByRole('button', { name: 'Not for me' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  const without = mockSaveTaste.mock.calls[0][0].bitter;
+  mockSaveTaste.mockClear();
+  mockSaveSwipes.mockClear();
+
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
   expect(screen.getByText('1 of 10')).toBeTruthy();
   expect(screen.getByText('Swipe right for Want, left for Not for me.')).toBeTruthy();
   expect(screen.getByLabelText(/^Swipe 0, \d+% match$/)).toBeTruthy();
@@ -152,8 +191,57 @@ test('the ten swipes save Wants and passes, count Wants in the taste, and Back u
   await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByText('1 of 10')).toBeTruthy();
   await swipeTen();
-  expect(mockSaveSwipes).toHaveBeenCalledWith({ wants: ['w0', 'w1', 'w2'], passes: ['w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9'] });
+  expect(mockSaveSwipes).toHaveBeenCalledWith({ wants: [], passes: ['w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9'] });
+  expect(mockSaveSwipes).toHaveBeenCalledWith({ wants: ['w0', 'w1', 'w2'], passes: [] });
   await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
-  // Three bitter Wants pull the taste to bitter.
-  expect(mockSaveTaste.mock.calls[0][0].bitter).toBeGreaterThan(0.3);
+  // Review 12 Nov: once the Wants saved, the deck changed and they fell out of the saved taste.
+  expect(mockSaveTaste.mock.calls[0][0].bitter).toBeGreaterThan(without);
+});
+
+test('with no confirmed age the Wants wait for the age check; passes save either way; a refusal saves no Wants', async () => {
+  mockAge = 'unknown';
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  await swipeTen();
+  expect(mockSaveSwipes).toHaveBeenCalledTimes(1);
+  expect(mockSaveSwipes).toHaveBeenCalledWith({ wants: [], passes: ['w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9'] });
+  await fireEvent.press(screen.getByRole('button', { name: 'Not now, age' }));
+  expect(mockSaveSwipes).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole('button', { name: 'Start' })).toBeTruthy();
+
+  mockSaveSwipes.mockClear();
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  await swipeTen();
+  await fireEvent.press(screen.getByRole('button', { name: 'Confirm my age' }));
+  expect(mockSaveSwipes).toHaveBeenLastCalledWith({ wants: ['w0', 'w1', 'w2'], passes: [] });
+});
+
+test('the system back steps back a step, does nothing on Your taste, and lets setup go once it ends', async () => {
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  expect(mockSystemBack.held).toBe(true);
+  await fireEvent.press(screen.getByRole('button', { name: 'Want' }));
+  await mockSystemBack.back();
+  expect(await screen.findByText('1 of 10')).toBeTruthy();
+  await swipeTen();
+  expect(mockSystemBack.held).toBe(true);
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  expect(mockSystemBack.held).toBe(false);
+});
+
+test('an empty deck goes straight on to Your taste', async () => {
+  mockDeckNow = [];
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  expect(await screen.findByRole('button', { name: 'Start' })).toBeTruthy();
+});
+
+test('a British home user reads ml (the country rule in lib/units)', async () => {
+  mockRegion = 'GB';
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  for (let i = 0; i < 10; i++) await fireEvent.press(screen.getByRole('button', { name: 'Not for me' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  expect(useSettingsStore.getState().units).toBe('ml');
 });

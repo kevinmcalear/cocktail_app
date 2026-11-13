@@ -59,22 +59,21 @@ export function useWantDeck(count: number, skip: readonly string[], enabled = tr
       }),
     [rows, flavors.data, sketches.byId]
   );
-  return { drinks, ready: !deck.isPending && !flavors.isPending, error: deck.error, refetch: deck.refetch };
+  // With no rows the flavours never load (nothing to ask for): the deck is ready, and empty.
+  return { drinks, ready: !deck.isPending && (!rows.length || !flavors.isPending), error: deck.error, refetch: deck.refetch };
 }
 
 /**
- * The swipes' answers: a Want is a want_list row (source 'swipe'), a Not for
- * me a drink_passes row, so the deck never shows that drink again. Answering
- * the same drink twice keeps the first.
+ * The swipes' answers: a Not for me is a drink_passes row, so the deck never
+ * shows that drink again; a Want a want_list row (source 'swipe'), which,
+ * like all collecting, the database takes only from a confirmed age
+ * (SwipesStep asks first). Passes save first and apart, so a refused Want
+ * never takes them with it. Answering the same drink twice keeps the first.
  */
 export function useSaveSwipes() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ wants, passes }: { wants: readonly string[]; passes: readonly string[] }) => {
-      if (wants.length) {
-        const { error } = await supabase.from('want_list').insert(wants.map((id) => ({ kind: 'drink', item_id: id, source: 'swipe' })));
-        if (error && error.code !== '23505') throw error;
-      }
       if (passes.length) {
         const { error } = await supabase.from('drink_passes').upsert(
           passes.map((id) => ({ item_id: id })),
@@ -82,10 +81,12 @@ export function useSaveSwipes() {
         );
         if (error) throw error;
       }
+      if (wants.length) {
+        const { error } = await supabase.from('want_list').insert(wants.map((id) => ({ kind: 'drink', item_id: id, source: 'swipe' })));
+        if (error && error.code !== '23505') throw error;
+      }
     },
-    onSettled: () => {
-      void qc.invalidateQueries({ queryKey: ['want-deck'] });
-      void qc.invalidateQueries({ queryKey: ['collection'] });
-    },
+    onSettled: () => void qc.invalidateQueries({ queryKey: ['collection'] }),
+    onError: () => {},
   });
 }
