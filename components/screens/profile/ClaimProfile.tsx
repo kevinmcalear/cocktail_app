@@ -26,7 +26,7 @@ export function ClaimProfile({ profile, label = 'Claim this profile' }: { profil
   const wide = useBreakpoint() !== 'phone';
   const asDialog = sheetIsDialog && wide;
   const [dialog, setDialog] = useState(false);
-  const open = () => (userId && asDialog ? setDialog(true) : router.push((userId ? `/p/${profile.id}/claim` : '/auth/login') as Href));
+  const open = () => (userId && asDialog ? setDialog(true) : router.push((userId ? `/p/${profile.id}/claim` : '/auth/login?step=email') as Href));
   const claimDialog = dialog ? <ClaimDialog profileRef={profile.id} name={profile.display_name} onClose={() => setDialog(false)} /> : null;
   if (latest?.status === 'pending') {
     return (

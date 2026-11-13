@@ -162,7 +162,7 @@ export function SignInBand({ text, title = 'Rank it, save it, find where it’s 
         <Headline role="heading">{title}</Headline>
         <Body tone="muted">{text}</Body>
       </View>
-      <Button label="Sign in" variant="secondary" onPress={() => router.push('/auth/login')} />
+      <Button label="Sign in" variant="secondary" onPress={() => router.push('/auth/login?step=email')} />
     </Surface>
   );
 }

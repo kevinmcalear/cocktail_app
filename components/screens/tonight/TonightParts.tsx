@@ -1,16 +1,13 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Caption, DrinkDrawingFor, Head, DsText, PressableScale, TextLink, useDs, type IconName } from '@/components/ds';
+import { TintSky } from '@/components/ds/TintSky';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, palateHues, radius, space } from '@/constants/tokens';
 import { useItemSketch } from '@/hooks/useItemSketch';
 import { withAlpha } from '@/lib/color';
 import { liquidOf } from '@/lib/sketch/types';
-
-/** How far down the sky reaches before it is the page's ground. */
-const SKY = 440;
 
 /** A main tab's head (Prod-today, Prod-drinks, Prod-discover): the eyebrow in small capitals, and the tab's name in the display face at 40. */
 export function TonightHead({ eyebrow, title = 'Tonight', onEyebrow, eyebrowLabel }: { eyebrow: string; title?: string; onEyebrow?: () => void; eyebrowLabel?: string }) {
@@ -60,20 +57,10 @@ function useDrinkTint(itemId: string): string | null {
  * `cap`: its top edge only, unfaded, for ScrollSky's pull.
  */
 export function TonightSky({ ids, cap }: { ids: readonly string[]; cap?: boolean }) {
-  const ds = useDs();
   const a = useDrinkTint(ids[0] ?? '');
   const b = useDrinkTint(ids[1] ?? '');
   const c = useDrinkTint(ids[2] ?? '');
-  const tints = [a, b, c].filter((t): t is string => !!t);
-  if (!tints.length) return null;
-  const strength = ds.scheme === 'dark' ? 0.22 : 0.16;
-  const colors = (tints.length === 1 ? [tints[0], tints[0]] : tints).map((t) => withAlpha(t, strength)) as [string, string, ...string[]];
-  return (
-    <View pointerEvents="none" style={[styles.sky, cap && { backgroundColor: ds.c.ground }]}>
-      <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
-      {cap ? null : <LinearGradient colors={[withAlpha(ds.c.ground, 0), ds.c.ground]} style={StyleSheet.absoluteFill} />}
-    </View>
-  );
+  return <TintSky tints={[a, b, c].filter((t): t is string => !!t)} cap={cap} />;
 }
 
 /** A list's name under its eyebrow, with a chevron: tap opens the list. */
@@ -145,7 +132,6 @@ const styles = StyleSheet.create({
   head: { gap: space.xs, paddingBottom: space.lg },
   caps: { textTransform: 'uppercase', letterSpacing: 1.2 },
   label: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
-  sky: { position: 'absolute', left: 0, right: 0, top: 0, height: SKY },
   listHead: { gap: space.xs, alignSelf: 'flex-start' },
   listName: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   tile: { width: 132, gap: space.xs },

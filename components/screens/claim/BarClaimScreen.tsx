@@ -45,7 +45,7 @@ export function ClaimBody({ profileRef, onBack }: { profileRef: string; onBack?:
       return (
         <View style={styles.gap}>
           <Body>{`Sign in to claim ${profile.display_name}. Use your work email if you have one at the ${claimPlace(profile.kind)}’s own domain: that’s the quickest way.`}</Body>
-          <Button label="Sign in" onPress={() => router.push('/auth/login' as Href)} style={styles.hug} />
+          <Button label="Sign in" onPress={() => router.push('/auth/login?step=email' as Href)} style={styles.hug} />
         </View>
       );
     }

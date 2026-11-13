@@ -14,12 +14,14 @@ env:
     commands:
       - openLink: cocktailapp-dev://expo-development-client/?url=${METRO_URL}&disableOnboarding=1
 # A cold Metro can take minutes to bundle.
+# Signed out, a first open shows Welcome (components/auth/Welcome.tsx); the
+# email link signs in from there, as from the email step ("Sign in").
 - extendedWaitUntil:
-    visible: "Sign in|Tonight"
+    visible: "Continue with email|Sign in|Tonight"
     timeout: 300000
 - runFlow:
     when:
-      visible: "Sign in"
+      visible: "Continue with email|Sign in"
     commands:
       - openLink: ${SIGN_IN_LINK}
       # The email link asks before it signs in (components/auth/EmailLinkGate.tsx).

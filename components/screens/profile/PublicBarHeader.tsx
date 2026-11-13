@@ -78,7 +78,7 @@ export function PublicBarActions({ profile, signedIn = false }: { profile: Profi
       showMessage("Couldn't share the link", url);
     }
   };
-  const signIn = () => router.push('/auth/login');
+  const signIn = () => router.push('/auth/login?step=email');
   const grow = wide ? undefined : styles.grow;
   return (
     <View style={[styles.actions, wide ? styles.wrap : null]}>
