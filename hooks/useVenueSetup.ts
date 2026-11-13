@@ -7,7 +7,6 @@ import { CLAIM_COLUMNS, changedProfiles, type ProfileClaim } from '@/hooks/usePr
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { supabase } from '@/lib/supabase';
 import { DEFAULT_UNIT, startingBarUnit } from '@/lib/units';
-import { useSettingsStore } from '@/store/useSettingsStore';
 import type { HeldSetup } from '@/store/useVenueSetup';
 
 /** A bar page on the Find your bar step, with what the card shows. */
@@ -133,10 +132,11 @@ export function useCreateSetupVenue() {
       });
       if (error) throw error;
       const id = (data as { id: string }).id;
-      // A new venue starts on its owner's own unit, else its bar page's country's, else this phone's (a United
-      // States bar on oz). Only here, as it's made: a bar that has a unit keeps it, whatever setup does after.
+      // A new venue starts on its bar page's country's unit, else this phone's region's (a United States bar on
+      // oz); the owner's own Units are not a pick for the bar. Only here, as it's made: a bar that has a unit
+      // keeps it, whatever setup does after.
       // It's made by now, so a miss here leaves ml, which its Admins change in its settings.
-      const unit = startingBarUnit(useSettingsStore.getState().units, country ?? getLocales()[0]?.regionCode);
+      const unit = startingBarUnit(country ?? getLocales()[0]?.regionCode);
       if (unit !== DEFAULT_UNIT) await supabase.from('bars').update({ spec_unit: unit }).eq('id', id);
       return id;
     },

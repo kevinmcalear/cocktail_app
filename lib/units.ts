@@ -133,11 +133,13 @@ export function tidyAmount(text: string): string {
 const OZ_COUNTRIES = new Set(['US', 'LR', 'MM']);
 
 /**
- * The unit a new bar starts on: its owner's own Units when they picked one,
- * else its country's (a United States bar pours in oz, so 2 oz never reads as
- * 60 ml), else ml. Its Admins change it in the bar's settings.
+ * The unit a new bar starts on: its country's (a United States bar pours in
+ * oz, so 2 oz never reads as 60 ml), else ml. A unit its owner has for
+ * themselves is not a pick for the bar (it may be a guess from their phone,
+ * review 12 Nov: a British home user's New York bar got ml), so it plays no
+ * part; the bar's Admins pick its unit in its settings. Also a home user's
+ * first guess, from their phone's region.
  */
-export function startingBarUnit(own: string | null | undefined, country: string | null | undefined): string {
-  if (own) return own;
+export function startingBarUnit(country: string | null | undefined): string {
   return country && OZ_COUNTRIES.has(country.toUpperCase()) ? 'oz' : DEFAULT_UNIT;
 }

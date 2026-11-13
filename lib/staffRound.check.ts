@@ -14,12 +14,10 @@ assert.deepEqual(readyDestination(true), { href: '/', label: 'Go to Tonight', wh
 assert.equal(readyDestination(false).href, '/drinks');
 assert.equal(readyDestination(false).label, 'Go to Drinks');
 
-// A new bar's unit: the owner's own, else its country's (walk 12 Nov: a New York bar started on ml, 2 oz read 60 ml).
-assert.equal(startingBarUnit(null, 'US'), 'oz');
-assert.equal(startingBarUnit(null, 'us'), 'oz');
-assert.equal(startingBarUnit(null, 'GB'), 'ml');
-assert.equal(startingBarUnit(null, null), 'ml');
-assert.equal(startingBarUnit('ml', 'US'), 'ml');
-assert.equal(startingBarUnit('cl', 'FR'), 'cl');
+// A new bar's unit: its country's (walk 12 Nov: a New York bar started on ml, 2 oz read 60 ml).
+assert.equal(startingBarUnit('US'), 'oz');
+assert.equal(startingBarUnit('us'), 'oz');
+assert.equal(startingBarUnit('GB'), 'ml');
+assert.equal(startingBarUnit(null), 'ml');
 
 console.log('staffRound ok');

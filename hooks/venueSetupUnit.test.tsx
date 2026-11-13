@@ -36,12 +36,14 @@ test('a new bar starts on its country’s unit: a New York bar on oz, though the
   expect(mockUpdate).toHaveBeenCalledWith({ spec_unit: 'oz' }, 'new-bar');
 });
 
-test('the owner’s own unit wins, and a bar on ml writes nothing', async () => {
-  useSettingsStore.setState({ units: 'cl' });
+// Second look 12 Nov: a guess is not a pick. A British home user (ml guessed from the phone) who makes a
+// New York bar gets oz; the owner's own Units never become the bar's.
+test('the owner’s own unit is not the bar’s: a British home user’s New York bar starts on oz, a London one writes nothing', async () => {
+  useSettingsStore.setState({ units: 'ml' });
   await create('US');
-  expect(mockUpdate).toHaveBeenCalledWith({ spec_unit: 'cl' }, 'new-bar');
+  expect(mockUpdate).toHaveBeenCalledWith({ spec_unit: 'oz' }, 'new-bar');
   mockUpdate.mockReset();
-  useSettingsStore.setState({ units: null });
+  useSettingsStore.setState({ units: 'oz' });
   await create('GB');
   expect(mockUpdate).not.toHaveBeenCalled();
 });
