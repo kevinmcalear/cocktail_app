@@ -22,6 +22,12 @@ const mockDrinks = names.map((name, i) => ({
 let mockOffered = mockDrinks;
 jest.mock('@/hooks/useFirstRunDrinks', () => ({ useFirstRunDrinks: () => ({ drinks: mockOffered, ready: true, isLoading: false, error: null, refetch: jest.fn() }) }));
 jest.mock('@/hooks/useFlavor', () => ({ useSaveTasteAnswers: () => ({ mutate: mockSaveTaste, isPending: false }) }));
+const mockSaveSwipes = jest.fn();
+const mockDeck = Array.from({ length: 10 }, (_, i) => ({ id: `w${i}`, name: `Swipe ${i}`, ingredients: 'Gin, lime', tint: null, profile: profile({ bitter: 0.9 }) }));
+jest.mock('@/hooks/useWantDeck', () => ({
+  useWantDeck: () => ({ drinks: mockDeck, ready: true, error: null, refetch: jest.fn() }),
+  useSaveSwipes: () => ({ mutate: mockSaveSwipes, isPending: false }),
+}));
 jest.mock('@/hooks/useDiscoverHome', () => ({
   useBestNear: () => ({ rows: [{ barId: 'b1', barHandle: 'attaboy', barName: 'Attaboy', name: 'Negroni', distanceKm: 1.2 }], onMenus: [] }),
 }));
@@ -31,10 +37,19 @@ jest.mock('@/components/ds', () => ({ ...jest.requireActual('@/components/ds'), 
 
 beforeEach(() => {
   mockSaveTaste.mockReset();
+  mockSaveSwipes.mockReset();
   mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSettled?.());
   useSettingsStore.setState({ units: null });
   mockOffered = mockDrinks;
 });
+
+/** The ten swipes after the pairs: Want on the first three, Not for me on the rest. */
+async function swipeTen() {
+  for (let i = 0; i < 10; i++) {
+    expect(screen.getByText(`${i + 1} of 10`)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: i < 3 ? 'Want' : 'Not for me' }));
+  }
+}
 
 async function pickFive() {
   for (const name of ['Negroni', 'House Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin']) await fireEvent.press(screen.getByRole('checkbox', { name }));
@@ -62,6 +77,7 @@ test('five picks, three pairs, then the taste they make, saved on Start', async 
     for (const c of cards) expect(['Negroni', 'House Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin'].some((n) => c.props.accessibilityLabel.startsWith(n))).toBe(true);
     await fireEvent.press(cards.find((c) => c.props.accessibilityLabel.startsWith('Negroni')) ?? cards[0]);
   }
+  await swipeTen();
 
   expect(screen.getByText(/^You like it .+\.$/)).toBeTruthy();
   expect(screen.getByText('Attaboy')).toBeTruthy();
@@ -93,6 +109,7 @@ test('a bar under the taste ends setup on its page', async () => {
     const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
     await fireEvent.press(cards[0]);
   }
+  await swipeTen();
   await fireEvent.press(screen.getByRole('link', { name: /^Attaboy\./ }));
   expect(onDone).toHaveBeenCalledWith('/p/attaboy');
 });
@@ -106,6 +123,7 @@ test('Your taste has no Back (the board draws none); a bartender gets no unit gu
     const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
     await fireEvent.press(cards[0]);
   }
+  await swipeTen();
   expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
   await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
   await fireEvent.press(screen.getByRole('button', { name: /Start|Saving/ }));
@@ -117,4 +135,25 @@ test('Your taste has no Back (the board draws none); a bartender gets no unit gu
   await renderWithProviders(<FirstRunTaste home pending={false} onDone={skip} />);
   await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
   expect(skip).toHaveBeenCalledWith();
+});
+
+test('the ten swipes save Wants and passes, count Wants in the taste, and Back undoes the last', async () => {
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await pickFive();
+  await fireEvent.press(screen.getAllByRole('button', { name: 'Next' })[0]);
+  for (let i = 0; i < 3; i++) {
+    const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
+    await fireEvent.press(cards[0]);
+  }
+  expect(screen.getByText('1 of 10')).toBeTruthy();
+  expect(screen.getByText('Swipe right for Want, left for Not for me.')).toBeTruthy();
+  expect(screen.getByLabelText(/^Swipe 0, \d+% match$/)).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Want' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByText('1 of 10')).toBeTruthy();
+  await swipeTen();
+  expect(mockSaveSwipes).toHaveBeenCalledWith({ wants: ['w0', 'w1', 'w2'], passes: ['w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9'] });
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  // Three bitter Wants pull the taste to bitter.
+  expect(mockSaveTaste.mock.calls[0][0].bitter).toBeGreaterThan(0.3);
 });

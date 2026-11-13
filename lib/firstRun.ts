@@ -18,6 +18,8 @@ export const FIRST_RUN_LABELS: Partial<Record<(typeof FIRST_RUN_DRINKS)[number],
 /** How many to pick, and how many pairs to ask. */
 export const PICKS = 5;
 export const PAIRS = 3;
+/** Then ten drinks to swipe Want or Not for me on (board Loop-want, "In onboarding"). */
+export const SWIPES = 10;
 
 export interface PickedDrink {
   id: string;
@@ -84,11 +86,12 @@ const ASKED = QUICK_QUESTIONS.map((q) => q.dim);
 
 /**
  * The taste the picks and pairs add up to: each picked drink once, each
- * pair's winner twice more, averaged per dimension and rounded to two places.
- * Empty when no picked drink has a flavour profile yet.
+ * pair's winner twice more, each drink swiped Want once, averaged per
+ * dimension and rounded to two places. Empty when no picked drink has a
+ * flavour profile yet.
  */
-export function tasteFrom(picks: readonly PickedDrink[], winners: readonly string[]): Taste {
-  const weighted: { profile: Profile; w: number }[] = [];
+export function tasteFrom(picks: readonly PickedDrink[], winners: readonly string[], wanted: readonly (Profile | null)[] = []): Taste {
+  const weighted: { profile: Profile; w: number }[] = wanted.flatMap((profile) => (profile ? [{ profile, w: 1 }] : []));
   for (const p of picks) {
     if (!p.profile) continue;
     weighted.push({ profile: p.profile, w: 1 + 2 * winners.filter((id) => id === p.id).length });

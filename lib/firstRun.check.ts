@@ -39,4 +39,14 @@ assert.equal(tasteLine({ sour: 0.7, sweet: 0.4 }, ['shake', 'stir']), 'You like 
 assert.equal(tasteLine({ sour: 0.7 }, []), 'You like it sour.');
 assert.equal(tasteLine({}, []), null);
 
+// Each drink swiped Want counts once more in the taste.
+{
+  const flat = Object.fromEntries(DIMENSIONS.map((d) => [d, 0])) as Profile;
+  const bitter = { ...flat, bitter: 1 } as Profile;
+  const plain = tasteFrom([{ id: 'a', method: null, profile: flat }], []);
+  const withWant = tasteFrom([{ id: 'a', method: null, profile: flat }], [], [bitter, null]);
+  assert.equal(plain.bitter, 0);
+  assert.equal(withWant.bitter, 0.5);
+}
+
 console.log('firstRun ok');

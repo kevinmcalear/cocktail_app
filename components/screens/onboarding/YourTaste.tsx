@@ -13,6 +13,7 @@ import { useBestNear } from '@/hooks/useDiscoverHome';
 import { useSaveTasteAnswers } from '@/hooks/useFlavor';
 import type { FirstRunDrink } from '@/hooks/useFirstRunDrinks';
 import { STYLES } from '@/lib/drinkStyles';
+import type { Profile } from '@/lib/flavor';
 import { tasteFrom, tasteLine } from '@/lib/firstRun';
 import { formatDistance, nearMeArea, usesMiles } from '@/lib/nearMe';
 import { useLastPlace } from '@/store/useLastPlace';
@@ -33,6 +34,8 @@ const BARS = 3;
 type Props = {
   picks: readonly FirstRunDrink[];
   winners: readonly string[];
+  /** The flavours of the drinks swiped Want. */
+  wanted: readonly (Profile | null)[];
   /** Home bartenders get a unit from their region; bartenders follow their bar's. */
   home: boolean;
   /** Setup is finishing, and what went wrong if it didn't. */
@@ -49,12 +52,12 @@ export function YourTasteStep(props: Props) {
   );
 }
 
-function Page({ picks, winners, home, pending, error, onDone }: Props) {
+function Page({ picks, winners, wanted, home, pending, error, onDone }: Props) {
   const ds = useDs();
   const gutter = useGutter();
   const insets = useSafeAreaInsets();
   const save = useSaveTasteAnswers();
-  const taste = useMemo(() => tasteFrom(picks, winners), [picks, winners]);
+  const taste = useMemo(() => tasteFrom(picks, winners, wanted), [picks, winners, wanted]);
   // The drinks liked more, most-chosen first: the hero is the favourite, the sky their colours.
   const liked = useMemo(() => {
     const count = (id: string) => winners.filter((w) => w === id).length;

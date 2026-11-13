@@ -8,9 +8,11 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { displayFaces, layout, radius, space } from '@/constants/tokens';
 import { useFirstRunDrinks, type FirstRunDrink } from '@/hooks/useFirstRunDrinks';
 import { withAlpha } from '@/lib/color';
-import { flavourWords, methodWord, pairsFor, PICKS } from '@/lib/firstRun';
+import { useSaveSwipes, useWantDeck } from '@/hooks/useWantDeck';
+import { flavourWords, methodWord, pairsFor, PICKS, SWIPES, tasteFrom } from '@/lib/firstRun';
 
 import { COPY } from './onboardingCopy';
+import { SwipeCard } from './TenSwipes';
 import { YourTasteStep } from './YourTaste';
 
 /** The board's tile drawing, 86 tall, from the 160 tile drawing. */
@@ -40,14 +42,22 @@ export function FirstRunTaste({
   const [picked, setPicked] = useState<string[]>([]);
   const [winners, setWinners] = useState<string[]>([]);
   const [chosen, setChosen] = useState<{ picks: FirstRunDrink[]; pairs: [string, string][] } | null>(null);
-  const [stage, setStage] = useState<'five' | 'pairs' | 'taste'>('five');
+  const [stage, setStage] = useState<'five' | 'pairs' | 'swipes' | 'taste'>('five');
   const byId = useMemo(() => new Map((chosen?.picks ?? []).map((d) => [d.id, d])), [chosen]);
+  // The ten swipes: drinks they haven't picked, each answered Want (true) or Not for me.
+  const pickedIds = useMemo(() => (chosen?.picks ?? []).map((d) => d.id), [chosen]);
+  const deck = useWantDeck(SWIPES, pickedIds, !!chosen);
+  const [answers, setAnswers] = useState<{ id: string; want: boolean }[]>([]);
+  const saveSwipes = useSaveSwipes();
+  const wanted = useMemo(() => answers.filter((a) => a.want).map((a) => deck.drinks.find((d) => d.id === a.id)?.profile ?? null), [answers, deck.drinks]);
+  const noDeck = !!deck.error || (deck.ready && !deck.drinks.length);
 
-  if (stage === 'taste' && chosen)
+  if ((stage === 'taste' || (stage === 'swipes' && noDeck)) && chosen)
     return (
       <YourTasteStep
         picks={chosen.picks}
         winners={winners}
+        wanted={wanted}
         home={home}
         pending={pending}
         error={finishError}
@@ -60,7 +70,9 @@ export function FirstRunTaste({
     const back = () => (at ? setWinners((w) => w.slice(0, -1)) : setStage('five'));
     const choose = (id: string) => {
       setWinners((w) => [...w, id]);
-      if (at + 1 >= chosen.pairs.length) setStage('taste');
+      if (at + 1 < chosen.pairs.length) return;
+      setAnswers([]);
+      setStage('swipes');
     };
     const left = a ? byId.get(a) : undefined;
     const right = b ? byId.get(b) : undefined;
@@ -73,6 +85,25 @@ export function FirstRunTaste({
             <OrDisc />
           </View>
         ) : null}
+      </FirstRunPage>
+    );
+  }
+  if (stage === 'swipes' && chosen) {
+    const at = answers.length;
+    const card = deck.drinks[at];
+    const back = () => (at ? setAnswers((a) => a.slice(0, -1)) : (setWinners((w) => w.slice(0, -1)), setStage('pairs')));
+    const answer = (want: boolean) => {
+      if (!card) return;
+      const next = [...answers, { id: card.id, want }];
+      setAnswers(next);
+      if (next.length < deck.drinks.length) return;
+      // Kept as they go on to Your taste: a miss here costs the deck, not their taste.
+      saveSwipes.mutate({ wants: next.filter((a) => a.want).map((a) => a.id), passes: next.filter((a) => !a.want).map((a) => a.id) });
+      setStage('taste');
+    };
+    return (
+      <FirstRunPage onBack={back} barTitle={`${Math.min(at + 1, deck.drinks.length)} of ${deck.drinks.length || SWIPES}`}>
+        {card ? <SwipeCard key={card.id} drink={card} taste={tasteFrom(chosen.picks, winners, wanted)} onAnswer={answer} /> : <Caption tone="muted">One moment…</Caption>}
       </FirstRunPage>
     );
   }
@@ -120,7 +151,8 @@ function FirstRunPage({
   onBack,
   onNext,
   nextReady,
-  size,
+  size = 'title',
+  barTitle,
   title,
   sub,
   children,
@@ -128,9 +160,11 @@ function FirstRunPage({
   onBack?: () => void;
   onNext?: () => void;
   nextReady?: boolean;
-  size: 'head' | 'title';
-  title: string;
-  sub: string;
+  size?: 'head' | 'title';
+  /** The top bar's own title ("3 of 10"), for a page with no big title. */
+  barTitle?: string;
+  title?: string;
+  sub?: string;
   children: ReactNode;
 }) {
   const Heading = size === 'head' ? Head : Title;
@@ -144,16 +178,23 @@ function FirstRunPage({
           <View style={styles.column}>
             <View style={styles.top}>
               {onBack ? <GlassButton accessibilityLabel="Back" icon="chevron.left" onPress={onBack} /> : <View />}
+              {barTitle ? (
+                <DsText variant="headline" role="heading" align="center" pointerEvents="none" style={styles.barTitle}>
+                  {barTitle}
+                </DsText>
+              ) : null}
               {onNext ? (
                 <PressableScale role="button" accessibilityLabel="Next" aria-disabled={!nextReady} onPress={onNext} style={[styles.next, { backgroundColor: ds.accentFill.fill }]}>
                   <IconSymbol name="checkmark" size={20} color={ds.accentFill.text} />
                 </PressableScale>
               ) : null}
             </View>
-            <View style={styles.head}>
-              <Heading>{title}</Heading>
-              <Body tone="muted">{sub}</Body>
-            </View>
+            {title ? (
+              <View style={styles.head}>
+                <Heading>{title}</Heading>
+                {sub ? <Body tone="muted">{sub}</Body> : null}
+              </View>
+            ) : null}
             {children}
           </View>
         </ScrollView>
@@ -237,6 +278,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   column: { width: '100%', maxWidth: 560, alignSelf: 'center', gap: space.lg },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: layout.minTapTarget },
+  barTitle: { position: 'absolute', left: 0, right: 0 },
   next: { width: layout.minTapTarget, height: layout.minTapTarget, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
   head: { gap: space.md, paddingTop: space.xl, paddingBottom: space.sm },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm + 2 },
