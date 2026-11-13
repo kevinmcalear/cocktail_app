@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { useSignedIn } from '@/ctx/AuthContext';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
@@ -25,8 +26,8 @@ export function useSearchMine() {
   );
   const { data: capabilities } = useCapabilities(venue?.id ?? null);
   // R&D trials stay out of the venue's search, as they stay out of Library's All.
-  const { data: menus } = useVenueMenus(venue?.id ?? null);
-  const [now] = useState(() => Date.now());
+  const { data: menus, dataUpdatedAt: menusAt } = useVenueMenus(venue?.id ?? null);
+  const now = useMenuNow(menusAt);
   const hiddenIds = useMemo(() => (venue && menus ? menuDrinks(menus, now, null).rnd : []), [venue, menus, now]);
   return {
     label: venue?.name ?? 'Your drinks',

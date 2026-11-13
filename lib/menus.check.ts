@@ -3,13 +3,21 @@ import assert from 'node:assert/strict';
 import { toDay } from '@/lib/collection';
 import type { MenuSectionDetail, MenuSummary } from '@/types/menus';
 
-import { bandLoopJump, bothPrices, printedPrice, cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, homeNightTag, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine, namesLine } from './menus';
+import { bandLoopJump, bothPrices, printedPrice, cardWhen, EMPTY_PLAN, previewSections, isSouthern, menuNameIdeas, nextMondays, savedLine, seasonOf, nightLine, venuePlan, comingUpLine, sectionLine, draftLine, dotLine, editedWhen, isOneNightMenu, isOneNightRun, previousLine, groupMenus, homeMenuLine, homeNight, homeNightTag, ingredientLine, menuAsText, readingName, sentenceLine, menuDateLine, menuReadiness, menuPageNow, menuStatus, newDrinkCount, newDrinkIds, sectionRule, tonightLine, namesLine } from './menus';
 
 const now = Date.parse('2026-09-25T18:00:00Z');
 const d = (iso: string) => new Date(iso).toISOString();
 
 // --- status mirrors private.menu_on_now ---
 assert.equal(menuStatus({ startsAt: null, endsAt: null }, now), 'draft');
+// "Put it on now": the server starts it after the page opened; the refetch that brings it back reads it as on.
+{
+  const opened = now;
+  const serverStart = now + 1500;
+  const refetched = serverStart + 200;
+  assert.equal(menuStatus({ startsAt: d(new Date(serverStart).toISOString()), endsAt: null }, menuPageNow(opened, refetched)), 'on');
+  assert.equal(menuPageNow(opened, 0), opened); // nothing fetched yet, or an old persisted copy
+}
 assert.equal(menuStatus({ startsAt: d('2026-10-03T19:00:00Z'), endsAt: null }, now), 'upcoming');
 assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: null }, now), 'on');
 assert.equal(menuStatus({ startsAt: d('2026-09-01T00:00:00Z'), endsAt: d('2026-12-01T00:00:00Z') }, now), 'on');

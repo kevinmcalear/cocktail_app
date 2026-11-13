@@ -20,7 +20,18 @@ jest.mock('@/hooks/useOnboarding', () => ({
   useSaveWorkplace: () => ({ mutate: jest.fn(), isPending: false, error: null }),
   useFinishOnboarding: () => ({ mutate: mockFinish, isPending: false, error: null }),
 }));
-jest.mock('@/hooks/useFlavor', () => ({ useSaveTasteAnswers: () => ({ mutate: jest.fn(), isPending: false, error: null }) }));
+// The first-run drinks are tested in FirstRunPicks.test.tsx: here a stand-in with its Back.
+jest.mock('./FirstRunPicks', () => {
+  const { Pressable, Text } = jest.requireActual('react-native');
+  return {
+    FirstRunTaste: ({ onBack }: { onBack?: () => void }) => (
+      <>
+        <Text>Pick five drinks you like</Text>
+        {onBack ? <Pressable role="button" accessibilityLabel="Back" onPress={onBack} /> : null}
+      </>
+    ),
+  };
+});
 jest.mock('@/hooks/useProfiles', () => ({
   useFindNamesakes: () => async () => mockNamesakes,
   useNamesakes: () => ({ data: mockNamesakes }),
@@ -72,7 +83,7 @@ test('after Claim sent, no path makes a second profile', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
   // Making drinks skips Find (they've seen Claim sent) and the career steps.
   await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at a bar' }));
-  expect(screen.getByText('What do you like to drink?')).toBeTruthy();
+  expect(screen.getByText('Pick five drinks you like')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
   await fireEvent.press(screen.getByRole('button', { name: 'I love drinks' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Back' }));

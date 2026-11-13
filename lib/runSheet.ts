@@ -10,7 +10,8 @@
  */
 
 import { barSection, isMixer } from './barSections';
-import { isGarnishUnit, MAX_SERVES } from './batch';
+import { MAX_SERVES } from './batch';
+import { isGarnish } from './garnish';
 import { bottlesFor, bottlesText } from './bottles';
 import { keepsFor } from './batchPrep';
 import { PART_JOINS, type StoredPart } from './drinkParts';
@@ -202,9 +203,10 @@ export function swappedRecipe(drink: Pick<RunDrink, 'id' | 'recipe'>, swaps: Run
   });
 }
 
-const isGarnishLine = (line: Pick<SpecLine, 'amount' | 'unit'>) => {
+// An egg white counted "1 each" goes in the drink: in its table, not its garnish (walk 12 Nov).
+const isGarnishLine = (line: Pick<SpecLine, 'amount' | 'unit' | 'name'>) => {
   const q = toQuantity(line.amount, line.unit);
-  return !!q && q.kind === 'count' && isGarnishUnit(q.unit);
+  return !!q && q.kind === 'count' && isGarnish(q.unit, line.name);
 };
 
 function perServe(line: SpecLine): string {
@@ -239,7 +241,7 @@ function fruitFor(name: string, quantities: Quantity[]): string | null {
 }
 
 function groupFor(id: string, name: string, quantities: Quantity[], input: RunSheetInput): GroupKey {
-  if (quantities.length && quantities.every((q) => q.kind === 'count' && isGarnishUnit(q.unit))) return 'garnish';
+  if (quantities.length && quantities.every((q) => q.kind === 'count' && isGarnish(q.unit, name))) return 'garnish';
   if (input.houseMade[id]) return 'preps';
   const f = input.items[id];
   const section = barSection({ name, kind: f?.kind, role: f?.role, abv: f?.abv });

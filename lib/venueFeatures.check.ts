@@ -88,7 +88,7 @@ const ENTRY: Record<VenueFeatureKey, readonly string[]> = {
     'components/techniques/TechnicalIngredientCard.tsx',
     'components/screens/make/MakeSteps.tsx',
   ],
-  libraryExtras: ['components/screens/drinks/useStaffDrinks.ts', 'components/search/SearchPanel.tsx'],
+  libraryExtras: ['components/screens/drinks/useStaffDrinks.ts', 'components/search/SearchPanel.tsx', 'components/screens/addIngredient/AddBottle.tsx'],
   advanced: ['app/settings/bar/[id]/ice.tsx', 'app/settings/bar/[id]/tools.tsx', 'components/bar/VenueSettingsLinks.tsx', 'components/screens/venueSetup/KitStep.tsx', 'components/screens/venue/GlasswareScreen.tsx', 'hooks/useGlassFill.ts'],
 };
 

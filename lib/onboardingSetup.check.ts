@@ -3,33 +3,30 @@ import assert from 'node:assert/strict';
 
 import { jobYears, monthLabel, stepProgress } from './onboarding';
 
-// Counted along the path they're on: before they answer, the short way (name, hospitality, taste, units, bring).
-assert.deepEqual(stepProgress('name'), { at: 1, of: 5, label: 'Step 1 of 5' });
-assert.deepEqual(stepProgress('hospitality', false, ['name']), { at: 2, of: 5, label: 'Step 2 of 5' });
+// Counted along the path they're on: before they answer, the short way (name, hospitality, taste).
+assert.deepEqual(stepProgress('name'), { at: 1, of: 3, label: 'Step 1 of 3' });
+assert.deepEqual(stepProgress('hospitality', false, ['name']), { at: 2, of: 3, label: 'Step 2 of 3' });
 // Yes: the career steps count from here.
-assert.deepEqual(stepProgress('find', false, ['name', 'hospitality']), { at: 3, of: 10, label: 'Step 3 of 10' });
-assert.deepEqual(stepProgress('work', false, ['name', 'hospitality', 'find']), { at: 4, of: 10, label: 'Step 4 of 10' });
-assert.deepEqual(stepProgress('drinks', false, ['name', 'hospitality', 'find', 'work', 'past', 'menus']), { at: 7, of: 10, label: 'Step 7 of 10' });
-assert.deepEqual(stepProgress('units', false, ['name', 'hospitality', 'find', 'work', 'past', 'menus', 'drinks', 'taste']), { at: 9, of: 10, label: 'Step 9 of 10' });
+assert.deepEqual(stepProgress('find', false, ['name', 'hospitality']), { at: 3, of: 8, label: 'Step 3 of 8' });
+assert.deepEqual(stepProgress('work', false, ['name', 'hospitality', 'find']), { at: 4, of: 8, label: 'Step 4 of 8' });
+assert.deepEqual(stepProgress('drinks', false, ['name', 'hospitality', 'find', 'work', 'past', 'menus']), { at: 7, of: 8, label: 'Step 7 of 8' });
+assert.deepEqual(stepProgress('taste', false, ['name', 'hospitality', 'find', 'work', 'past', 'menus', 'drinks']), { at: 8, of: 8, label: 'Step 8 of 8' });
 // A claim skips the career steps.
-assert.deepEqual(stepProgress('find', false, ['name', 'hospitality'], 'claim'), { at: 3, of: 6, label: 'Step 3 of 6' });
-assert.deepEqual(stepProgress('taste', false, ['name', 'hospitality', 'find']), { at: 4, of: 6, label: 'Step 4 of 6' });
-// Home cooks: taste and units are steps 3 and 4, never after "Step 4 of 4".
-assert.deepEqual(stepProgress('taste', false, ['name', 'hospitality']), { at: 3, of: 5, label: 'Step 3 of 5' });
-assert.deepEqual(stepProgress('units', false, ['name', 'hospitality', 'taste']), { at: 4, of: 5, label: 'Step 4 of 5' });
+assert.deepEqual(stepProgress('find', false, ['name', 'hospitality'], 'claim'), { at: 3, of: 4, label: 'Step 3 of 4' });
+assert.deepEqual(stepProgress('taste', false, ['name', 'hospitality', 'find']), { at: 4, of: 4, label: 'Step 4 of 4' });
+// Home cooks: taste is step 3, the last (units come later).
+assert.deepEqual(stepProgress('taste', false, ['name', 'hospitality']), { at: 3, of: 3, label: 'Step 3 of 3' });
 // The owner's Find your bar and Add your bar start the bar's setup: no count (venue setup counts from there).
 assert.equal(stepProgress('bar', false, ['name', 'hospitality'], 'new'), null);
 assert.equal(stepProgress('addbar', false, ['name', 'hospitality', 'bar']), null);
 // "Is this you?" shares the name's number, and the steps after it don't shift.
 // Back at the name for a taken handle: still step 1.
-assert.deepEqual(stepProgress('name', false, ['name', 'hospitality', 'bar']), { at: 1, of: 5, label: 'Step 1 of 5' });
-assert.deepEqual(stepProgress('you', false, ['name']), { at: 1, of: 5, label: 'Step 1 of 5' });
-assert.deepEqual(stepProgress('hospitality', false, ['name', 'you']), { at: 2, of: 5, label: 'Step 2 of 5' });
-assert.deepEqual(stepProgress('taste', false, ['name', 'you', 'hospitality']), { at: 3, of: 5, label: 'Step 3 of 5' });
-// Bring in: the bar alone; its title carries "Last step".
-assert.deepEqual(stepProgress('bring', false, ['name', 'hospitality', 'taste', 'units']), { at: 5, of: 5, label: null });
+assert.deepEqual(stepProgress('name', false, ['name', 'hospitality', 'bar']), { at: 1, of: 3, label: 'Step 1 of 3' });
+assert.deepEqual(stepProgress('you', false, ['name']), { at: 1, of: 3, label: 'Step 1 of 3' });
+assert.deepEqual(stepProgress('hospitality', false, ['name', 'you']), { at: 2, of: 3, label: 'Step 2 of 3' });
+assert.deepEqual(stepProgress('taste', false, ['name', 'you', 'hospitality']), { at: 3, of: 3, label: 'Step 3 of 3' });
 // A declined invite isn't a step.
-assert.deepEqual(stepProgress('name', false, ['invite']), { at: 1, of: 5, label: 'Step 1 of 5' });
+assert.deepEqual(stepProgress('name', false, ['invite']), { at: 1, of: 3, label: 'Step 1 of 3' });
 assert.equal(stepProgress('invite'), null);
 
 // The invited path counts its own three; the third is the app itself.

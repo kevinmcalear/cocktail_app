@@ -175,26 +175,33 @@ export function searchIngredients<T extends IngredientRow>(
   if (!q) return [];
   const { aliases = [], coreIds = new Set<string>(), limit = 6 } = opts;
   const same = sameIngredient(query, rows, aliases);
-  const aliasHits = new Set(aliases.filter((a) => a.key.startsWith(q)).map((a) => a.item_id));
+  // Rows an alias starting with what's typed finds (Yellow Chartreuse is "chartreuse jaune"); see `len` below.
+  const aliasHits = new Map<string, string[]>();
+  for (const a of aliases) if (a.key.startsWith(q)) aliasHits.set(a.item_id, [...(aliasHits.get(a.item_id) ?? []), a.key]);
   const words = q.split(' ').map((w) => ({ w, twin: numberTwin(w) }));
   // One plain word is already found by "contains"; more words, or a number, need the word check.
   const byWord = words.length > 1 || words.some((x) => x.twin !== null);
   const index = indexOf(rows);
   const own = byWord ? wordsOf(index) : [];
-  const scored: { r: T; s: number }[] = [];
+  const scored: { r: T; s: number; len: number }[] = [];
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i];
     if (r === same) continue;
     const k = index.keys[i];
     const starts = k.startsWith(q) || aliasHits.has(r.id);
+    // Shorter first. An alias that is the start of the row's own name is its short name ("tanqueray" for
+    // Tanqueray London Dry Gin) and counts; any other alias only finds the row, or "chartreuse 1605"
+    // would put that Élixir above Yellow Chartreuse and "havana 7" above plain Havana Club.
+    const short = (aliasHits.get(r.id) ?? []).filter((a) => k === a || k.startsWith(`${a} `)).map((a) => a.length);
+    const len = Math.min((r.name ?? '').length, ...short);
     const contains = !starts && k.includes(q);
     const every = !starts && !contains && byWord && hasEveryWord(own[i], words);
     if (!starts && !contains && !every) continue;
     if (r.hide_from_search && k !== q) continue;
     // Lower is better: start before contain before every word, core before the rest, then shorter.
-    scored.push({ r, s: (starts ? 0 : contains ? 2 : 4) + (coreIds.has(r.id) ? 0 : 1) });
+    scored.push({ r, s: (starts ? 0 : contains ? 2 : 4) + (coreIds.has(r.id) ? 0 : 1), len });
   }
-  scored.sort((a, b) => a.s - b.s || (a.r.name ?? '').length - (b.r.name ?? '').length);
+  scored.sort((a, b) => a.s - b.s || a.len - b.len);
   return [...(same ? [same] : []), ...scored.map((x) => x.r)].slice(0, limit);
 }
 

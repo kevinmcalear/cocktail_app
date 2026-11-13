@@ -7,7 +7,7 @@ import { WebHead } from '@/components/WebHead';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useStaffRound } from '@/hooks/useStaffRound';
-import { firstName, houseMadeLine } from '@/lib/staffRound';
+import { firstName, houseMadeLine, roundNote } from '@/lib/staffRound';
 
 import { RoundNote, StepGroup, type StepRowData } from './StepGroup';
 
@@ -88,7 +88,7 @@ function Round() {
             <Body tone="muted">Three things, about ten minutes.</Body>
           </View>
           {r.isLoading ? <PencilState kind="loading" title="Getting tonight’s menu" compact /> : <StepGroup rows={rows} label="Your first round" />}
-          <RoundNote icon="person.2" text={`${r.setter ?? 'Your bar'} set these for new bartenders.`} />
+          <RoundNote icon="person.2" text={roundNote(active.name)} />
           <Button label={move.label} variant="ink" size="lg" onPress={move.go} />
         </View>
       </ScrollView>

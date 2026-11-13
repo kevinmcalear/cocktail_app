@@ -13,7 +13,7 @@ import { useSetDrinkPrice, useSetMenuDrinkPrice } from '@/hooks/useDrinkCost';
 import { useMenuCosting, type MenuCostRow } from '@/hooks/useMenuCosting';
 import { useMenu } from '@/hooks/useMenus';
 import { usePricingSettings } from '@/hooks/usePricing';
-import { formatPct, margin, menuSummary, targetsLine, targetStatus, underLabel, type Targets, type TaxRule } from '@/lib/costing';
+import { costKnown, formatPct, margin, menuSummary, targetsLine, targetStatus, type Targets, type TaxRule, underLabel } from '@/lib/costing';
 import { andList } from '@/lib/makers';
 import { formatPrice, printedPrice } from '@/lib/menus';
 import { formatMoney, priceMinor, priceText } from '@/lib/money';
@@ -56,7 +56,7 @@ function Page({ menuId }: { menuId: string }) {
   const currency = settings?.currency ?? null;
   const drinks = (rows ?? []).filter((r) => r.itemType === 'cocktail');
   const summary = menuSummary(
-    drinks.map((r) => ({ costMinor: r.cost && !(r.cost.total_minor === 0 && r.cost.missing > 0) ? r.cost.total_minor : null, priceMinor: priceMinor(printedPrice(r), currency), missing: r.cost?.missing ?? 0 })),
+    drinks.map((r) => ({ costMinor: r.cost && costKnown(r.cost) ? r.cost.total_minor : null, priceMinor: priceMinor(printedPrice(r), currency), missing: r.cost?.missing ?? 0 })),
     targets,
     tax
   );
@@ -155,7 +155,7 @@ function Row({ row, menuId, menuName, wide, tax, targets, currency, money }: { r
   const usualMinor = priceMinor(usual, currency);
   const minor = priceMinor(typed, currency);
   // A drink whose every line is unpriced has no cost yet, not a cost of nothing.
-  const costMinor = row.cost && !(row.cost.total_minor === 0 && row.cost.missing > 0) ? row.cost.total_minor : null;
+  const costMinor = row.cost && costKnown(row.cost) ? row.cost.total_minor : null;
   const m = costMinor == null ? null : margin(costMinor, minor, tax);
   const target = costMinor == null ? null : targetStatus(costMinor, minor, targets, tax);
   // Marked only once it has a price: an unpriced drink isn't under anything yet.

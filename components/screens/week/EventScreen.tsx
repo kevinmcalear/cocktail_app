@@ -6,6 +6,7 @@ import { Body, BrandProvider, Button, Caption, DsText, PressableScale, TextLink,
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { ItemMoreMenu } from '@/components/screens/drink/ItemMoreMenu';
 import { font, radius, space } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useBarPlace, useDeleteEvent, useEventDraft, useWeekEvent, useWeekEventBrand } from '@/hooks/useWeek';
@@ -50,12 +51,12 @@ function EventPage({ id }: { id: string }) {
   const caps = useCapabilities(event?.barId);
   const canEdit = Array.isArray(caps.data) && caps.data.includes('menus');
   const draft = useEventDraft(canEdit ? id : null);
-  const { data: menus = [] } = useVenueMenus(canEdit ? (event?.barId ?? undefined) : undefined);
+  const { data: menus = [], dataUpdatedAt: menusAt } = useVenueMenus(canEdit ? (event?.barId ?? undefined) : undefined);
   const remove = useDeleteEvent();
   const [editing, setEditing] = useState(false);
   const barPlace = useBarPlace(event?.barProfileId);
   const directions = directionsUrl(barPlace.data, Platform.OS === 'ios' || (Platform.OS === 'web' && isApplePlatform()));
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow(menusAt);
   const color = useDotColor();
   const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
 

@@ -24,9 +24,12 @@ export function BarUnitSync() {
   const { active } = useActiveVenue();
   const known = hydrated && !loading && (!user || !!bars);
   const unit = !known ? undefined : !user || !active ? null : active.unit;
+  const barId = !known ? undefined : !user || !active ? null : active.id;
   useEffect(() => {
     const s = useSettingsStore.getState();
     if (unit !== undefined && (unit !== s.barUnit || !s.unitsChecked)) s.setBarUnit(unit);
-  }, [unit]);
+    // Whose last-picked line unit new lines start in (getLineUnit).
+    if (barId !== undefined && barId !== s.barId) s.setBarId(barId);
+  }, [unit, barId]);
   return null;
 }

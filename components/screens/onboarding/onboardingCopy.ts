@@ -19,18 +19,7 @@ export const COPY: Record<OnboardingStep, { title: string; intro?: string }> = {
     title: 'Cocktails you worked on',
     intro: 'A drink you made or helped make. It shows as a suggested credit. A closed bar can still be where it started.',
   },
-  taste: {
-    title: 'What do you like to drink?',
-    intro: 'A few quick answers start your palate. Every drink you rank shapes it from there.',
-  },
+  // The first of first run's three taste steps (FirstRunPicks); the pairs and Your taste carry their own words.
+  taste: { title: 'Which have you had?', intro: 'Pick five you know. We learn your taste from them, nothing else to fill in.' },
   units: { title: 'How do you measure?', intro: 'New specs, and the amounts you read. You can change this in Settings.' },
-  bring: {
-    title: 'Bring your bar in',
-    intro: 'Got a spec book, a menu or a back bar? Give it to us and we’ll set up your drinks, menus and bottles while you finish here.',
-  },
-};
-
-export const HOME_BRING = {
-  title: 'What’s on your shelf?',
-  intro: 'Snap your bottles, or bring in recipes you’ve saved elsewhere. We’ll read them in as soon as you’re set up, and you check them before they’re saved.',
 };
