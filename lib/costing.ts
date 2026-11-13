@@ -27,6 +27,11 @@ export function exTax(priceMinor: number, tax: TaxRule): number {
   return tax.pricesIncludeTax ? priceMinor / (1 + tax.taxRate / 100) : priceMinor;
 }
 
+/** A cost there is to show: not every line still unpriced (that's $0.00 and a 100% GP that isn't true). */
+export function costKnown(cost: { total_minor: number; missing: number }): boolean {
+  return !(cost.total_minor === 0 && cost.missing > 0);
+}
+
 /** GP and pour cost for a serve that costs `costMinor` and sells at `priceMinor`; null without a price. */
 export function margin(costMinor: number, priceMinor: number | null | undefined, tax: TaxRule): Margin | null {
   if (priceMinor == null || priceMinor <= 0) return null;

@@ -22,7 +22,7 @@ const time = (d: Date) => {
   return `${h}${m ? `:${String(m).padStart(2, '0')}` : ''} ${d.getHours() < 12 ? 'am' : 'pm'}`;
 };
 
-/** "Thu 22 Oct · 7 pm to 2 am", or null with no date. A date with no time (a home menu's night) is just the day. */
+/** "Thu 22 Oct · 7 pm to 2 am", or null with no date. A date with no time (a home menu's night, a menu on from the start of a day) is just the day. */
 export function nightLine(startsAt: string | null, endsAt: string | null): string | null {
   if (!startsAt) return null;
   const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(startsAt);
@@ -31,6 +31,8 @@ export function nightLine(startsAt: string | null, endsAt: string | null): strin
   const day = start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
   if (dateOnly) return day;
   const end = endsAt ? new Date(endsAt) : null;
+  // A menu put on from a day starts at midnight: that's the day, not a night at "12 am" (walk 12 Nov).
+  if (!end && start.getHours() === 0 && start.getMinutes() === 0) return day;
   return `${day} · ${time(start)}${end && !Number.isNaN(end.getTime()) ? ` to ${time(end)}` : ''}`;
 }
 

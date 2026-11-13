@@ -5,7 +5,7 @@ import { Body, Button, Caption, Headline, PressableScale, Sheet, Switch, useDs }
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, layout, radius, space, type } from '@/constants/tokens';
 import type { SpecCategory } from '@/hooks/useCocktailEditor';
-import { isGarnishUnit } from '@/lib/garnish';
+import { isGarnish } from '@/lib/garnish';
 import { COMMON_METHODS, iceLine } from '@/lib/drinkWizard';
 import { showMessage } from '@/lib/dialogs';
 import { findByName } from '@/lib/drinkMethods';
@@ -39,7 +39,7 @@ const optionsOf = (editor: Editor, category: Category): Option[] =>
 
 /** The garnish row's words: the spec's garnish lines, by the page's rule (lib/batch isGarnishLine's rule, from the small lib/garnish). */
 export const garnishNames = (items: readonly { name: string; unit?: string | null }[]) =>
-  items.filter((l) => isGarnishUnit(l.unit?.trim() || null) && !/\begg/i.test(l.name)).map((l) => l.name).join(', ');
+  items.filter((l) => isGarnish(l.unit?.trim() || null, l.name)).map((l) => l.name).join(', ');
 
 /** New's methods with no row yet (Churn, Eddie tf-061), made when picked. A one-word one is there already when a row starts like it ("Shaken" for Shake). */
 const NEW = 'new:';

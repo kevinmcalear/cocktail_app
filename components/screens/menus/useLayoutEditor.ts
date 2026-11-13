@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useToast } from '@/components/ds';
 import { itemHref } from '@/lib/itemRoutes';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useSetDrinkPrices } from '@/hooks/useDrinkCost';
 import { useBarDrinks } from '@/hooks/useHomeBar';
 import { useMenuLibrary, usePickMenuCover, useSaveMenu } from '@/hooks/useMenuMutations';
@@ -55,8 +56,7 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   // The cover's own problem, shown on the cover: it never holds up saving the rest.
   const [coverError, setCoverError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<number | null>(null);
-  const [now] = useState(() => Date.now());
-  const save = useSaveMenu(menu.id);
+    const save = useSaveMenu(menu.id);
   const prices = useSetDrinkPrices();
   const cover = usePickMenuCover(menu.id);
   const libraryQuery = useMenuLibrary(menu.barId);
@@ -65,7 +65,8 @@ export function useLayoutEditor(menu: MenuDetail, { paste = false }: { paste?: b
   const shelf = useBarDrinks(!menu.barId);
   const canMake = menu.barId ? [] : shelf.canMake.map((d) => d.id);
   const refetchLibrary = libraryQuery.refetch;
-  const { data: venueMenus = [] } = useVenueMenus(menu.barId);
+  const { data: venueMenus = [], dataUpdatedAt: menusAt } = useVenueMenus(menu.barId);
+  const now = useMenuNow(menusAt);
   const toast = useToast();
   const deleteForGood = useDeleteDrink();
   // The handoff below subscribes once; it reads these as they are now.

@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, Headline, PressableScale, useDs } from '@/components/ds';
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { displayFaces, font, radius, space, STATUS } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useMode } from '@/hooks/useMode';
@@ -39,8 +39,8 @@ export function PastMenusScreen() {
   const { active } = useActiveVenue();
   const home = useMode().mode === 'home';
   const barId = home ? null : (active?.id ?? null);
-  const { data: menus = [], isLoading, error } = useVenueMenus(barId);
-  const [now] = useState(() => Date.now());
+  const { data: menus = [], isLoading, error, dataUpdatedAt: menusAt } = useVenueMenus(barId);
+  const now = useMenuNow(menusAt);
   const green = readableAccent(STATUS.success, ds.c.ground);
 
   const shown = menus

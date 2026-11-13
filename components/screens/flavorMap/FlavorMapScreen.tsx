@@ -18,7 +18,7 @@ import { searchIngredients } from '@/lib/ingredientNames';
 import { HOME_BAR } from '@/lib/itemRoutes';
 import { shareOrCopy } from '@/lib/shareLink';
 import { siteOrigin } from '@/lib/venueLink';
-import { getPreferredUnit } from '@/store/useSettingsStore';
+import { getLineUnit } from '@/store/useSettingsStore';
 import { useDrinkWizardStore, wizardPlace } from '@/store/useDrinkWizardStore';
 
 import { RingMap } from './RingMap';
@@ -70,7 +70,7 @@ function FlavorMapPage() {
     const { kept, patch } = useDrinkWizardStore.getState();
     const lines = kept[place]?.draft.lines ?? [];
     const fresh = picked.filter((id) => !lines.some((l) => l.id === id));
-    patch(place, { lines: [...lines, ...fresh.map((id) => newLine({ id, name: nameOf(id) }, guessUnit(nameOf(id), getPreferredUnit())))] });
+    patch(place, { lines: [...lines, ...fresh.map((id) => newLine({ id, name: nameOf(id) }, guessUnit(nameOf(id), getLineUnit())))] });
     router.push(`/add-cocktail?barId=${venue?.id ?? HOME_BAR}` as never);
   };
 

@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { Body, Button, Caption, Chip, Field } from '@/components/ds';
 import { Choice, MenuSheet } from '@/components/screens/menus/MenuSheet';
 import { NearPicks } from '@/components/search/NearPicks';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useApplySwap, useSpecCatalog, useSwapSource, useUndoSwap } from '@/hooks/useBulk';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useNearIngredients } from '@/hooks/useNearIngredients';
@@ -89,7 +90,7 @@ export function SwapSheet({ barId, onClose }: { barId: string; onClose: () => vo
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [undone, setUndone] = useState<{ itemId: string; version: number }[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow(menus.dataUpdatedAt);
 
   const names = useMemo(() => {
     const map: Record<string, string> = { ...(source.data?.names ?? {}) };

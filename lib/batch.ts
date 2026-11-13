@@ -18,7 +18,7 @@
 import { VOLUME_ML } from '@/lib/quantity';
 import type { SpecLine } from '@/lib/spec';
 
-import { GARNISH_UNITS, isGarnishUnit } from './garnish';
+import { GARNISH_UNITS, goesInTheDrink, isGarnishUnit } from './garnish';
 
 // Their home is lib/garnish.ts, small so Tonight's lines don't load the batch maths.
 export { GARNISH_UNITS, isGarnishUnit };
@@ -110,7 +110,7 @@ export function classifyMethod(names: readonly string[]): BatchMethod {
  */
 export function isGarnishLine(l: { unit: string | null | undefined; ingredient: string | null | undefined; garnish?: boolean }): boolean {
   // The server's word where the unit is masked (names only), else the unit.
-  return (l.garnish ?? isGarnishUnit(l.unit)) && !/\begg/i.test(l.ingredient ?? '');
+  return (l.garnish ?? isGarnishUnit(l.unit)) && !goesInTheDrink(l.ingredient);
 }
 
 /** The guess from the name and unit, for lines nobody has decided yet. */
