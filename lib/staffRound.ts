@@ -73,3 +73,25 @@ export function roundSetter<M extends { user_id: string; role_level: number; dis
 
 /** "Ana Ruiz" -> "Ana". */
 export const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
+
+/**
+ * The line under the first round. The round is the same three things at every
+ * bar, so nobody at the bar "set" them: say what is true. (The board draws
+ * "Ana Ruiz set these for new bartenders."; that reads true only once a bar
+ * sets its own round.)
+ */
+export function roundNote(barName: string | null | undefined): string {
+  const bar = barName?.trim();
+  return bar ? `Every new bartender at ${bar} starts with these three.` : 'Every new bartender starts with these three.';
+}
+
+/**
+ * Where Ready's button goes: Tonight (board Kept-onboard 5, "Go to Tonight"),
+ * or Drinks at a bar that has Tonight switched off, which is where "/" lands
+ * there (lib/venueFeatures venueHome), so the words say so.
+ */
+export function readyDestination(hasTonight: boolean): { href: '/' | '/drinks'; label: string; where: string } {
+  return hasTonight
+    ? { href: '/', label: 'Go to Tonight', where: 'The menu, specs and prep are on Tonight.' }
+    : { href: '/drinks', label: 'Go to Drinks', where: 'The menu and specs are on Drinks.' };
+}

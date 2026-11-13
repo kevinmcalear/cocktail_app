@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Caption, DsText, Field, PalateFlower, PressableScale, Surface, Title, useDs } from '@/components/ds';
-import { TasteAnswers } from '@/components/screens/taste/TasteAnswers';
+import { Caption, DsText, Field, PressableScale, Surface, useDs } from '@/components/ds';
 import { font, radius, space } from '@/constants/tokens';
-import { useSaveTasteAnswers } from '@/hooks/useFlavor';
 import { useVenueSpecUnit } from '@/hooks/useOnboarding';
-import { QUICK_QUESTIONS, tasteHeadline, type Taste } from '@/lib/flavor';
 import { MEASURE_UNITS, handleError, nameError, type MeasureUnit } from '@/lib/onboarding';
 import { convertPour } from '@/lib/drinkWizard';
 import { handleFromName } from '@/lib/profiles';
@@ -65,32 +62,6 @@ export function NameStep({
       ) : null}
       {invited ? <Caption tone="muted">On your other devices, sign in with this email and we’ll send a code. No password to remember.</Caption> : null}
       {job ? <Caption tone="muted">{`Your job at ${job.bar} is saved for you as ${job.title}. Change it on your profile.`}</Caption> : null}
-    </SetupPage>
-  );
-}
-
-/**
- * A few quick taste questions, with the palate flower growing as they're
- * answered. Skippable; a failed save doesn't hold up setup (Discover asks again).
- */
-export function TasteStep({ onDone }: { onDone: () => void }) {
-  const [answers, setAnswers] = useState<Taste>({});
-  const save = useSaveTasteAnswers();
-  const answered = Object.keys(answers).length > 0;
-  const headline = tasteHeadline(answers);
-  return (
-    <SetupPage
-      footer={<SetupFooter pending={save.isPending} disabled={!answered} onPress={() => save.mutate(answers, { onSuccess: onDone, onError: () => {} })} onSkip={onDone} />}
-    >
-      <View style={styles.flower}>
-        <PalateFlower values={answers} size={188} />
-        <Title italic align="center">
-          {headline ? `${headline}.` : answered ? 'Nothing stands out yet.' : 'Tap an answer to start.'}
-        </Title>
-      </View>
-      <TasteAnswers questions={QUICK_QUESTIONS} value={answers} onChange={setAnswers} />
-      <Caption tone="muted">Change them any time on You. Every drink you rank sharpens it.</Caption>
-      {save.error ? <Caption tone="accent">{"Couldn't save your answers. Try again, or skip and answer later on You."}</Caption> : null}
     </SetupPage>
   );
 }
@@ -177,7 +148,6 @@ const styles = StyleSheet.create({
   tiles: { flexDirection: 'row', gap: space.sm },
   tile: { flex: 1, minHeight: 64, borderRadius: radius.control, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   mono: { ...font.figuresMedium },
-  flower: { alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
   strong: { ...font.semiBold },
   preview: { gap: space.sm },
   line: { flexDirection: 'row', alignItems: 'baseline', gap: space.md },
