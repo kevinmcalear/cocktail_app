@@ -26,10 +26,14 @@ import type { CreateDrinkInput, CreateDrinkResult } from '@/hooks/useCreateDrink
 import type { MenuLayoutWrite } from '@/hooks/barWrites';
 import { loadSavedSpecBooks } from '@/lib/specBookFile';
 
+// The database didn't answer though the device is connected (wifi with no internet, below): offline
+// until it does, whatever NetInfo says meanwhile.
+let unreachable = false;
+
 // Setup network listener for TanStack Query
 onlineManager.setEventListener((setOnline) => {
   return NetInfo.addEventListener((state) => {
-    setOnline(!!state.isConnected);
+    setOnline(!!state.isConnected && !unreachable);
   });
 });
 
@@ -60,6 +64,7 @@ function checkReachable() {
   void (async () => {
     try {
       if (await reachable(url)) return;
+      unreachable = true;
       onlineManager.setOnline(false);
       // Looked at again until it answers, or the device is offline for real (NetInfo says when it's back).
       for (;;) {
@@ -68,6 +73,7 @@ function checkReachable() {
         if (await reachable(url)) return onlineManager.setOnline(true);
       }
     } finally {
+      unreachable = false;
       probing = false;
     }
   })();
