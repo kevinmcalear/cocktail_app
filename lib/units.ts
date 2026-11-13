@@ -128,3 +128,16 @@ export function tidyAmount(text: string): string {
   if (m[4]) n += FRACTIONS[m[4]];
   return roundAmount(n);
 }
+
+/** Countries whose bars write specs in ounces. */
+const OZ_COUNTRIES = new Set(['US', 'LR', 'MM']);
+
+/**
+ * The unit a new bar starts on: its owner's own Units when they picked one,
+ * else its country's (a United States bar pours in oz, so 2 oz never reads as
+ * 60 ml), else ml. Its Admins change it in the bar's settings.
+ */
+export function startingBarUnit(own: string | null | undefined, country: string | null | undefined): string {
+  if (own) return own;
+  return country && OZ_COUNTRIES.has(country.toUpperCase()) ? 'oz' : DEFAULT_UNIT;
+}

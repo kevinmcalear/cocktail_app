@@ -1,3 +1,4 @@
+import { getLocales } from 'expo-localization';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
@@ -5,8 +6,8 @@ import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { CLAIM_COLUMNS, changedProfiles, type ProfileClaim } from '@/hooks/useProfiles';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { supabase } from '@/lib/supabase';
-import { DEFAULT_UNIT } from '@/lib/units';
-import { getPreferredUnit } from '@/store/useSettingsStore';
+import { DEFAULT_UNIT, startingBarUnit } from '@/lib/units';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import type { HeldSetup } from '@/store/useVenueSetup';
 
 /** A bar page on the Find your bar step, with what the card shows. */
@@ -114,6 +115,22 @@ export function useVenuePage(barId: string | null) {
 }
 
 /**
+ * Where and when knows the bar's country: the bar takes that country's unit
+ * (lib/units startingBarUnit), unless its owner picked their own Units.
+ */
+export function useStartingBarUnit() {
+  return useMutation({
+    mutationFn: async ({ barId, country }: { barId: string; country: string | null }) => {
+      const own = useSettingsStore.getState().units;
+      if (own || !country) return;
+      const { error } = await supabase.from('bars').update({ spec_unit: startingBarUnit(null, country) }).eq('id', barId);
+      if (error) throw error;
+    },
+    onError: () => {},
+  });
+}
+
+/**
  * The venue setup works on: a private venue with the person as its Admin
  * (create_new_bar, as Settings always allowed). The claim then links it to
  * the bar page once a person approves it.
@@ -132,8 +149,9 @@ export function useCreateSetupVenue() {
       });
       if (error) throw error;
       const id = (data as { id: string }).id;
-      // A new venue starts on its owner's unit. It's made by now, so a miss here leaves ml, which they can change in its settings.
-      const unit = getPreferredUnit();
+      // A new venue starts on its owner's unit, else this phone's country's (Where and when sets the bar's own
+      // country's, useStartingBarUnit). It's made by now, so a miss here leaves ml, which they can change in its settings.
+      const unit = startingBarUnit(useSettingsStore.getState().units, getLocales()[0]?.regionCode);
       if (unit !== DEFAULT_UNIT) await supabase.from('bars').update({ spec_unit: unit }).eq('id', id);
       return id;
     },
