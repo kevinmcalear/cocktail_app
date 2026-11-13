@@ -47,7 +47,7 @@ test('setting up a bar: find it and open its page, or add it, and venue setup ta
   await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
   await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
   expect(screen.getByText('What brings you here?')).toBeTruthy();
-  expect(screen.getByText('Step 2 of 5')).toBeTruthy();
+  expect(screen.getByText('Step 2 of 3')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: /I’m setting up a bar/ }));
   // Kept so bar pages know who works in bars (Q33).
   expect(mockSaveAnswer).toHaveBeenCalledWith('owner');

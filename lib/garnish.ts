@@ -6,3 +6,13 @@ export const GARNISH_UNITS = new Set(['each', 'pinch', 'sprig', 'leaf', 'peel', 
 export function isGarnishUnit(unit: string | null | undefined): boolean {
   return GARNISH_UNITS.has((unit ?? '').toLowerCase());
 }
+
+/** A garnish line: a count unit, but not an egg (an egg white counted "1 each" goes in the drink). */
+export function isGarnish(unit: string | null | undefined, name: string | null | undefined): boolean {
+  return isGarnishUnit(unit) && !goesInTheDrink(name);
+}
+
+/** Counted, but in the drink, not on it: an egg, a yolk, an egg white. */
+export function goesInTheDrink(name: string | null | undefined): boolean {
+  return /\begg/i.test(name ?? '');
+}

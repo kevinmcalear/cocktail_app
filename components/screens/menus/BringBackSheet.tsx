@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, DateField, PressableScale, Segmented, Switch, useDs, useToast } from '@/components/ds';
 import { font, radius, space } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useTellTeam } from '@/hooks/useListAsks';
 import { useBarClock, useListChanges, useListRows } from '@/hooks/useLivingList';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
@@ -41,8 +42,9 @@ export function BringBackSheet({ entry, barId, barName, onClose }: { entry: Repe
   const ds = useDs();
   const toast = useToast();
   const { drink, dates } = entry;
-  const [now] = useState(() => Date.now());
-  const lists = (useVenueMenus(barId).data ?? []).filter((m) => m.barId === barId && m.kind === 'menu' && menuStatus(m, now) === 'on');
+    const venueMenus = useVenueMenus(barId);
+  const now = useMenuNow(venueMenus.dataUpdatedAt);
+  const lists = (venueMenus.data ?? []).filter((m) => m.barId === barId && m.kind === 'menu' && menuStatus(m, now) === 'on');
   // Onto the list it was last on, when that's on now; else the first list that's on.
   const [listId, setListId] = useState<string | null>(null);
   const list = lists.find((m) => m.id === listId) ?? lists.find((m) => m.name === dates[0]?.listName) ?? lists[0] ?? null;

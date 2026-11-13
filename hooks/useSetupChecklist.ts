@@ -1,5 +1,5 @@
-import { useState } from 'react';
 
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useBarGlassware, useHeldGlasses } from '@/hooks/useBarGlassware';
 import { useBarKit } from '@/hooks/useBarKit';
@@ -35,7 +35,7 @@ export function useSetupChecklist(barId: string) {
   const page = useVenuePage(barId);
   const brand = useVenueBrand(barId);
   const calendars = useCalendarSources(barId);
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow(menus.dataUpdatedAt);
   // A menu on now, coming up or a draft: a claimed bar's past menus (its history) aren't tonight's.
   const groups = groupMenus(menus.data ?? [], now);
   const current = [...groups.on, ...groups.upcoming, ...groups.draft];

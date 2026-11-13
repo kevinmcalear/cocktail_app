@@ -1,0 +1,256 @@
+import { fireEvent, screen } from '@testing-library/react-native';
+
+import { renderWithProviders } from '@/jest.setup';
+import { LABEL, type Dimension, type Profile } from '@/lib/flavor';
+import { usePendingWants } from '@/store/usePendingWants';
+import { useSettingsStore } from '@/store/useSettingsStore';
+
+import { FirstRunTaste } from './FirstRunPicks';
+
+const mockSaveTaste = jest.fn();
+const profile = (some: Partial<Profile>) => Object.fromEntries((Object.keys(LABEL) as Dimension[]).map((d) => [d, some[d] ?? 0])) as Profile;
+const names = ['Negroni', 'House Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin', 'Aperol Spritz', 'Clover Club', 'Last Word', 'Bee’s Knees'];
+const stirred = new Set(['Negroni', 'House Martini', 'Old Fashioned']);
+const mockDrinks = names.map((name, i) => ({
+  id: `d${i}`,
+  name: name === 'House Martini' ? 'Martini' : name,
+  label: name,
+  tint: null,
+  method: stirred.has(name) ? 'stir' : 'shake',
+  profile: profile(name === 'Negroni' ? { bitter: 0.9, sweet: 0.4 } : name === 'Daiquiri' ? { sour: 0.8, sweet: 0.4 } : { sweet: 0.3 }),
+}));
+
+let mockOffered = mockDrinks;
+jest.mock('@/hooks/useFirstRunDrinks', () => ({ useFirstRunDrinks: () => ({ drinks: mockOffered, ready: true, isLoading: false, error: null, refetch: jest.fn() }) }));
+jest.mock('@/hooks/useFlavor', () => ({ useSaveTasteAnswers: () => ({ mutate: mockSaveTaste, isPending: false }) }));
+const mockSaveSwipes = jest.fn();
+const mockDeck = Array.from({ length: 10 }, (_, i) => ({ id: `w${i}`, name: `Swipe ${i}`, ingredients: 'Gin, lime', tint: null, profile: profile({ bitter: 0.9 }) }));
+// The live deck drops a drink once it's wanted, as want_deck does after a save.
+let mockDeckNow = mockDeck;
+jest.mock('@/hooks/useWantDeck', () => ({
+  useWantDeck: () => ({ drinks: mockDeckNow, ready: true, error: null, refetch: jest.fn() }),
+  useSaveSwipes: () => ({ mutate: mockSaveSwipes, isPending: false }),
+}));
+jest.mock('@/hooks/useDiscoverHome', () => ({
+  useBestNear: () => ({ rows: [{ barId: 'b1', barHandle: 'attaboy', barName: 'Attaboy', name: 'Negroni', distanceKm: 1.2 }], onMenus: [] }),
+}));
+let mockRegion = 'US';
+jest.mock('expo-localization', () => ({ getLocales: () => [{ regionCode: mockRegion }] }));
+let mockAge = 'confirmed';
+jest.mock('@/hooks/useAgeCheck', () => ({ useAgeCheck: () => ({ data: mockAge }) }));
+jest.mock('@/components/screens/safety/AgeGateSheetLazy', () => {
+  const { Pressable } = jest.requireActual('react-native');
+  return {
+    AgeGateSheet: ({ onClose, onConfirmed }: { onClose: () => void; onConfirmed: () => void }) => (
+      <>
+        <Pressable role="button" accessibilityLabel="Confirm my age" onPress={onConfirmed} />
+        <Pressable role="button" accessibilityLabel="Not now, age" onPress={onClose} />
+      </>
+    ),
+  };
+});
+// The system back: the latest page's handler, held or not.
+let mockSystemBack: { held: boolean; back: () => void } = { held: false, back: () => {} };
+jest.mock('expo-router', () => ({ usePreventRemove: (held: boolean, back: () => void) => void (mockSystemBack = { held, back }) }));
+jest.mock('@/components/screens/tonight/TonightParts', () => ({ TonightSky: () => null }));
+jest.mock('@/components/screens/home/BarMark', () => ({ BarMark: () => null }));
+jest.mock('@/components/ds', () => ({ ...jest.requireActual('@/components/ds'), DrinkDrawingFor: () => null }));
+
+beforeEach(() => {
+  mockSaveTaste.mockReset();
+  mockSaveSwipes.mockReset();
+  mockSaveTaste.mockImplementation((_answers, opts) => opts?.onSettled?.());
+  useSettingsStore.setState({ units: null });
+  mockOffered = mockDrinks;
+  mockAge = 'confirmed';
+  usePendingWants.getState().clear();
+  mockRegion = 'US';
+  mockDeckNow = mockDeck;
+  mockSaveSwipes.mockImplementation(({ wants }: { wants: string[] }) => {
+    if (wants.length) mockDeckNow = mockDeck.filter((d) => !wants.includes(d.id));
+  });
+});
+
+/** The ten swipes after the pairs: Want on the first three, Not for me on the rest. */
+async function swipeTen() {
+  for (let i = 0; i < 10; i++) {
+    expect(screen.getByText(`${i + 1} of 10`)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: i < 3 ? 'Want' : 'Not for me' }));
+  }
+}
+
+async function pickFive() {
+  for (const name of ['Negroni', 'House Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin']) await fireEvent.press(screen.getByRole('checkbox', { name }));
+}
+
+test('five picks, three pairs, then the taste they make, saved on Start', async () => {
+  const onDone = jest.fn();
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={onDone} />);
+  expect(screen.getByText('Which have you had?')).toBeTruthy();
+  expect(screen.getByRole('button', { name: '0 of 5' })).toBeDisabled();
+  await fireEvent.press(screen.getByRole('button', { name: 'Next' }));
+  expect(screen.getByText('Which have you had?')).toBeTruthy();
+
+  // A sixth pick waits for one to be let go.
+  await pickFive();
+  await fireEvent.press(screen.getByRole('checkbox', { name: 'Last Word' }));
+  expect(screen.getByRole('checkbox', { name: 'Last Word', checked: false })).toBeTruthy();
+  await fireEvent.press(screen.getAllByRole('button', { name: 'Next' })[0]);
+
+  // Three pairs, always from the five; the Negroni wins where it's offered, else the first card.
+  for (let i = 0; i < 3; i++) {
+    expect(screen.getByText('Which do you like more?')).toBeTruthy();
+    const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
+    expect(cards).toHaveLength(2);
+    for (const c of cards) expect(['Negroni', 'House Martini', 'Old Fashioned', 'Daiquiri', 'Penicillin'].some((n) => c.props.accessibilityLabel.startsWith(n))).toBe(true);
+    await fireEvent.press(cards.find((c) => c.props.accessibilityLabel.startsWith('Negroni')) ?? cards[0]);
+  }
+  await swipeTen();
+
+  expect(screen.getByText(/^You like it .+\.$/)).toBeTruthy();
+  expect(screen.getByText('Attaboy')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  expect(mockSaveTaste).toHaveBeenCalledWith(expect.objectContaining({ bitter: expect.any(Number) }), expect.anything());
+  expect(onDone).toHaveBeenCalledWith(undefined);
+  expect(useSettingsStore.getState().units).not.toBeNull();
+});
+
+test('Back walks the pairs back to the picks, and from the picks leaves', async () => {
+  const onBack = jest.fn();
+  await renderWithProviders(<FirstRunTaste home pending={false} onBack={onBack} onDone={jest.fn()} />);
+  await pickFive();
+  await fireEvent.press(screen.getAllByRole('button', { name: 'Next' })[0]);
+  expect(screen.getByText('Which do you like more?')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByText('Which have you had?')).toBeTruthy();
+  expect(screen.getByRole('checkbox', { name: 'Negroni', checked: true })).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+  expect(onBack).toHaveBeenCalled();
+});
+
+test('a bar under the taste ends setup on its page', async () => {
+  const onDone = jest.fn();
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={onDone} />);
+  await pickFive();
+  await fireEvent.press(screen.getAllByRole('button', { name: 'Next' })[0]);
+  for (let i = 0; i < 3; i++) {
+    const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
+    await fireEvent.press(cards[0]);
+  }
+  await swipeTen();
+  await fireEvent.press(screen.getByRole('link', { name: /^Attaboy\./ }));
+  expect(onDone).toHaveBeenCalledWith('/p/attaboy');
+});
+
+test('Your taste has no Back (the board draws none); a bartender gets no unit guessed; fewer than five still lets setup end', async () => {
+  const onDone = jest.fn();
+  await renderWithProviders(<FirstRunTaste home={false} pending={false} onDone={onDone} />);
+  await pickFive();
+  await fireEvent.press(screen.getAllByRole('button', { name: 'Next' })[0]);
+  for (let i = 0; i < 3; i++) {
+    const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
+    await fireEvent.press(cards[0]);
+  }
+  await swipeTen();
+  expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  await fireEvent.press(screen.getByRole('button', { name: /Start|Saving/ }));
+  expect(onDone).toHaveBeenCalledTimes(1);
+  expect(useSettingsStore.getState().units).toBeNull();
+
+  mockOffered = mockDrinks.slice(0, 3);
+  const skip = jest.fn();
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={skip} />);
+  await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
+  expect(skip).toHaveBeenCalledWith(undefined);
+});
+
+async function toSwipes() {
+  await pickFive();
+  await fireEvent.press(screen.getAllByRole('button', { name: 'Next' })[0]);
+  for (let i = 0; i < 3; i++) {
+    const cards = screen.getAllByRole('button').filter((b) => names.some((n) => b.props.accessibilityLabel?.startsWith(n)));
+    await fireEvent.press(cards[0]);
+  }
+}
+
+test('the ten swipes save passes and Wants apart, the Wants count in the saved taste, and Back undoes the last', async () => {
+  // The same picks and pairs with no Wants: the taste without them.
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  for (let i = 0; i < 10; i++) await fireEvent.press(screen.getByRole('button', { name: 'Not for me' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  const without = mockSaveTaste.mock.calls[0][0].bitter;
+  mockSaveTaste.mockClear();
+  mockSaveSwipes.mockClear();
+
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  expect(screen.getByText('1 of 10')).toBeTruthy();
+  expect(screen.getByText('Swipe right for Want, left for Not for me.')).toBeTruthy();
+  expect(screen.getByLabelText(/^Swipe 0, \d+% match$/)).toBeTruthy();
+  await fireEvent.press(screen.getByRole('button', { name: 'Want' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByText('1 of 10')).toBeTruthy();
+  await swipeTen();
+  expect(mockSaveSwipes).toHaveBeenCalledWith({ wants: [], passes: ['w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9'] });
+  expect(mockSaveSwipes).toHaveBeenCalledWith({ wants: ['w0', 'w1', 'w2'], passes: [] });
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  // Review 12 Nov: once the Wants saved, the deck changed and they fell out of the saved taste.
+  expect(mockSaveTaste.mock.calls[0][0].bitter).toBeGreaterThan(without);
+});
+
+// Second look 12 Nov: Wants held for the age check lived only in the screen. They wait on the device
+// (store/usePendingWants) and are saved or dropped by the answer (lib/swipes.test.ts).
+test('with no confirmed age the Wants wait on the device for the age check; passes save either way; under age keeps none', async () => {
+  mockAge = 'unknown';
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  await swipeTen();
+  expect(mockSaveSwipes).toHaveBeenCalledTimes(1);
+  expect(mockSaveSwipes).toHaveBeenCalledWith({ wants: [], passes: ['w3', 'w4', 'w5', 'w6', 'w7', 'w8', 'w9'] });
+  expect(usePendingWants.getState().ids).toEqual(['w0', 'w1', 'w2']);
+  await fireEvent.press(screen.getByRole('button', { name: 'Not now, age' }));
+  expect(mockSaveSwipes).toHaveBeenCalledTimes(1);
+  expect(usePendingWants.getState().ids).toEqual(['w0', 'w1', 'w2']);
+  expect(screen.getByRole('button', { name: 'Start' })).toBeTruthy();
+
+  usePendingWants.getState().clear();
+  mockSaveSwipes.mockClear();
+  mockAge = 'under_age';
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  await swipeTen();
+  expect(mockSaveSwipes).toHaveBeenCalledTimes(1);
+  expect(usePendingWants.getState().ids).toEqual([]);
+  expect(screen.queryByRole('button', { name: 'Confirm my age' })).toBeNull();
+});
+
+test('the system back steps back a step, does nothing on Your taste, and lets setup go once it ends', async () => {
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  expect(mockSystemBack.held).toBe(true);
+  await fireEvent.press(screen.getByRole('button', { name: 'Want' }));
+  await mockSystemBack.back();
+  expect(await screen.findByText('1 of 10')).toBeTruthy();
+  await swipeTen();
+  expect(mockSystemBack.held).toBe(true);
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  expect(mockSystemBack.held).toBe(false);
+});
+
+test('an empty deck goes straight on to Your taste', async () => {
+  mockDeckNow = [];
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  expect(await screen.findByRole('button', { name: 'Start' })).toBeTruthy();
+});
+
+test('a British home user reads ml (the country rule in lib/units)', async () => {
+  mockRegion = 'GB';
+  await renderWithProviders(<FirstRunTaste home pending={false} onDone={jest.fn()} />);
+  await toSwipes();
+  for (let i = 0; i < 10; i++) await fireEvent.press(screen.getByRole('button', { name: 'Not for me' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
+  expect(useSettingsStore.getState().units).toBe('ml');
+});

@@ -15,6 +15,7 @@ export function useDrafts() {
             const { data, error } = await supabase
                 .from('drafts')
                 .select('*')
+                .eq('user_id', user.id)
                 // The drink wizard's own drafts (hooks/useDraftSync) are listed at the top of New, not here.
                 .neq('entity_type', 'drink_wizard')
                 .order('updated_at', { ascending: false });
@@ -52,18 +53,12 @@ export function useDrafts() {
             if (capitalizedData.menuName) {
                 capitalizedData.menuName = capitalize(capitalizedData.menuName);
             }
-            
-            // Augment draftData with the editor's email to avoid complex joins
-            const augmentedDraftData = {
-                ...capitalizedData,
-                last_editor_email: user.email || 'Unknown Email'
-            };
 
             if (id) {
                 // Update existing draft
                 const { data, error } = await supabase
                     .from('drafts')
-                    .update({ draft_data: augmentedDraftData, bar_id, user_id: user.id, updated_at: new Date().toISOString() })
+                    .update({ draft_data: capitalizedData, bar_id, user_id: user.id, updated_at: new Date().toISOString() })
                     .eq('id', id)
                     .select()
                     .single();
@@ -73,7 +68,7 @@ export function useDrafts() {
                 // Insert new draft
                 const { data, error } = await supabase
                     .from('drafts')
-                    .insert({ user_id: user.id, entity_type: entityType, draft_data: augmentedDraftData, bar_id })
+                    .insert({ user_id: user.id, entity_type: entityType, draft_data: capitalizedData, bar_id })
                     .select()
                     .single();
                 if (error) throw error;

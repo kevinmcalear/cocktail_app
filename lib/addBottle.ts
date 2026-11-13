@@ -69,10 +69,17 @@ export function kindHelp(kind: string | null, from: 'label' | 'name' | 'you' | '
   return can;
 }
 
-/** The toast once it's saved: "It's on Bottles, and any drink that calls for Islay scotch can use it." */
-export function savedDetail(atBar: boolean, kind: string | null): string {
-  const where = atBar ? 'It’s on Bottles' : 'It’s on your shelf';
-  return kind ? `${where}, and any drink that calls for ${kindWords(kind)} can use it.` : `${where}.`;
+/**
+ * The toast once it's saved: "It's on Bottles, and any drink that calls for
+ * Islay scotch can use it." (Add-bottle, Done). It names only a list the
+ * person has: a bar's Bottles is behind its More drink filters switch
+ * (lib/venueFeatures.ts), so without it the toast says what the bottle does.
+ */
+export function savedDetail(where: 'bottles' | 'bar' | 'shelf', kind: string | null): string {
+  const can = kind ? `any drink that calls for ${kindWords(kind)} can use it.` : null;
+  if (where === 'bar') return can ? `${can[0].toUpperCase()}${can.slice(1)}` : 'Drinks here can use it now.';
+  const on = where === 'bottles' ? 'It’s on Bottles' : 'It’s on your shelf';
+  return can ? `${on}, and ${can}` : `${on}.`;
 }
 
 /** ABV as typed ("40", "40,5", ".5") to a number, or null when it isn't one from 0 to 100. */

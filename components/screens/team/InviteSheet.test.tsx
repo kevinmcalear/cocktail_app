@@ -53,7 +53,7 @@ test('a name finds people already on the app; picking one invites their page, at
   expect(screen.queryByText(/Okonkwo/)).toBeNull();
   expect(screen.queryByLabelText('Sam’s email')).toBeNull();
   await fireEvent.press(screen.getByText('Sam Okafor, Bar Bianca'));
-  await fireEvent.press(screen.getByRole('radio', { name: 'Takeover bartender. Plus prep notes and the staff list' }));
+  await fireEvent.press(screen.getByRole('radio', { name: 'Takeover bartender. Menu, specs, house-made, prep' }));
   await fireEvent.press(screen.getByRole('button', { name: 'Send invite' }));
   expect(mockInviteProfile).toHaveBeenCalledWith({ profileId: 'p-sam', roleLevel: 30, roleId: 'tk' });
   expect(mockSendAsync).toHaveBeenCalledWith({ profileId: 'p-sam' });

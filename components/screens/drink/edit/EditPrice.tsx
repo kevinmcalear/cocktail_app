@@ -6,7 +6,7 @@ import { radius, space } from '@/constants/tokens';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useDrinkCost } from '@/hooks/useDrinkCost';
 import { usePricingSettings } from '@/hooks/usePricing';
-import { formatPct, margin, priceForTarget } from '@/lib/costing';
+import { costKnown, formatPct, margin, priceForTarget } from '@/lib/costing';
 import { formatMoney, priceMinor, priceText } from '@/lib/money';
 
 import { Eyebrow } from '../../addDrink/WizardChrome';
@@ -38,7 +38,7 @@ export function EditPrice({ itemId, barId, value, onChange }: EditPriceProps) {
   const tax = { taxRate: settings.tax_rate, pricesIncludeTax: settings.prices_include_tax };
   const money = (minor: number) => formatMoney(minor, currency) ?? String(minor);
   // Every line unpriced: no cost yet, so no margin either (as Cost and margin).
-  const known = !!cost && !(cost.total_minor === 0 && cost.missing > 0);
+  const known = !!cost && costKnown(cost);
   const m = cost && known ? margin(cost.total_minor, priceMinor(value, currency), tax) : null;
   const gp = ask ?? (settings.target_gp == null ? '' : String(settings.target_gp));
   const gpN = Number(gp);

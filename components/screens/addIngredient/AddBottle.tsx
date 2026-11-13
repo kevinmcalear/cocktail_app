@@ -1,4 +1,5 @@
 import { useNetInfo } from '@react-native-community/netinfo';
+import { useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Alert, Platform, StyleSheet, View, type TextInput } from 'react-native';
 
@@ -7,6 +8,7 @@ import { STATUS } from '@/constants/tokens';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useNearIngredientsChecked } from '@/hooks/useNearIngredients';
 import { useReadLabel } from '@/hooks/useReadLabel';
+import { useVenueFeature } from '@/hooks/useVenueFeatures';
 import { useBottleHere, useBottleStrengths, useSaveBottle } from '@/hooks/useSaveBottle';
 import { abvError, abvNumber, bottleMatches, kindHelp, notABottleWords, ownBottle, savedDetail, takenWords, type BottleRow } from '@/lib/addBottle';
 import { readableAccent } from '@/lib/color';
@@ -57,6 +59,9 @@ type KindFrom = 'label' | 'you';
 export function AddBottle({ barId = null, initialName, embedded, onClose, onSaved, onMake, closeRef }: AddBottleProps) {
   const ds = useDs();
   const toast = useToast();
+  const router = useRouter();
+  // A bar's Bottles list is behind More drink filters: the toast names it, and opens it, only when it's there.
+  const bottlesList = useVenueFeature('libraryExtras');
   const [name, setName] = useState(capitalizeFirsts(initialName?.trim() ?? ''));
   const [maker, setMaker] = useState('');
   const [abv, setAbv] = useState('');
@@ -156,7 +161,12 @@ export function AddBottle({ barId = null, initialName, embedded, onClose, onSave
         if (queued) return;
         // Another id: the database had it already, shared (by a spelling this screen didn't know), so it's that bottle, with its own kind.
         const shared = id === write.id ? null : (byId.get(id) ?? { id, name: write.name });
-        toast.show({ title: 'Bottle saved', detail: savedDetail(!!barId, shared ? kindOf(shared) : (kindPick?.name ?? null)) });
+        const where = !barId ? 'shelf' : bottlesList ? 'bottles' : 'bar';
+        toast.show({
+          title: 'Bottle saved',
+          detail: savedDetail(where, shared ? kindOf(shared) : (kindPick?.name ?? null)),
+          action: where === 'bottles' ? { label: 'See Bottles', onPress: () => router.push('/drinks?show=bottles' as Href) } : undefined,
+        });
         onSaved({ id, name: shared?.name ?? write.name }, write.existing || !!shared);
       },
       onError: (e) => Alert.alert('Couldn’t save the bottle', saveErrorWords(e)),

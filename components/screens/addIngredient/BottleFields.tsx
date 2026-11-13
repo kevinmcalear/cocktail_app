@@ -30,7 +30,8 @@ interface Props {
 /**
  * Filled in (board Add-bottle, 3): who makes it, how strong, and what it's a
  * kind of, which can be changed (it says which drinks can use it), then the
- * label photo kept with it. A pick from the catalog shows the catalog's.
+ * label photo kept with it. A pick from the catalog shows the catalog's;
+ * anything else says it isn't in the catalog.
  */
 export function BottleFields({ maker, abv, abvError, kind, kindHelp, fixed, onMaker, onAbv, onKind, usualAbv, photo, reading, onRemovePhoto }: Props) {
   return (
@@ -49,7 +50,8 @@ export function BottleFields({ maker, abv, abvError, kind, kindHelp, fixed, onMa
         {fixed ? <Fact value={kind ?? ''} label="A kind of" /> : <KindBox kind={kind} onPress={onKind} />}
         {kindHelp ? <Caption tone="muted">{kindHelp}</Caption> : null}
       </Labelled>
-      {fixed ? <Caption tone="muted">From the shared catalog: the same bottle every bar and shelf uses.</Caption> : null}
+      {/* Said plainly either way, so a name the catalog doesn't have isn't a silent new form (walk 12 Nov). */}
+      <Caption tone="muted">{fixed ? 'From the shared catalog: the same bottle every bar and shelf uses.' : 'Not in the shared catalog, so it’s a new bottle. Only its name is needed.'}</Caption>
       {photo && !fixed ? <PhotoRow uri={photo.uri} reading={reading} onRemove={onRemovePhoto} /> : null}
     </View>
   );

@@ -113,7 +113,7 @@ test('an admin invites by email and role from the sheet, and the invite is email
   await fireEvent.press(screen.getByRole('button', { name: 'Invite someone' }));
   expect(screen.getByText('Invite to Caretakers')).toBeTruthy();
   await fireEvent.press(screen.getByText('By email'));
-  expect(screen.getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list', checked: true })).toBeTruthy();
+  expect(screen.getByRole('radio', { name: 'Bartender. Menu, specs, house-made, prep', checked: true })).toBeTruthy();
   expect(within(screen.getByLabelText('As')).queryByRole('radio', { name: /^Guest/ })).toBeNull();
   // The old form's note and preview are gone.
   expect(screen.queryByRole('button', { name: 'Preview the email' })).toBeNull();
@@ -277,7 +277,7 @@ test('a person’s page: their numbers, a new role, and Remove', async () => {
   expect(mockShown).toHaveBeenCalledWith({ id: 'pos', shown: false });
   await fireEvent.press(screen.getByRole('link', { name: 'Role, Employee' }));
   expect(within(screen.getByLabelText('Role for Jo Park')).getByRole('radio', { name: 'Guest. Sees the menu only' })).toBeTruthy();
-  await fireEvent.press(within(screen.getByLabelText('Role for Jo Park')).getByRole('radio', { name: 'Bartender. Plus prep notes and the staff list' }));
+  await fireEvent.press(within(screen.getByLabelText('Role for Jo Park')).getByRole('radio', { name: 'Bartender. Menu, specs, house-made, prep' }));
   expect(mockChoose).toHaveBeenCalledWith({ userId: 'jo', choice: { level: 30 } }, expect.anything());
   await fireEvent.press(within(screen.getByLabelText('Role for Jo Park')).getByRole('radio', { name: 'Barback. From Employee, plus prep' }));
   expect(mockChoose).toHaveBeenLastCalledWith({ userId: 'jo', choice: { venueRoleId: 'bb' } }, expect.anything());
