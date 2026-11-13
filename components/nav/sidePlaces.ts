@@ -14,7 +14,6 @@ import { useEffectiveRole } from '@/hooks/useViewAs';
 import type { NavMatch } from '@/lib/shellNav';
 import { groupMenus } from '@/lib/menus';
 import { buildPrepList, DEFAULT_SERVES, tonightAt6 } from '@/lib/prep';
-import { shortDay } from '@/lib/takeover';
 import { canSeeTeam } from '@/lib/team';
 
 import { useWebTabs } from './WebTabBar';
@@ -105,6 +104,11 @@ function takeoverAhead(m: { endsAt: string | null; plannedEndsAt?: string | null
   return !start || Date.parse(start) > now - 86_400_000;
 }
 
+/** "Thu": a takeover's day in the sidebar. */
+function weekday(iso: string | null): string {
+  return iso ? new Date(iso).toLocaleDateString('en-GB', { weekday: 'short' }) : '';
+}
+
 /** The bar's takeover lists not over yet, soonest first: the sidebar's rows for them. */
 function useTakeoverLists(venueId: string | null) {
   const menus = useVenueMenus(venueId).data;
@@ -147,7 +151,7 @@ export function useSideNotes(venueId: string | null): SideNotes {
   const takeovers = useTakeoverLists(venueId);
   return {
     // A takeover's day: "Thu".
-    ...Object.fromEntries(takeovers.map((t) => [`takeover-${t.id}`, { text: shortDay(t.plannedStartsAt ?? t.startsAt)?.split(' ')[0] ?? '' }])),
+    ...Object.fromEntries(takeovers.map((t) => [`takeover-${t.id}`, { text: weekday(t.plannedStartsAt ?? t.startsAt) }])),
     // One menu running is named, as the board draws it ("Autumn, on now"); several are counted.
     menus: on.length ? (on.length === 1 ? { text: 'on now', label: on[0].name } : { text: `${on.length} on now` }) : undefined,
     prep: low ? { text: `${low} low`, warn: true } : undefined,

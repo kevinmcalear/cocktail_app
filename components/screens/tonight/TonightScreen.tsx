@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { PencilState, useDs } from '@/components/ds';
@@ -11,16 +12,18 @@ import { useBarDrinks } from '@/hooks/useHomeBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useServiceDate } from '@/hooks/useServiceDay';
-import { useTakeoverGuest } from '@/hooks/useTakeoverPage';
+import { useTakeoverGuest } from '@/hooks/useTakeoverGuest';
 import { tonightEyebrow } from '@/lib/tonight';
 
-import { GuestTonight } from './GuestTonight';
 import { HomeTonight } from './HomeTonight';
 import { useNightHandover } from './NightHandover';
 import { NoVenue, showsLists, StaffLists, StaffSide } from './StaffTonight';
 import { TonightHead, TonightSky } from './TonightParts';
 import { TonightScroll } from './TonightScroll';
 import { useStaffTonight } from './useStaffTonight';
+
+// Only a takeover's guest bartender sees it, so it isn't in Tonight's first load.
+const GuestTonight = lazy(() => import('./GuestTonight').then((m) => ({ default: m.GuestTonight })));
 
 /** The column beside the lists on wide web (Prod-desk-today). */
 const SIDE = 340;
@@ -63,7 +66,9 @@ function BarPage({ barId, barName }: { barId: string; barName: string }) {
   if (guest)
     return (
       <Frame sky={[]} eyebrow={null}>
-        <GuestTonight guest={guest} barId={barId} barName={barName} />
+        <Suspense fallback={<PencilState kind="loading" title="Loading tonight" compact />}>
+          <GuestTonight guest={guest} barId={barId} barName={barName} />
+        </Suspense>
       </Frame>
     );
   return <StaffPage barId={barId} />;
