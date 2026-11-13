@@ -16,7 +16,9 @@ import {
   markWaited,
   ownerKnown,
   ownerOf,
+  dropOthersWrite,
   setDiscardRefetch,
+  setWritesSaver,
   setQuerySaver,
   stampOwner,
   writeOwner,
@@ -30,8 +32,10 @@ import {
   guardStorage,
   PERSISTED_KEYS,
   pruneQueryFiles,
+  restoreRowSafely,
   shouldPersistQuery,
 } from '@/lib/queryCachePersist';
+import { reportError } from '@/lib/monitoring';
 import { BASE, KEEP, queryDefaults } from '@/lib/queryDefaults';
 import { retryDelay, retryQuery } from '@/lib/queryRetry';
 import { BAR_WRITE, isNetworkError, MENU_LAYOUT, NEW_DRINK, OFFLINE_SCOPE, retryBarWrite } from '@/lib/offlineWrites';
@@ -230,7 +234,8 @@ export const queryClient = new QueryClient({
 // The first screen's queries and unsent writes are one storage row, sized
 // for Android by serializeCache. Each save serializes the whole row, so save
 // at most every 5 seconds.
-export const asyncStoragePersister = createCachePersister(guardStorage(AsyncStorage), 5000);
+const rowStorage = guardStorage(AsyncStorage);
+export const asyncStoragePersister = createCachePersister(rowStorage, 5000);
 
 /**
  * What's saved to storage between launches: see lib/queryCachePersist.ts.
@@ -241,7 +246,9 @@ export const persistOptions = {
   persister: {
     ...asyncStoragePersister,
     restoreClient: async () => {
-      const [row] = await Promise.all([asyncStoragePersister.restoreClient(), loadSavedSpecBooks(queryClient).catch(() => undefined)]);
+      // A row that can't be read, or a write in it that's broken, never stops the app opening (lib/queryCachePersist.ts).
+      const canSend = (key: readonly unknown[]) => !!queryClient.getMutationDefaults(key as QueryKey).mutationFn;
+      const [row] = await Promise.all([restoreRowSafely(rowStorage, asyncStoragePersister, canSend, reportError), loadSavedSpecBooks(queryClient).catch(() => undefined)]);
       // Old query files go once the first screens have settled.
       setTimeout(() => void pruneQueryFiles(savedQueryFiles, SAVED).catch(() => undefined), 30_000);
       return row;
@@ -263,30 +270,32 @@ export function canResendAfterRelaunch(write: Mutation<unknown, Error, unknown, 
 
 /**
  * Sends writes saved offline before the app closed as soon as the cache is
- * restored, rather than at the next reconnect or return to the app. Sign-out
- * already dropped any that weren't this user's (lib/clearUserData.ts).
+ * restored, rather than at the next reconnect or return to the app. Never
+ * awaited: the first screen doesn't wait on a send (no signal, wifi with no
+ * internet, or a write stuck behind another), and auth only settles once the
+ * restore has ended (hooks/useUserCacheSync.ts).
  */
-export async function resumeSavedWrites(): Promise<void> {
+export function resumeSavedWrites(): void {
   const restored = queryClient.getMutationCache().getAll().filter((write) => write.state.status === 'pending');
   if (!restored.length) return;
-  // Stamped with who made them: sent once who's signed in is known, anyone else's dropped. Not awaited here
-  // when it isn't known yet: the restore waits on this, and auth only settles after it (hooks/useUserCacheSync.ts).
-  if (writeOwner() === undefined && restored.some((write) => ownerOf(write as AnyWrite) !== undefined)) {
-    void ownerKnown().then(() => sendRestored(restored));
-    return;
-  }
-  await sendRestored(restored);
+  void (async () => {
+    // Stamped with who made them: sent once who's signed in is known, anyone else's dropped.
+    if (writeOwner() === undefined && restored.some((write) => ownerOf(write as AnyWrite) !== undefined)) await ownerKnown();
+    await sendRestored(restored);
+  })().catch(() => undefined);
 }
 
 async function sendRestored(restored: Mutation<unknown, Error, unknown, unknown>[]): Promise<void> {
-  for (const write of restored) if (madeBySomeoneElse(write as AnyWrite)) queryClient.getMutationCache().remove(write);
+  for (const write of restored) if (madeBySomeoneElse(write as AnyWrite)) dropOthersWrite(queryClient, write as AnyWrite, 'relaunch');
   // onlineManager says online until NetInfo's first event, which can land
   // after the restore: ask first, or a write sent with no signal fails and is lost.
   const { isConnected } = await NetInfo.fetch();
   onlineManager.setOnline(!!isConnected);
-  await queryClient.resumePausedMutations();
-  // One killed while it was sending comes back neither paused nor running: it goes again (sends are whole or keyed, so twice is once).
-  for (const write of queryClient.getMutationCache().getAll()) if (write.state.status === 'pending' && !write.state.isPaused) void write.continue().catch(() => undefined);
+  const cache = queryClient.getMutationCache();
+  // One killed while it was sending comes back neither paused nor running, and it's first in its line: it goes
+  // again first (a drink resends what it froze, hooks/useCreateDrink.ts), and the ones paused behind it follow in order.
+  for (const write of restored) if (cache.getAll().includes(write) && write.state.status === 'pending' && !write.state.isPaused) void write.continue().catch(() => undefined);
+  void queryClient.resumePausedMutations();
 }
 
 // Freshness by kind of data (static, catalog, public, yours, live), and a
@@ -309,12 +318,14 @@ queryClient.setMutationDefaults(['deleteCocktail'], { mutationFn: deleteCocktail
  * A saved write goes only as the person who made it: one stamped with someone else is dropped, not sent
  * (the Supabase client sends as whoever is signed in at send time). Checked once auth has settled.
  */
+/** Dropped by ownWrite: nothing to tell the person signed in now (it wasn't theirs). */
+const notTheirs = (e: unknown) => (e as { code?: string } | null)?.code === 'not-theirs';
 async function ownWrite(v: unknown): Promise<void> {
   const write = mutationCache.find({ predicate: (m) => m.state.variables === v }) as AnyWrite | undefined;
   if (!write || ownerOf(write) === undefined) return;
   await ownerKnown();
   if (!madeBySomeoneElse(write)) return;
-  mutationCache.remove(write);
+  dropOthersWrite(queryClient, write, 'send');
   throw Object.assign(new Error('Made by someone else on this phone, so it wasn’t sent.'), { code: 'not-theirs' });
 }
 
@@ -335,7 +346,7 @@ for (const write of Object.values(BAR_WRITES)) {
     gcTime: Infinity,
     scope: after.scope,
     onSuccess: after.saved && ((data, v) => after.saved!(queryClient, data, v)),
-    onError: after.failed && ((e, v) => void after.failed!(e as Error, v).catch(() => undefined)),
+    onError: after.failed && ((e, v) => void (notTheirs(e) ? undefined : after.failed!(e as Error, v).catch(() => undefined))),
     onSettled: (_data, _error, v) => {
       for (const queryKey of (write.refresh as (v: unknown) => QueryKey[])(v)) void queryClient.invalidateQueries({ queryKey });
     },
@@ -350,7 +361,7 @@ queryClient.setMutationDefaults(NEW_DRINK, {
   gcTime: Infinity,
   scope: OFFLINE_SCOPE,
   onSuccess: (r: unknown, v: unknown) => drinkSave().then((m) => m.newDrinkSaved(queryClient, r as CreateDrinkResult, v as CreateDrinkInput)),
-  onError: (e: Error, v: unknown) => void drinkSave().then((m) => m.newDrinkFailed(e, v as CreateDrinkInput), () => undefined),
+  onError: (e: Error, v: unknown) => void (notTheirs(e) ? undefined : drinkSave().then((m) => m.newDrinkFailed(e, v as CreateDrinkInput), () => undefined)),
 });
 
 // The row saves every 5 seconds at most; a write that starts waiting for
@@ -369,7 +380,14 @@ function saveSoon() {
   if (saving) return;
   saving = setTimeout(() => {
     saving = undefined;
-    const clientState = dehydrate(queryClient, persistOptions.dehydrateOptions);
-    void asyncStoragePersister.saveNow({ timestamp: Date.now(), buster: SAVED.buster, clientState }).catch(() => undefined);
+    void saveWrites();
   }, 0);
 }
+const saveWrites = () => {
+  const clientState = dehydrate(queryClient, persistOptions.dehydrateOptions);
+  return asyncStoragePersister.saveNow({ timestamp: Date.now(), buster: SAVED.buster, clientState }).catch(() => undefined);
+};
+setWritesSaver(async (v) => {
+  const write = mutationCache.find({ predicate: (m) => m.state.variables === v });
+  if (write && isStoredWrite(write as AnyWrite)) await saveWrites();
+});

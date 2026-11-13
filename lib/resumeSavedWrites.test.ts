@@ -24,6 +24,8 @@ const mockSend = (v?: { id?: string }) => {
 jest.mock('@react-native-community/netinfo', () => jest.requireActual('@react-native-community/netinfo/jest/netinfo-mock'));
 // Placing a drink in a waiting layout never reaches the database; its client's timers would keep the run open.
 jest.mock('@/lib/supabase', () => ({ supabase: {} }));
+const mockReported = jest.fn();
+jest.mock('@/lib/monitoring', () => ({ reportError: (...a: unknown[]) => mockReported(...a) }));
 jest.mock('@/hooks/useCocktails', () => ({ updateCocktailFn: () => mockSend(), deleteCocktailFn: () => mockSend() }));
 const mockSaved = jest.fn(() => Promise.resolve());
 jest.mock('@/hooks/barWrites', () => ({
@@ -86,6 +88,7 @@ beforeEach(() => {
   mockLayoutsSent = [];
   mockPricesSent = [];
   mockHang = false;
+  mockReported.mockClear();
   setWriteOwner(undefined);
   queryClient.getMutationCache().clear();
 });
@@ -93,7 +96,8 @@ afterEach(() => onlineManager.setOnline(true));
 
 test('a write saved offline is sent when the cache comes back', async () => {
   await writeOfflineThenRelaunch(['updateCocktail']);
-  await resumeSavedWrites();
+  resumeSavedWrites();
+  await tick();
   expect(sent).toBe(1);
   expect(queryClient.getMutationCache().getAll()[0].state.status).toBe('success');
 });
@@ -101,7 +105,8 @@ test('a write saved offline is sent when the cache comes back', async () => {
 test('still offline at launch, the write waits instead of failing', async () => {
   await writeOfflineThenRelaunch(['deleteCocktail']);
   jest.mocked(NetInfo.fetch).mockResolvedValueOnce(offline);
-  await resumeSavedWrites();
+  resumeSavedWrites();
+  await tick();
   expect(sent).toBe(0);
   expect(queryClient.getMutationCache().getAll()[0].state.isPaused).toBe(true);
 });
@@ -113,7 +118,8 @@ test("a write that can't be sent after a relaunch isn't saved", async () => {
 
 test('a count made behind the bar with no signal is sent after a relaunch', async () => {
   await writeOfflineThenRelaunch(['bar-write', 'zone-count']);
-  await resumeSavedWrites();
+  resumeSavedWrites();
+  await tick();
   expect(sent).toBe(1);
 });
 
@@ -121,7 +127,8 @@ test('a count made behind the bar with no signal is sent after a relaunch', asyn
 test('a bottle saved offline does what follows a save (its photo, its toast) after a relaunch too', async () => {
   mockSaved.mockClear();
   await writeOfflineThenRelaunch(['bar-write', 'bottle']);
-  await resumeSavedWrites();
+  resumeSavedWrites();
+  await tick();
   expect(sent).toBe(1);
   expect(mockSaved).toHaveBeenCalledWith(queryClient, 'drink', { id: 'drink' });
 });
@@ -160,7 +167,8 @@ test('a new drink and then a menu edit made offline send once each, in that orde
   queryClient.getMutationCache().clear();
   onlineManager.setOnline(true);
   await persistQueryClientRestore({ queryClient, persister });
-  await resumeSavedWrites();
+  resumeSavedWrites();
+  await tick();
   await tick();
   expect(mockOrder).toEqual(['drink', 'menu']);
   expect(mockDrinkSaved).toHaveBeenCalledTimes(1);
@@ -231,7 +239,8 @@ test('a drink made offline from a menu section ends up in that section when it s
   queryClient.getMutationCache().clear();
   await persistQueryClientRestore({ queryClient, persister });
   onlineManager.setOnline(true);
-  await resumeSavedWrites();
+  resumeSavedWrites();
+  await tick();
   await tick();
   expect(mockOrder).toEqual(['drink', 'menu']);
   expect(mockLayoutsSent).toHaveLength(1);
@@ -285,7 +294,8 @@ test('a saved write made by someone else is dropped, not sent: after a relaunch,
   onlineManager.setOnline(true);
   setWriteOwner('b');
   await persistQueryClientRestore({ queryClient, persister });
-  await resumeSavedWrites();
+  resumeSavedWrites();
+  await tick();
   await tick();
   expect(sent).toBe(0);
   expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
@@ -307,6 +317,12 @@ test('a saved write made by someone else is dropped, not sent: after a relaunch,
   await tick();
   expect(sent).toBe(0);
   expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
+  // Second review, 4: each drop is reported, by kind and where, with no one's id in it.
+  expect(mockReported.mock.calls.map(([, about]) => about)).toEqual([
+    { kind: 'zone-count', where: 'relaunch' },
+    { kind: 'menu-layout', where: 'resend' },
+  ]);
+  expect(JSON.stringify(mockReported.mock.calls)).not.toMatch(/"a"|"b"/);
 });
 
 // Review M1: killed while a waiting write is sending: it's still saved, and goes again after the relaunch.
@@ -326,10 +342,102 @@ test('a waiting write that is sending stays saved until the database answers', a
   queryClient.getMutationCache().clear();
   mockHang = false;
   await persistQueryClientRestore({ queryClient, persister });
-  await resumeSavedWrites();
+  resumeSavedWrites();
+  await tick();
   await tick();
   expect(sent).toBe(2);
   expect(mockOrder).toEqual(['menu', 'menu']);
+});
+
+// Second review S1: the one killed mid-send is first in its line; the ones behind it waited on it, and it was
+// only sent again after them, so nothing ever sent again.
+test.each([
+  ['two drinks', ['new-drink', 'new-drink']],
+  ['three drinks', ['new-drink', 'new-drink', 'new-drink']],
+  ['two menu edits', ['menu-layout', 'menu-layout']],
+  ['three menu edits', ['menu-layout', 'menu-layout', 'menu-layout']],
+  ['a drink, a menu edit and a drink', ['new-drink', 'menu-layout', 'new-drink']],
+])('killed while the first of %s was sending: after the relaunch all go, once each, in order', async (_name, kinds) => {
+  const persister = memoryPersister();
+  onlineManager.setOnline(false);
+  const ids = kinds.map((kind, i) => `${kind}-${i + 1}`);
+  kinds.forEach((kind, i) => void write(['bar-write', kind], ids[i]).catch(() => {}));
+  await tick();
+  // Signal comes back: the first starts sending, the rest wait behind it. Then the app is killed.
+  mockHang = true;
+  onlineManager.setOnline(true);
+  void queryClient.resumePausedMutations();
+  await tick();
+  expect(mockOrder).toEqual([ids[0]]);
+  await persistQueryClientSave({ queryClient, persister, dehydrateOptions: persistOptions.dehydrateOptions });
+  expect(persister.saved()?.clientState.mutations).toHaveLength(kinds.length);
+  queryClient.getMutationCache().clear();
+  mockHang = false;
+  mockOrder = [];
+  await persistQueryClientRestore({ queryClient, persister });
+  resumeSavedWrites();
+  for (let i = 0; i < kinds.length + 1; i++) await tick();
+  expect(mockOrder).toEqual(ids);
+  expect(queryClient.getMutationCache().getAll().filter((w) => w.state.status === 'pending')).toHaveLength(0);
+});
+
+// Second review S2: the first screen never waits on a send.
+test('the app opens with a send that never answers and no owner known yet', async () => {
+  const persister = memoryPersister();
+  setWriteOwner('a');
+  onlineManager.setOnline(false);
+  void write(['bar-write', 'new-drink'], 'drink').catch(() => {});
+  void write(['bar-write', 'menu-layout'], 'menu').catch(() => {});
+  await tick();
+  mockHang = true;
+  onlineManager.setOnline(true);
+  void queryClient.resumePausedMutations();
+  await tick();
+  await persistQueryClientSave({ queryClient, persister, dehydrateOptions: persistOptions.dehydrateOptions });
+  queryClient.getMutationCache().clear();
+  setWriteOwner(undefined);
+  // As PersistQueryClientProvider runs it: restore, then onSuccess, then the app renders.
+  const opened = persistQueryClientRestore({ queryClient, persister }).then(() => resumeSavedWrites()).then(() => 'opened');
+  expect(await Promise.race([opened, tick().then(() => 'stuck')])).toBe('opened');
+});
+
+test('the app opens with no signal, the writes waiting', async () => {
+  const persister = await writeOfflineThenRelaunch(['bar-write', 'zone-count']);
+  queryClient.getMutationCache().clear();
+  jest.mocked(NetInfo.fetch).mockResolvedValueOnce(offline);
+  const opened = persistQueryClientRestore({ queryClient, persister }).then(() => resumeSavedWrites()).then(() => 'opened');
+  expect(await Promise.race([opened, tick().then(() => 'stuck')])).toBe('opened');
+  await tick();
+  expect(queryClient.getMutationCache().getAll()[0].state.isPaused).toBe(true);
+});
+
+test('a stored row that can’t be read is set aside, and the app opens without it', async () => {
+  await AsyncStorage.clear();
+  await AsyncStorage.setItem('REACT_QUERY_OFFLINE_CACHE', '{"clientState":{"mutations":[{"mutationKey"');
+  await expect(persistQueryClientRestore({ queryClient, ...persistOptions })).resolves.toBeUndefined();
+  const aside = JSON.parse((await AsyncStorage.getItem('REACT_QUERY_SET_ASIDE')) ?? 'null');
+  expect(aside.items).toBe('{"clientState":{"mutations":[{"mutationKey"');
+  expect(mockReported).toHaveBeenCalledTimes(1);
+});
+
+test('a broken write comes back as didn’t send; one that can’t be sent is set aside; the rest restore', async () => {
+  await AsyncStorage.clear();
+  onlineManager.setOnline(false);
+  void write(['bar-write', 'zone-count'], 'whole').catch(() => {});
+  await tick();
+  const row = JSON.parse((await AsyncStorage.getItem('REACT_QUERY_OFFLINE_CACHE')) ?? '{}');
+  row.clientState.mutations.push({ mutationKey: ['bar-write', 'zone-count'], state: { variables: { id: 'broken' }, status: 'sending?' } }, { mutationKey: 'no key' }, 42);
+  row.clientState.queries.push(null, { queryKey: 'x' });
+  await AsyncStorage.setItem('REACT_QUERY_OFFLINE_CACHE', JSON.stringify(row));
+  queryClient.getMutationCache().clear();
+  await persistQueryClientRestore({ queryClient, ...persistOptions });
+  const writes = queryClient.getMutationCache().getAll();
+  expect(writes.map((w) => [(w.state.variables as { id: string }).id, w.state.status, isKeptWrite(w)])).toEqual([
+    ['whole', 'pending', true],
+    ['broken', 'error', true],
+  ]);
+  const aside = JSON.parse((await AsyncStorage.getItem('REACT_QUERY_SET_ASIDE')) ?? 'null');
+  expect(aside.items).toEqual([{ mutationKey: 'no key' }, 42]);
 });
 
 // Review M2: Discard takes the change off the screen too, from the copy saved with the write.

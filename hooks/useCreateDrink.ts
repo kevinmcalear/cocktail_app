@@ -11,6 +11,7 @@ import { refreshSpecs } from '@/hooks/useBulk';
 import { linesOnKeptHouseMades, liveIds, specLineSaver, withKeptHouseMades } from '@/hooks/specLineSave';
 import { saveDrinkSpec, type SpecLineInput } from '@/hooks/useVersions';
 import { track } from '@/lib/analytics';
+import { saveWritesNow } from '@/lib/keptWrites';
 import { NEW_DRINK, specFingerprint } from '@/lib/offlineWrites';
 import { saveErrorWords } from '@/lib/saveErrorWords';
 import { toastDone } from '@/lib/toast';
@@ -28,7 +29,7 @@ import { ontoBarLines } from '@/lib/sameName';
 import type { SketchInputs } from '@/lib/sketch/types';
 import { supabase } from '@/lib/supabase';
 import { namedOnly } from '@/lib/whoMadeIt';
-import type { Insert } from '@/types/db';
+import type { Insert, Json } from '@/types/db';
 import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
 import { useMenuDrinkHandoff } from '@/store/useMenuDrinkHandoff';
 import { useRecentActivityStore } from '@/store/useRecentActivityStore';
@@ -53,6 +54,19 @@ export interface CreateDrinkInput {
   queued?: boolean;
   /** The kept draft as it was when Save was pressed (specFingerprint): once it's in, a draft still the same goes; one changed since stays. */
   keptPrint?: string;
+  /** Filled in as it sends, and saved with it (createDrink): sent again after the app was killed mid-send, it repeats nothing. */
+  sent?: SentDrink;
+}
+
+/**
+ * What a save froze as it went: the save_drink call exactly as sent (so a repeat is the same save, and the
+ * database hands back the same drink), each photo's uploaded image, and the steps after it that are done.
+ */
+export interface SentDrink {
+  key?: string;
+  save?: Json;
+  images?: Partial<Record<ImageAngle, string>>;
+  done?: string[];
 }
 
 export interface CreateDrinkResult {
@@ -92,7 +106,18 @@ async function draftPrice(draft: WizardDraft, barId: string): Promise<string | n
  * The save itself. It reads only its input (and who is signed in when it
  * sends), so one kept on the phone sends the same after a relaunch.
  */
-export async function createDrink({ draft, barId, myProfileId, menuSectionId, sketch, updateId }: CreateDrinkInput, qc: QueryClient, signedIn?: string | null): Promise<CreateDrinkResult> {
+export async function createDrink(input: CreateDrinkInput, qc: QueryClient, signedIn?: string | null): Promise<CreateDrinkResult> {
+  const { draft, barId, myProfileId, menuSectionId, sketch, updateId } = input;
+  // Frozen in the write's own variables as it goes, and saved with it before the next request: a kill mid-send
+  // sends the same save again (the same drink back) and skips what's done. Only a stored write saves (keptWrites).
+  const sent = (input.sent ??= {});
+  const done = new Set(sent.done);
+  const keep = () => saveWritesNow(input);
+  const mark = async (step: string) => {
+    done.add(step);
+    sent.done = [...done];
+    await keep();
+  };
   // One sent after a relaunch reads who's signed in from the session on the device (no request): sign-out drops another person's waiting saves (lib/clearUserData.ts).
   const userId = signedIn ?? (await supabase.auth.getSession()).data.session?.user.id;
   if (!userId) throw new Error('Sign in to save drinks.');
@@ -127,7 +152,17 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
     is_float: !!line.float,
     ...(draft.parts?.length ? { part: linePart(draft.parts, line.key, garnishes.has(line.key)) } : {}),
   });
+  const key = (sent.key ??= draft.id ?? newDraftId());
+  const freeze = async (save: Json) => {
+    if (sent.save === undefined) {
+      sent.save = save;
+      await keep();
+    }
+    return sent.save;
+  };
   const id = await (async () => {
+    // Sent before: the same save again, not one rebuilt from what's read now (a price, a credit), which the database would take as a new drink.
+    if (!updateId && sent.save !== undefined) return (await saver.saveDrink(key, spec.map(({ line }) => line), {}, specOf, freeze)).item;
     // Made in parts: each part's methods in turn, with its number (Build can be in two parts).
     const methodIds: string[] = [];
     const methodParts: number[] = [];
@@ -208,7 +243,7 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
       price: barId ? await draftPrice(draft, barId) : null,
     };
     const saved = await saver.saveDrink(
-      draft.id ?? newDraftId(),
+      key,
       spec.map(({ line }) => line),
       {
         drink: row,
@@ -219,6 +254,7 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
         credits: { creator: creatorId, names: creatorNames, accept: !!creatorId && creatorId === myProfileId && !otherBar },
       },
       specOf,
+      freeze,
     );
     return saved.item;
   })();
@@ -236,36 +272,43 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
   // Decorative, so a failure only means the worker draws it as usual.
   // No glass drawing picked goes without "variant": the database stores
   // the default drawing that way and refuses a null one.
-  if (sketch) {
+  if (sketch && !done.has('sketch')) {
     // The database adds the build from the drink's own (20261029500000), and an older one refuses the key.
     // The ice's look, the glass's height and its traced outline are the venue's, not the drink's, so they aren't sent either.
     const { variant, build: _build, iceLook: _look, glassMm: _mm, outline: _outline, ...rest } = sketch;
-    await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: variant ? { ...rest, variant } : rest });
+    const { error } = await supabase.rpc('save_maker_sketch', { p_item_id: id, p_inputs: variant ? { ...rest, variant } : rest });
+    if (!error) await mark('sketch');
   }
 
-  if (draft.publish) {
+  if (draft.publish && !done.has('publish')) {
     const { error } = await supabase.from('items').update({ publish_mode: draft.publish }).eq('id', id);
     if (error) warnings.push(plainDbMessage(error) ?? 'It’s saved as private: who can see it didn’t change.');
+    else await mark('publish');
   }
 
   // Not the person credited first, and only people with a profile (the database checks both).
   const coIds = [...new Set((draft.coCreators ?? []).map((c) => c.id).filter((p): p is string => !!p && p !== creatorId))];
-  if (coIds.length) {
+  if (coIds.length && !done.has('credits')) {
     const { error } = await saveCredits(id, coIds);
     if (error) warnings.push(plainDbMessage(error) ?? 'The people who made it with you weren’t added. Add them on the drink’s page.');
+    else await mark('credits');
   }
 
   // "Just me": the notes are yours alone, never the drink's. Otherwise
   // they're the drink's, for a role and up at a venue (E29).
-  if (privateNotes && draft.notes.trim()) {
+  if (done.has('notes')) {
+    // Saved by the send before this one: not again, over an edit made since.
+  } else if (privateNotes && draft.notes.trim()) {
     try {
       await savePrivateNote(id, draft.notes);
+      await mark('notes');
     } catch {
       warnings.push(`Your note wasn’t saved: “${draft.notes.trim().slice(0, 80)}”. Add it again on the drink’s page.`);
     }
   } else if (draft.notes.trim()) {
     try {
       await saveItemNotes(id, draft.notes, barId ? (draft.notesLevel ?? null) : null);
+      await mark('notes');
     } catch {
       warnings.push(`The notes weren’t saved: “${draft.notes.trim().slice(0, 80)}”. Add them again on the drink’s page.`);
     }
@@ -275,18 +318,32 @@ export async function createDrink({ draft, barId, myProfileId, menuSectionId, sk
   // fails is said, not fatal: the drink is saved and photos can follow.
   let photosMissed = 0;
   for (const [angle, uri] of Object.entries(draft.photos ?? {}) as [ImageAngle, string][]) {
-    const image = await uploadDrinkPhoto(uri, `cocktails/${id}`).catch(() => null);
-    const linked = image ? await supabase.from('item_images').insert({ item_id: id, image_id: image.id, angle, sort_order: 0 }) : null;
-    if (!image || linked?.error) photosMissed += 1;
+    if (done.has(`photo:${angle}`)) continue;
+    // Uploaded once: a repeat links the image the send before uploaded.
+    let imageId = sent.images?.[angle];
+    if (!imageId) {
+      imageId = (await uploadDrinkPhoto(uri, `cocktails/${id}`).catch(() => null))?.id;
+      if (imageId) {
+        sent.images = { ...sent.images, [angle]: imageId };
+        await keep();
+      }
+    }
+    const linked = imageId ? await supabase.from('item_images').insert({ item_id: id, image_id: imageId, angle, sort_order: 0 }) : null;
+    if (!imageId || linked?.error) photosMissed += 1;
+    else await mark(`photo:${angle}`);
   }
   if (photosMissed) warnings.push(photosMissed === 1 ? 'One photo wasn’t added. Add it on the drink’s page.' : `${photosMissed} photos weren’t added. Add them on the drink’s page.`);
   if (Object.keys(draft.photos ?? {}).length) void qc.invalidateQueries({ queryKey: ['cocktail', id] });
 
-  await afterSaved(warnings, async () => {
-    await saver.saveOwnPreps();
-    await saver.saveCards();
-    await saver.saveBottles();
-  });
+  if (!done.has('preps')) {
+    const said = warnings.length;
+    await afterSaved(warnings, async () => {
+      await saver.saveOwnPreps();
+      await saver.saveCards();
+      await saver.saveBottles();
+    });
+    if (warnings.length === said) await mark('preps');
+  }
 
   if (menuSectionId) useMenuDrinkHandoff.getState().deliver(menuSectionId, id);
 

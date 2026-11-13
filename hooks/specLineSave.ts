@@ -215,9 +215,17 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
    * reply that never came, it hands back the same rows instead of making them
    * twice. `rest` is the rest save_drink takes (drink or item, methods, parts,
    * credits, images); `specOf` a line as save_drink_spec takes it, less its
-   * ingredient. Returns the drink and each line's row, in order.
+   * ingredient. Returns the drink and each line's row, in order. `freeze`
+   * gets the save as built and returns what to send: a save sent before
+   * sends what it sent then, so the database knows it (useCreateDrink).
    */
-  const saveDrink = async (key: string, lines: readonly WizardLine[], rest: Record<string, unknown>, specOf: (l: WizardLine, i: number) => Omit<SpecLineInput, 'ingredient_item_id'>) => {
+  const saveDrink = async (
+    key: string,
+    lines: readonly WizardLine[],
+    rest: Record<string, unknown>,
+    specOf: (l: WizardLine, i: number) => Omit<SpecLineInput, 'ingredient_item_id'>,
+    freeze: (save: Json) => Promise<Json> = async (save) => save,
+  ) => {
     const house = lines.filter(isHouseMade);
     const { payload, at } = houseMadesPayload(house.map((l) => ({ name: l.name, prep: l.prep! })));
     const houseAt = lines.map((l) => house.indexOf(l));
@@ -230,7 +238,7 @@ export function specLineSaver(barId: string | null, live: ReadonlySet<string>) {
       return isOwnPrep(l) ? { name, own: true } : { name, allergens: prepFacts([l.name]).allergens };
     });
     const save = { ...rest, bar: barId, preps: payload, lines: lines.map((l, i) => ({ ...specOf(l, i), ingredient: refs[i] })) };
-    const { data, error } = await supabase.rpc('save_drink', { p_key: key, p_save: save as unknown as Json });
+    const { data, error } = await supabase.rpc('save_drink', { p_key: key, p_save: await freeze(save as unknown as Json) });
     if (error) throw error;
     const out = data as { item: string; version: number; house_mades: string[] | null; lines: { id: string; new: boolean; yours?: boolean }[] };
     newIngredients.push(...(out.house_mades ?? []));

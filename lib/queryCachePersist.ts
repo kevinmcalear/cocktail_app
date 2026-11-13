@@ -224,3 +224,81 @@ export async function pruneQueryFiles(files: FileStore, { maxAge, buster }: { ma
     if (!query || query.buster !== buster || age > maxAge) await files.remove(name);
   }
 }
+
+// --- reading the row back ---
+
+/** Where writes that couldn't be read back are set aside: kept on the phone as they were, never sent, never in the way. */
+export const SET_ASIDE_KEY = 'REACT_QUERY_SET_ASIDE';
+
+type Saved = { mutationKey?: unknown; state?: { status?: unknown; isPaused?: unknown; variables?: unknown; submittedAt?: unknown; owner?: unknown } };
+const STATUSES = ['idle', 'pending', 'error', 'success'];
+const UNREAD = 'It couldn’t be read back after the app closed. Send it again, or discard it.';
+
+/**
+ * A saved row's writes, checked before they're restored: one whole is kept; one this app can still send but whose
+ * state is broken comes back as didn't send (its variables kept, listed on Tonight); anything else is set aside.
+ * Broken queries just go (they're fetched again). `canSend` says a key has a registered mutationFn.
+ */
+export function checkSavedWrites(row: PersistedClient, canSend: (key: readonly unknown[]) => boolean): { row: PersistedClient; setAside: unknown[] } {
+  const setAside: unknown[] = [];
+  const mutations: unknown[] = [];
+  const saved: unknown = row.clientState?.mutations;
+  for (const m of (Array.isArray(saved) ? saved : []) as (Saved | null)[]) {
+    const key = m?.mutationKey;
+    const sendable = Array.isArray(key) && canSend(key);
+    const state = m?.state && typeof m.state === 'object' ? m.state : undefined;
+    if (sendable && state && STATUSES.includes(state.status as string) && typeof state.isPaused === 'boolean') mutations.push(m);
+    else if (sendable && state && state.variables !== undefined)
+      mutations.push({
+        ...m,
+        state: {
+          context: undefined,
+          data: undefined,
+          error: { message: UNREAD },
+          failureCount: 0,
+          failureReason: null,
+          isPaused: false,
+          status: 'error',
+          variables: state.variables,
+          submittedAt: Number(state.submittedAt) || Date.now(),
+          ...(state.owner !== undefined ? { owner: state.owner } : {}),
+        },
+      });
+    else setAside.push(m);
+  }
+  const queries: unknown = row.clientState?.queries;
+  const whole = (Array.isArray(queries) ? queries : []).filter(
+    (q: Partial<PersistedQuery> | null) => !!q && Array.isArray(q.queryKey) && typeof q.queryHash === 'string' && !!q.state && typeof q.state === 'object',
+  );
+  return { row: { ...row, clientState: { mutations, queries: whole } as PersistedClient['clientState'] }, setAside };
+}
+
+/**
+ * Reads the row back without ever stopping the app opening: what can't be read (corrupt, or too big to read) is
+ * set aside as it was, reported, and the app opens without it; broken writes are sorted by checkSavedWrites.
+ * ponytail: only the latest set-aside is kept, and nothing in the app reads it yet (support can, from the device).
+ */
+export async function restoreRowSafely(
+  storage: AsyncStorage<string>,
+  persister: Persister,
+  canSend: (key: readonly unknown[]) => boolean,
+  report: (e: unknown, about: Record<string, unknown>) => void,
+): Promise<PersistedClient | undefined> {
+  const setAside = (items: unknown) => Promise.resolve(storage.setItem(SET_ASIDE_KEY, JSON.stringify({ at: Date.now(), items }))).catch(() => undefined);
+  try {
+    const row = await persister.restoreClient();
+    if (!row) return row;
+    const checked = checkSavedWrites(row, canSend);
+    if (checked.setAside.length) {
+      await setAside(checked.setAside);
+      report(new Error('Saved writes set aside: unreadable'), { count: checked.setAside.length });
+    }
+    return checked.row;
+  } catch (e) {
+    const raw = await Promise.resolve(storage.getItem(ROW_KEY)).catch(() => null);
+    if (raw) await setAside(raw);
+    await Promise.resolve(storage.removeItem(ROW_KEY)).catch(() => undefined);
+    report(e, { where: 'restore', setAside: !!raw });
+    return undefined;
+  }
+}

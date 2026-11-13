@@ -30,6 +30,10 @@ jest.mock('@/hooks/usePrepCard', () => ({
   savePrepRecipe: (...args: unknown[]) => mockSavePrepRecipe(...args),
 }));
 jest.mock('@/hooks/useVersions', () => ({ saveDrinkSpec: (...args: unknown[]) => mockSaveSpec(...args) }));
+const mockUpload = jest.fn(async (_uri: string, _folder: string) => ({ id: 'img-1', url: 'u' }));
+jest.mock('@/components/drink/drinkImages', () => ({ uploadDrinkPhoto: (uri: string, folder: string) => mockUpload(uri, folder) }));
+// The app killed mid-send, at a photo's link: that request never answers.
+let mockKillAtPhotoLink = false;
 
 // Rows that exist; 'gone' was merged away (deleted) after the draft picked it.
 const LIVE = ['lime', 'shake'];
@@ -92,6 +96,7 @@ jest.mock('@/lib/supabase', () => {
             if (mockTakenNames.has(row.name as string)) return chain(() => ({ data: null, error: { code: 'P0001', message: 'taken', hint: TAKEN_ID } }));
           }
           if (table !== 'items') mockOtherInserts.push([table, row]);
+          if (table === 'item_images' && mockKillAtPhotoLink) return { then: () => undefined };
           if (table !== 'items' || row.item_type !== 'cocktail') return chain(() => ({ data: { id: 'new-row' }, error: null }));
           mockInserts.push(row);
           const id = row.id as string | undefined;
@@ -368,4 +373,36 @@ describe('once a waiting save is in', () => {
     expect(now?.name).toBe('Pine Fizz No. 2');
     expect(now?.id).not.toBe('d1');
   });
+});
+
+// Second review S3: a drink sent again after the app was killed mid-send repeats nothing. What it read as it
+// sent (here, a picked row merged away since) can't change the save, so the database hands back the same drink.
+test('a drink sent again after a kill sends the same save, uploads no photo twice and writes its notes once', async () => {
+  mockRpcs.length = 0;
+  mockOtherInserts.length = 0;
+  mockUpload.mockClear();
+  const { result } = await renderHook(() => useCreateDrink() as unknown as { mutationFn: Fn });
+  const run = result.current.mutationFn;
+  const input: CreateDrinkInput = {
+    draft: { ...EMPTY_DRAFT, id: 'd-again', name: 'Again', creator: 'nobody', notes: 'Shake hard.', lines: [{ key: 'lime', id: 'lime', name: 'Lime', amount: '20', unit: 'ml' }], photos: { hero: 'file:///hero.jpg' } },
+    barId: null,
+    myProfileId: null,
+  };
+  mockKillAtPhotoLink = true;
+  void run(input);
+  await new Promise((done) => setTimeout(done, 20));
+  // Killed; what was saved with the write comes back after the relaunch, as plain JSON.
+  const restored = JSON.parse(JSON.stringify(input)) as CreateDrinkInput;
+  mockKillAtPhotoLink = false;
+  LIVE.splice(LIVE.indexOf('lime'), 1);
+  try {
+    await run(restored);
+  } finally {
+    LIVE.push('lime');
+  }
+  const [first, again] = saveCalls().map(([, args]) => args);
+  expect(again).toEqual(first);
+  expect(mockUpload).toHaveBeenCalledTimes(1);
+  expect(mockOtherInserts.filter(([t]) => t === 'item_notes' || t === 'item_private_notes')).toHaveLength(1);
+  expect(mockOtherInserts.filter(([t]) => t === 'item_images').map(([, row]) => row.image_id)).toEqual(['img-1', 'img-1']);
 });

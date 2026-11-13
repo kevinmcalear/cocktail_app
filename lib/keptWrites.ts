@@ -1,5 +1,7 @@
 import type { Mutation, QueryClient, QueryKey } from '@tanstack/react-query';
 
+import { reportError } from '@/lib/monitoring';
+
 /**
  * Writes kept on the phone until they're in (lib/react-query.ts keeps them,
  * hooks/useUnsentWrites lists them): apart from the client's own file so
@@ -52,10 +54,19 @@ export const madeBySomeoneElse = (write: AnyWrite) => {
   return owner !== undefined && signedIn !== undefined && owner !== signedIn;
 };
 
+/**
+ * Drops a write made by someone else on this phone (never sent as the person signed in now). Quiet for them,
+ * but reported (its kind and where, no ids) so it shows in monitoring.
+ */
+export function dropOthersWrite(client: QueryClient, write: AnyWrite, where: 'relaunch' | 'send' | 'resend'): void {
+  client.getMutationCache().remove(write);
+  reportError(new Error('A saved write made by someone else on this phone was dropped'), { kind: String(write.options.mutationKey?.[1] ?? 'unknown'), where });
+}
+
 /** A write that didn't send, sent again as it was (from what's waiting to send). It waits for signal like the first try. */
 export function resendWrite(client: QueryClient, write: AnyWrite): void {
   if (madeBySomeoneElse(write)) {
-    client.getMutationCache().remove(write);
+    dropOthersWrite(client, write, 'resend');
     return;
   }
   if (write.state.isPaused) {
@@ -96,6 +107,18 @@ let refetchAfterDiscard: (client: QueryClient, write: AnyWrite) => void = () => 
 /** lib/react-query.ts says what a write touches (its BAR_WRITES refresh keys). */
 export const setDiscardRefetch = (fn: typeof refetchAfterDiscard) => {
   refetchAfterDiscard = fn;
+};
+
+let writesSaver: (variables: unknown) => Promise<void> = async () => undefined;
+/**
+ * Saves the stored writes now, when the one with these variables is stored (else nothing to do). A write that
+ * changes its own variables while it sends (a new drink freezing what it sent, hooks/useCreateDrink.ts) awaits
+ * this, so a kill straight after can't lose the change.
+ */
+export const saveWritesNow = (variables: unknown) => writesSaver(variables);
+/** lib/react-query.ts says how (its row persister). */
+export const setWritesSaver = (save: typeof writesSaver) => {
+  writesSaver = save;
 };
 
 let saver: (queryKey: QueryKey) => Promise<void> = async () => undefined;
