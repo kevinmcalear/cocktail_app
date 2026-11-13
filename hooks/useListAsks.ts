@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BAR_WRITES, type OffTonightWrite } from '@/hooks/barWrites';
 import { check, useListChanges, type ListRow } from '@/hooks/useLivingList';
 import { MENU_DRINK_COLUMNS, toMenuDrink, type MenuItemRow } from '@/hooks/useMenus';
+import { offTonightKey, type OffTonight } from '@/hooks/useOffTonight';
 import { newDraftId } from '@/lib/drinkWizard';
 import { supabase } from '@/lib/supabase';
 import type { MenuDrink } from '@/types/menus';
@@ -43,18 +44,10 @@ export interface ListNotice {
   toldBy: string;
 }
 
-/** A drink off for tonight only. */
-export interface OffTonight {
-  id: string;
-  menuId: string;
-  itemId: string;
-  until: string;
-}
-
 export const askKeys = {
   asks: (menuId: string) => ['living-list', menuId, 'asks'] as const,
   notices: (barId: string) => ['list-notices', barId] as const,
-  offTonight: (barId: string) => ['off-tonight', barId] as const,
+  offTonight: offTonightKey,
 };
 
 /** The asks on a list the caller reads: their own (drafts too) and, for the menu team, everyone's that were asked. */
@@ -204,24 +197,6 @@ export function useListNotices(barId: string | null | undefined, sinceIso: strin
         at: n.at,
         toldBy: n.told_by,
       }));
-    },
-  });
-}
-
-/** Drinks off for tonight at a bar, on any of its lists; a row past its close no longer counts. */
-export function useOffTonight(barId: string | null | undefined) {
-  return useQuery({
-    queryKey: askKeys.offTonight(barId ?? ''),
-    enabled: !!barId,
-    staleTime: 60_000,
-    queryFn: async (): Promise<OffTonight[]> => {
-      const { data, error } = await supabase
-        .from('menu_off_tonight')
-        .select('id, menu_id, item_id, until, menu:menus!inner(bar_id)')
-        .eq('menu.bar_id', barId!)
-        .gt('until', new Date().toISOString());
-      if (error) throw error;
-      return (data ?? []).map((r) => ({ id: r.id, menuId: r.menu_id, itemId: r.item_id, until: r.until }));
     },
   });
 }

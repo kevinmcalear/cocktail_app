@@ -78,6 +78,7 @@ function EventPage({ id }: { id: string }) {
     .filter(Boolean)
     .join(' · ');
   const link = `${siteOrigin()}/e/${event.id}`;
+  const takeoverNight = event.eventKind === 'takeover';
   const confirmDelete = () => {
     const go = () => remove.mutate(event.id, { onSuccess: back });
     if (Platform.OS === 'web') {
@@ -126,6 +127,7 @@ function EventPage({ id }: { id: string }) {
           {directions ? <Button label="Directions" variant="secondary" onPress={() => Linking.openURL(directions)} style={styles.flex} /> : null}
         </View>
         <EventDrinks event={event} />
+        {canEdit && event.menuId && takeoverNight ? <TextLink label="Open the takeover page" onPress={() => router.push(`/takeover/${event.menuId}` as Href)} /> : null}
         {canEdit && event.menuId ? <TextLink label="Open the menu" onPress={() => router.push(`/menus/${event.menuId}` as Href)} /> : null}
         <EventStaff event={event} canEdit={canEdit} />
         {canEdit ? <Button label="Delete event" variant="danger" onPress={confirmDelete} disabled={remove.isPending} style={styles.delete} /> : null}
