@@ -104,7 +104,7 @@ function VenueSetupScreenBody() {
   // The venue setup works on: made once, from the bar's name, when the claim goes (or is skipped).
   const ensureVenue = async (): Promise<string> => {
     if (barId) return barId;
-    const id = await createVenue.mutateAsync(name || 'My bar');
+    const id = await createVenue.mutateAsync({ name: name || 'My bar', country: profile?.country_code ?? null });
     rekey(keyRef.current, id);
     save(id, { barId: id, profileId, name });
     keyRef.current = id;
