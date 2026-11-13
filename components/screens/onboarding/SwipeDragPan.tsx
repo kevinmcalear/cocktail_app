@@ -41,6 +41,7 @@ export function SwipeDragPan({ onSwipe, tag, label, style, children }: { onSwipe
 
 const styles = StyleSheet.create({
   // A drag, not a text selection.
-  grab: { cursor: 'grab', userSelect: 'none' },
+  // React Native's type knows only 'auto' and 'pointer'; this file runs on the web alone, where 'grab' is real.
+  grab: { cursor: 'grab' as ViewStyle['cursor'], userSelect: 'none' },
   inside: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, pointerEvents: 'none' },
 });
