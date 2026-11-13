@@ -8,6 +8,10 @@ import { AddBottle } from './AddBottle';
 
 const mockSave = jest.fn();
 let mockConnected = true;
+let mockBottlesList = false;
+
+// The bar's Bottles list (More drink filters): off unless a test turns it on.
+jest.mock('@/hooks/useVenueFeatures', () => ({ useVenueFeature: () => mockBottlesList }));
 
 jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: mockConnected }) }));
 
@@ -98,7 +102,29 @@ describe('AddBottle', () => {
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Buffalo Trace');
     await fireEvent.press(saveButton());
     expect(onSaved).toHaveBeenCalledWith({ id: 'l10', name: 'Laphroaig 10' }, true);
-    expect(useToastStore.getState().toast?.detail).toBe(savedDetail(true, 'Islay Scotch'));
+    expect(useToastStore.getState().toast?.detail).toBe(savedDetail('bar', 'Islay Scotch'));
+  });
+
+  test('the toast names Bottles, and opens it, only at a bar that has the list', async () => {
+    mockSave.mockImplementation((_w, { onSuccess }) => onSuccess('l10'));
+    await renderWithProviders(<AddBottle barId="bar-1" onClose={jest.fn()} onSaved={jest.fn()} onMake={jest.fn()} />);
+    await laidOut();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Buffalo Trace');
+    await fireEvent.press(saveButton());
+    expect(useToastStore.getState().toast?.detail).not.toMatch(/Bottles/);
+    expect(useToastStore.getState().toast?.action).toBeUndefined();
+  });
+
+  test('with its Bottles list on, the toast says so and has See Bottles', async () => {
+    mockBottlesList = true;
+    mockSave.mockImplementation((_w, { onSuccess }) => onSuccess('l10'));
+    await renderWithProviders(<AddBottle barId="bar-1" onClose={jest.fn()} onSaved={jest.fn()} onMake={jest.fn()} />);
+    await laidOut();
+    await fireEvent.changeText(screen.getByLabelText('Name'), 'Buffalo Trace');
+    await fireEvent.press(saveButton());
+    expect(useToastStore.getState().toast?.detail).toBe(savedDetail('bottles', 'Islay Scotch'));
+    expect(useToastStore.getState().toast?.action?.label).toBe('See Bottles');
+    mockBottlesList = false;
   });
 
   test('Is it this one? A catalog pick fills in the maker, strength and kind, and goes on the back bar', async () => {

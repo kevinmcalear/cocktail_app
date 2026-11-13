@@ -12,18 +12,18 @@ import { inviteJobTitle, needsOnboarding, nextStep, splitName, stepProgress, typ
 import { roundKind } from '@/lib/firstRound';
 import { useAppMode } from '@/store/useAppMode';
 
-import { BringStep } from './BringStep';
 import { BringsYouStep } from './BringsYouStep';
 import { PlaceStep } from './CareerSteps';
 import { FindStep } from './FindStep';
 import { InviteBrand, InviteWelcome } from './InviteWelcome';
 import { OwnerAddStep, OwnerFindStep } from './OwnerBarStep';
-import { NameStep, TasteStep, UnitsStep } from './ProfileSteps';
-import { SetupChromeProvider, SetupFooter } from './SetupPage';
+import { FirstRunTaste } from './FirstRunPicks';
+import { NameStep, UnitsStep } from './ProfileSteps';
+import { SetupChromeProvider } from './SetupPage';
 import { SetupWelcome } from './SetupParts';
 import { DrinkStep, MenuStep } from './WorkedSteps';
 import { YouStep } from './YouStep';
-import { COPY, HOME_BRING } from './onboardingCopy';
+import { COPY } from './onboardingCopy';
 
 /** The name setup saved on the account (full_name), or ''. */
 const savedName = (metadata: unknown) => {
@@ -43,7 +43,8 @@ export const forgetSetupProgress = () => resumed.clear();
 
 /**
  * After the age check, once, for a new account: name, then what brings them
- * here (an owner's bar, work, or taste and units). A venue's invite comes first
+ * here (an owner's bar, work, or straight on), then five drinks, three pairs
+ * and their taste (FirstRunTaste). A venue's invite comes first
  * (InviteWelcome) and, once joined, shortens it to name and units; their job at that venue is saved for them.
  */
 export function OnboardingScreen() {
@@ -74,11 +75,7 @@ export function OnboardingScreen() {
   const [looking, setLooking] = useState(false);
   const findNamesakes = useFindNamesakes();
   const [home, setHome] = useState(saved?.home ?? false);
-  // The bar from "Where do you work?", for "Bring Little Rye in".
-  const [barName, setBarName] = useState<string | null>(null);
-  // Handed something to read on the last step: setup ends in Bring in, where it's being read.
-  const [handed, setHanded] = useState(false);
-  // Where setup ends: the app, Bring in with what they handed over, or venue setup for an owner.
+  // Where setup ends: the app, a bar from Your taste, or venue setup for an owner.
   const [landing, setLanding] = useState<Href>('/');
   const personId = createdId ?? profile.data?.id ?? null;
 
@@ -189,13 +186,7 @@ export function OnboardingScreen() {
     }, { name, handle });
   };
 
-  // Finish setup: Bring in shows what it's reading; Paste opens it empty.
-  const bring = (paste = false) => {
-    if (handed || paste) setLanding('/bring-in');
-    finish.mutate();
-  };
-
-  const copy = step === 'bring' && home ? HOME_BRING : step === 'bring' && barName ? { ...COPY.bring, title: `Bring ${barName} in` } : COPY[step];
+  const copy = COPY[step];
   if (profile.isPending || (invites.isLoading && !chosen) || profile.error) {
     return <SetupWelcome failed={!!profile.error} onRetry={() => profile.refetch()} onSkip={() => finish.mutate()} skipping={finish.isPending} error={finish.error?.message} />;
   }
@@ -220,9 +211,9 @@ export function OnboardingScreen() {
         title: copy.title,
         // Invited: the venue's unit is the starting point, so no "change this in Settings".
         intro: step === 'units' && joined ? 'New specs, and the amounts you read.' : copy.intro,
-        eyebrow: step === 'bring' && !home ? 'Last step' : joined ? joined.bar_name : null,
-        // The invited path wears the venue's brand, its name in the accent; "Last step" is quiet.
-        eyebrowTone: joined && step !== 'bring' ? 'accent' : 'muted',
+        eyebrow: joined ? joined.bar_name : null,
+        // The invited path wears the venue's brand, its name in the accent.
+        eyebrowTone: joined ? 'accent' : 'muted',
         progress: stepProgress(step, !!joined, trail, step === 'find' && personClaim ? 'claim' : step === 'bar' ? 'new' : 'no'),
         onBack: first ? undefined : back,
       }}
@@ -269,27 +260,14 @@ export function OnboardingScreen() {
           personId={personId}
           isCurrent
           onAddBar={() => setUpBar('new')}
-          onDone={(bar) => {
-            if (bar) setBarName(bar);
-            go('work');
-          }}
+          onDone={() => go('work')}
         />
       ) : null}
       {step === 'past' ? <PlaceStep personId={personId} isCurrent={false} onDone={() => go('past')} /> : null}
       {step === 'menus' ? <MenuStep personId={personId} onDone={() => go('menus')} /> : null}
       {step === 'drinks' ? <DrinkStep personId={personId} onDone={() => go('drinks')} /> : null}
-      {step === 'taste' ? <TasteStep onDone={() => go('taste')} /> : null}
+      {step === 'taste' ? <FirstRunTaste home={home} onBack={first ? undefined : back} onDone={(to) => (to && setLanding(to), go('taste'))} pending={finish.isPending} error={finish.error?.message} /> : null}
       {step === 'units' ? <UnitsStep joined={joined ? { barId: joined.bar_id, name: joined.bar_name } : null} onDone={() => go('units')} pending={finish.isPending} error={finish.error?.message} /> : null}
-      {step === 'bring' ? (
-        <BringStep
-          barId={null}
-          onFiles={() => setHanded(true)}
-          onPaste={() => bring(true)}
-          onLater={() => finish.mutate()}
-          error={finish.error?.message}
-          footer={<SetupFooter label="Finish setup" compact pending={finish.isPending} onPress={() => bring()} />}
-        />
-      ) : null}
       {saveProfile.error && step === 'name' ? <Caption tone="accent">{saveProfile.error.message}</Caption> : null}
       {ownerBar && finish.error ? <Caption tone="accent">{finish.error.message}</Caption> : null}
     </SetupChromeProvider>

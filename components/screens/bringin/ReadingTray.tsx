@@ -42,7 +42,7 @@ export function ReadingTray() {
   const job = useBringIn((s) => s.job);
   const queued = useBringIn((s) => s.queue.length);
   const foreground = useBringIn((s) => s.foreground);
-  // Setup's Bring step shows its own tray over its buttons (components/screens/onboarding/BringStep).
+  // Not over setup's steps or the Bring in screens themselves.
   if (!job || foreground || pathname.startsWith('/bring-in') || pathname.startsWith('/onboarding') || pathname.startsWith('/venue-setup')) return null;
   const { title, detail } = words(job, queued);
 

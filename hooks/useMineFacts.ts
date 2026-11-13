@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useStaffList } from '@/hooks/useStaffList';
 import { useVenueShelves } from '@/hooks/useVenueShelves';
@@ -13,11 +14,11 @@ import type { SearchItem } from '@/types/search';
  * `prepItems`: those house preps as rows, shared ones its drinks use too (the Library's Preps).
  */
 export function useMineFacts(venueId: string | null, items: readonly SearchItem[]): MineFacts & { prepItems: SearchItem[] } {
-  const { data: menus } = useVenueMenus(venueId);
+  const { data: menus, dataUpdatedAt: menusAt } = useVenueMenus(venueId);
   const { data: staff } = useStaffList(venueId);
   const published = useMemo(() => items.filter((i) => !i.isDraft), [items]);
   const shelves = useVenueShelves(venueId, published);
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow(menusAt);
   return useMemo(() => {
     const usedIn = new Map<string, string[]>();
     for (const d of published) {

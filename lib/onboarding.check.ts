@@ -26,9 +26,8 @@ assert.equal(nextStep('work'), 'past');
 assert.equal(nextStep('past'), 'menus');
 assert.equal(nextStep('menus'), 'drinks');
 assert.equal(nextStep('drinks'), 'taste');
-assert.equal(nextStep('taste'), 'units');
-assert.equal(nextStep('units'), 'bring');
-assert.equal(nextStep('bring'), 'done');
+// Five drinks, three pairs and their taste end setup: units and Bring in come later (Prod-first, 31 Oct).
+assert.equal(nextStep('taste'), 'done');
 
 // Invited: accept, then name, units, done. Declining is the usual way.
 assert.equal(nextStep('name', 'no', true), 'units');

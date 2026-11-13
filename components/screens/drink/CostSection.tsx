@@ -10,7 +10,7 @@ import { useCapabilities, useCapabilityOpensAt } from '@/hooks/useCapabilities';
 import { useDrinkCost } from '@/hooks/useDrinkCost';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { withAlpha } from '@/lib/color';
-import { formatPct, margin, targetsLine, targetStatus, type Margin, type Targets } from '@/lib/costing';
+import { costKnown, formatPct, margin, targetsLine, targetStatus, type Margin, type Targets } from '@/lib/costing';
 import { formatPrice } from '@/lib/menus';
 import { formatMoney, priceMinor } from '@/lib/money';
 import { roleLabel } from '@/lib/roles';
@@ -65,7 +65,7 @@ function Costed({ barId, cost, price, onMenu, currency, taxRate, pricesIncludeTa
   const tax = { taxRate, pricesIncludeTax };
   const money = (minor: number | null | undefined) => formatMoney(minor, currency) ?? (minor == null ? 'no price' : String(minor));
   // Every line unpriced: no cost yet, so no margin either.
-  const known = !(cost.total_minor === 0 && cost.missing > 0);
+  const known = costKnown(cost);
   // The number in the typed price; MP and the like have none, so no margin.
   const priceMinorValue = currency ? priceMinor(price, currency) : null;
   // A menu's own price, as money when it has a number ("$22.00"), else as typed ("MP").

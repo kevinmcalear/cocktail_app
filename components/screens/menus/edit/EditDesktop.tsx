@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
-import { useRef, useState, type ComponentRef } from 'react';
+import { useRef, type ComponentRef } from 'react';
 import { ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native';
 
 import { Caption, DsText, Field, GlassButton, Tag, useDs, type TagTone } from '@/components/ds';
 import { usePopover } from '@/components/ds/PopoverMenu';
 import { DragScrollView } from '@/components/ds/dragScroll';
 import { displayFaces, font, layout, radius, space, type } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { itemHref } from '@/lib/itemRoutes';
 import { menuReadiness, menuStatus, plural } from '@/lib/menus';
@@ -168,7 +169,7 @@ function EditChecks({ editor, look, dated, onOpen }: Pick<EditViewProps, 'editor
     ...ready.short.map((x) => ({ name: x.name, label: `${x.name} needs ${plural(x.needed, 'more drink')}` })),
     ...ready.over.map((x) => ({ name: x.name, label: `${x.name} has ${plural(x.extra, 'drink')} too many` })),
   ];
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow();
   const replaces = editor.status === 'on' ? null : editor.others.find((m) => menuStatus(m, now) === 'on')?.name;
   return (
     <>

@@ -8,7 +8,7 @@ import type { IngredientAlias } from '@/lib/ingredientNames';
 import { readSpec, type SpecRow } from '@/lib/specPaste';
 import { techniqueById } from '@/lib/techniques';
 import { amountText } from '@/lib/units';
-import { getPreferredUnit } from '@/store/useSettingsStore';
+import { getLineUnit } from '@/store/useSettingsStore';
 
 import type { CatalogIngredient } from './IngredientSearch';
 
@@ -91,7 +91,7 @@ export function PasteSpecPanel({ onClose, drinkName, ingredients, aliases, coreI
 function ReadRow({ row, tag }: { row: SpecRow; tag: string }) {
   const ds = useDs();
   const skipped = row.kind === 'skip';
-  const amount = row.amount ? amountText(row.amount, typedUnit(row.pick.name, row.unit, getPreferredUnit())) : row.unit === 'top' ? 'Top' : '';
+  const amount = row.amount ? amountText(row.amount, typedUnit(row.pick.name, row.unit, getLineUnit())) : row.unit === 'top' ? 'Top' : '';
   const marked = !skipped && (row.kind === 'finish' || !!row.house);
   return (
     <View role="listitem" style={[styles.row, { borderBottomColor: ds.c.line }]}>

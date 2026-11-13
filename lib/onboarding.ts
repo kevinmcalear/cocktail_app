@@ -19,7 +19,7 @@ export const MEASURE_UNITS: { id: MeasureUnit; label: string }[] = [
  * 'hospitality' is "What brings you here?" (owner-setup step 1). An owner goes
  * on to 'bar' ("Find your bar") and, for a bar not on Cocktail yet, 'addbar'.
  */
-export type OnboardingStep = 'invite' | 'name' | 'you' | 'hospitality' | 'bar' | 'addbar' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'taste' | 'units' | 'bring';
+export type OnboardingStep = 'invite' | 'name' | 'you' | 'hospitality' | 'bar' | 'addbar' | 'find' | 'work' | 'past' | 'menus' | 'drinks' | 'taste' | 'units';
 
 /** What the person picked on a step that branches: 'owner' is "I'm setting up a bar". */
 export type StepChoice = 'yes' | 'no' | 'claim' | 'new' | 'owner';
@@ -44,9 +44,10 @@ export function afterAgeCheck(metadata: unknown): '/onboarding' | '/' {
  * setup takes over, with no career steps, taste or units. Making drinks at a
  * bar looks for an existing profile first. A claim
  * skips the career steps (they don't own that profile until it's approved).
- * Otherwise: current job, earlier jobs, menus, drinks. Everyone then says what
- * they like to drink (their taste, see lib/flavor.ts) and picks units. Last,
- * the chance to bring a menu, specs or a shelf in (Bring in reads it after).
+ * Otherwise: current job, earlier jobs, menus, drinks. Everyone then picks
+ * five drinks they know and three pairs, and sees their taste (lib/firstRun.ts),
+ * which ends setup: units and bringing things in are asked later, when they
+ * matter (canvas Prod-first, decided 31 Oct).
  * Someone who joined a venue from an invite takes the short way: name, units,
  * then the app (INVITE_STEPS). Their job at that venue is saved for them.
  */
@@ -67,8 +68,6 @@ export function nextStep(step: OnboardingStep, choice: StepChoice = 'no', joined
   if (step === 'past') return 'menus';
   if (step === 'menus') return 'drinks';
   if (step === 'drinks') return 'taste';
-  if (step === 'taste') return 'units';
-  if (step === 'units') return 'bring';
   return 'done';
 }
 
@@ -110,7 +109,7 @@ export function stepProgress(step: OnboardingStep, joined = false, trail: readon
   for (let s: OnboardingStep | 'done' = nextStep(step, choice); s !== 'done'; s = nextStep(s)) ahead += 1;
   const at = step === 'you' ? Math.max(behind, 1) : behind + 1;
   const of = at + ahead;
-  return { at, of, label: step === 'bring' ? null : `Step ${at} of ${of}` };
+  return { at, of, label: `Step ${at} of ${of}` };
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

@@ -2,7 +2,7 @@
 // 2026): what the staff page says before doors and what the home page says
 // about the shelf. Plain functions so tonight.check.ts can hold them.
 
-import { isGarnishUnit } from './garnish';
+import { isGarnish } from './garnish';
 import type { MakeLine } from './prep';
 import { resolvePresentationIngredient, sortRecipesByOrder } from './recipeUtils';
 import type { PresentationRecipe } from './spec';
@@ -29,7 +29,7 @@ export function offTonight<T extends { offAt: string | null }>(drinks: readonly 
  * which also says "expressed and discarded" and "grated"; switch to it once it lands.
  */
 export function garnishOf(lines: readonly { ingredient: string | null; unit: string | null | undefined }[]): string[] {
-  return lines.filter((l) => l.ingredient && isGarnishUnit(l.unit) && !/\begg/i.test(l.ingredient)).map((l) => l.ingredient!);
+  return lines.filter((l) => l.ingredient && isGarnish(l.unit, l.ingredient)).map((l) => l.ingredient!);
 }
 
 /**

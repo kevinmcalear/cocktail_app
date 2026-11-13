@@ -185,4 +185,15 @@ assert.equal(clampServes(0), null);
 assert.equal(clampServes(''), null);
 assert.equal(clampServes(2.7), 2);
 
+// An egg white counted "1 each" goes in the drink: in its table and the fresh list, not its garnish (walk 12 Nov).
+{
+  const sour = buildRunSheet({ ...input, swaps: [], parties: [], drinks: [drink('sour', 'Walk Test Sour', 100, [line('gin', 'London dry gin', 60), line('egg', 'Egg white', 1, 'each'), line('lt', 'Lemon twist', 1, 'each')], { glass: { id: 'coupe', name: 'Coupe' } })] });
+  const [d] = sour.drinks;
+  assert.equal(d.serve, 'Coupe · Lemon twist');
+  assert.deepEqual(d.lines.filter((l) => !l.garnish).map((l) => l.name), ['London dry gin', 'Egg white']);
+  const groupOf = (name: string) => sour.groups.flatMap((g) => g.needs).find((n) => n.name === name)?.group;
+  assert.notEqual(groupOf('Egg white'), 'garnish');
+  assert.equal(groupOf('Lemon twist'), 'garnish');
+}
+
 console.log('runSheet checks passed');

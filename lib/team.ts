@@ -160,7 +160,7 @@ export function sinceLabel(m: { role_since?: string | null; joined_at?: string |
  */
 export const INVITE_ROLES: { level: number; detail: string }[] = [
   { level: 20, detail: 'Sees menus, talking points and where things live' },
-  { level: 30, detail: 'Plus prep notes and the staff list' },
+  { level: 30, detail: 'Menu, specs, house-made, prep' },
   { level: 35, detail: 'Adds and edits drinks and menus' },
   { level: TEAM_MANAGE, detail: 'Everything, including the team' },
 ];
