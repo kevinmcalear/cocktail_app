@@ -4,6 +4,7 @@ import type { IconName } from '@/components/ds';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useFirstRound } from '@/hooks/useFirstRound';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { usePrepData } from '@/hooks/usePrepList';
 import { useShelf } from '@/hooks/useHomeBar';
@@ -111,8 +112,9 @@ function weekday(iso: string | null): string {
 
 /** The bar's takeover lists not over yet, soonest first: the sidebar's rows for them. */
 function useTakeoverLists(venueId: string | null) {
-  const menus = useVenueMenus(venueId).data;
-  const [now] = useState(() => Date.now());
+  const query = useVenueMenus(venueId);
+  const menus = query.data;
+  const now = useMenuNow(query.dataUpdatedAt);
   return useMemo(
     () =>
       (menus ?? [])

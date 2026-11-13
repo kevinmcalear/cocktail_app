@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { useBarMembers } from '@/hooks/useBarDetail';
 import { useBarInvites } from '@/hooks/useBarInvites';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useOffTonight } from '@/hooks/useOffTonight';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useMenu, useVenueMenus } from '@/hooks/useMenus';
 import { useRunSheet } from '@/hooks/useRunSheet';
 import { useListMakers, useTakeoverHead } from '@/hooks/useTakeoverPage';
@@ -43,8 +44,9 @@ export function useTakeoverModel(menuId: string) {
   const members = useBarMembers(staff ? barId : null).data;
   const invites = useBarInvites(barId ?? '', staff && !!barId).data;
   const matrix = useRoleMatrix(staff ? barId : null).data;
-  const venueMenus = useVenueMenus(barId).data;
-  const [now] = useState(() => Date.now());
+  const venueMenusQuery = useVenueMenus(barId);
+  const venueMenus = venueMenusQuery.data;
+  const now = useMenuNow(venueMenusQuery.dataUpdatedAt);
   const house = useMemo(
     () => groupMenus((venueMenus ?? []).filter((m) => m.barId === barId && m.id !== menuId && m.listType !== 'takeover'), now).on[0] ?? null,
     [venueMenus, barId, menuId, now],
