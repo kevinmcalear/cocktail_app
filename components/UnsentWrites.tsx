@@ -1,4 +1,3 @@
-import { useNetInfo } from '@react-native-community/netinfo';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -7,10 +6,12 @@ import { Button, Sheet, SheetScrollView, Title } from '@/components/ds';
 import { ListGroup, ListRow } from '@/components/ds/ListGroup';
 import { Prompt } from '@/components/screens/addDrink/Prompt';
 import { space } from '@/constants/tokens';
+import { useOnline } from '@/hooks/useOnline';
 import { useUnsentWrites, type UnsentWrite } from '@/hooks/useUnsentWrites';
 import { confirmAsync } from '@/lib/dialogs';
 import { discardWrite, resendWrite } from '@/lib/keptWrites';
-import { didntSendWords, unsentDetail, unsentTitle, waitingWords } from '@/lib/unsentWords';
+import { unsentDetail, unsentTitle } from '@/lib/unsentRows';
+import { didntSendWords, waitingWords } from '@/lib/unsentWords';
 
 const timeOf = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
@@ -22,7 +23,7 @@ const timeOf = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: 'nume
  */
 export function UnsentWrites() {
   const unsent = useUnsentWrites();
-  const offline = useNetInfo().isConnected === false;
+  const offline = !useOnline();
   const [open, setOpen] = useState(false);
   const client = useQueryClient();
   if (!unsent.length) return null;

@@ -1,8 +1,8 @@
+import { lazy, Suspense } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { PencilState, useDs } from '@/components/ds';
 import { ScreenHeader } from '@/components/nav/ScreenHeader';
-import { UnsentWrites } from '@/components/UnsentWrites';
 import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
@@ -11,6 +11,7 @@ import { useBarDrinks } from '@/hooks/useHomeBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
 import { useServiceDate } from '@/hooks/useServiceDay';
+import { useUnsentWrites } from '@/hooks/useUnsentWrites';
 import { tonightEyebrow } from '@/lib/tonight';
 
 import { HomeTonight } from './HomeTonight';
@@ -19,6 +20,9 @@ import { NoVenue, showsLists, StaffLists, StaffSide } from './StaffTonight';
 import { TonightHead, TonightSky } from './TonightParts';
 import { TonightScroll } from './TonightScroll';
 import { useStaffTonight } from './useStaffTonight';
+
+// Only when something is waiting: it isn't in Tonight's first load.
+const UnsentWrites = lazy(() => import('@/components/UnsentWrites').then((m) => ({ default: m.UnsentWrites })));
 
 /** The column beside the lists on wide web (Prod-desk-today). */
 const SIDE = 340;
@@ -51,6 +55,7 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
   const bottom = useTabBarInset();
   const wide = useIsWideWeb();
   const column = usePageColumn(wide ? 'wide' : 'text');
+  const unsent = useUnsentWrites().length > 0;
   return (
     <View style={[styles.screen, { backgroundColor: ds.c.ground }]}>
       <TonightScroll sky={<TonightSky ids={sky} />} cap={<TonightSky ids={sky} cap />} contentContainerStyle={{ paddingBottom: bottom }}>
@@ -58,7 +63,11 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
         <View style={[column, styles.body]}>
           <TonightHead eyebrow={eyebrow} />
           {/* Under the title (Sta-errors, Didn't send): what's saved on this phone and not in yet. */}
-          <UnsentWrites />
+          {unsent ? (
+            <Suspense fallback={null}>
+              <UnsentWrites />
+            </Suspense>
+          ) : null}
           {children}
         </View>
       </TonightScroll>

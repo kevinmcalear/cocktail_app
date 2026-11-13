@@ -7,7 +7,7 @@ import { dehydrate, focusManager, type Mutation, MutationCache, type QueryKey, n
 import { AppState, Platform } from 'react-native';
 
 import { coalesceTimer } from '@/lib/coalesceTimer';
-import { loadDrinkSave } from '@/lib/drinkSaveLoader';
+import { loadDrinkSave, loadMadeForSection } from '@/lib/drinkSaveLoader';
 import { hasWaited, isKeptWrite, markWaited, setQuerySaver, type AnyWrite } from '@/lib/keptWrites';
 import { fileStore } from '@/lib/fileStore';
 import {
@@ -32,6 +32,51 @@ onlineManager.setEventListener((setOnline) => {
     setOnline(!!state.isConnected);
   });
 });
+
+// --- wifi with no internet ---
+// NetInfo says connected, but a write's dropped connection says otherwise: one look at the database's
+// address settles it. Not there, and the app counts as offline (writes wait, the pill shows) until it is.
+// ponytail: a request that gets no reply at all still waits for the platform's own timeout before it
+// fails; the upgrade is a timeout on the Supabase client's fetch for writes.
+const PROBE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ? `${process.env.EXPO_PUBLIC_SUPABASE_URL}/auth/v1/health` : null;
+let probing = false;
+async function reachable(url: string): Promise<boolean> {
+  const stop = new AbortController();
+  const timer = setTimeout(() => stop.abort(), 5000);
+  try {
+    // Any answer will do (no-cors: the web can't read it, and needn't).
+    await fetch(url, { mode: 'no-cors', signal: stop.signal });
+    return true;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+function checkReachable() {
+  const url = PROBE_URL;
+  if (!url || probing || !onlineManager.isOnline()) return;
+  probing = true;
+  void (async () => {
+    try {
+      if (await reachable(url)) return;
+      onlineManager.setOnline(false);
+      // Looked at again until it answers, or the device is offline for real (NetInfo says when it's back).
+      for (;;) {
+        await new Promise((done) => setTimeout(done, 10_000));
+        if (!(await NetInfo.fetch()).isConnected) return;
+        if (await reachable(url)) return onlineManager.setOnline(true);
+      }
+    } finally {
+      probing = false;
+    }
+  })();
+}
+/** A behind-the-bar write's tries: a dropped connection also checks the database is there, so it waits rather than retrying for half a minute. */
+const retryWrite = (count: number, error: Error) => {
+  if (isNetworkError(error)) checkReachable();
+  return retryBarWrite(count, error);
+};
 
 // On iOS and Android "focus" is the app coming back to the foreground (the
 // browser's tab focus doesn't exist there), so stale queries on screen
@@ -71,7 +116,8 @@ const refreshSpecBooksSoon = () => {
 
 // Behind-the-bar writes that waited are kept until they're in, even refused (lib/keptWrites.ts); the rest go once settled.
 const isBarWrite = (write: AnyWrite) => write.options.mutationKey?.[0] === BAR_WRITE;
-const isMenuLayout = (write: AnyWrite) => isBarWrite(write) && write.options.mutationKey?.[1] === MENU_LAYOUT[1];
+const isNewDrink = (write: AnyWrite) => isBarWrite(write) && write.options.mutationKey?.[1] === NEW_DRINK[1];
+const isMenuLayout =(write: AnyWrite) => isBarWrite(write) && write.options.mutationKey?.[1] === MENU_LAYOUT[1];
 const later = (fn: () => void) => setTimeout(fn, 0);
 
 const mutationCache = new MutationCache({
@@ -85,8 +131,16 @@ const mutationCache = new MutationCache({
       if (old !== write && isKeptWrite(old as AnyWrite) && (old.state.variables as MenuLayoutWrite | undefined)?.menuId === menuId) mutationCache.remove(old);
     }
   },
-  onSuccess: (_data, _v, _ctx, write) => {
+  onSuccess: async (data, v, _ctx, write) => {
     refreshSpecBooksSoon();
+    // A drink made offline from a menu section goes in it now, before the next waiting write runs (hooks/madeForSection.ts).
+    const made = v as CreateDrinkInput | undefined;
+    if (isNewDrink(write as AnyWrite) && (made?.queued || hasWaited(write as AnyWrite)) && made?.menuSectionId) {
+      const result = data as CreateDrinkResult;
+      const { placeInSection } = await loadMadeForSection();
+      const warning = await placeInSection(queryClient, made.menuSectionId, { id: result.id, name: made.draft.name.trim() }).catch(() => 'It isn’t on the menu yet: add it from the menu.');
+      if (warning) result.warnings.push(warning);
+    }
     // Bar writes are kept until they're in (gcTime: Infinity below): once in, they go.
     if (isBarWrite(write as AnyWrite)) later(() => mutationCache.remove(write));
   },
@@ -215,7 +269,7 @@ for (const write of Object.values(BAR_WRITES)) {
   const after = write as { saved?: (qc: QueryClient, data: unknown, v: unknown) => Promise<void>; failed?: (e: Error, v: unknown) => Promise<void>; scope?: { id: string } };
   queryClient.setMutationDefaults(write.key, {
     mutationFn: write.send as (v: unknown) => Promise<unknown>,
-    retry: retryBarWrite,
+    retry: retryWrite,
     // Kept until it's in, even refused (mutationCache above).
     gcTime: Infinity,
     scope: after.scope,
@@ -231,7 +285,7 @@ for (const write of Object.values(BAR_WRITES)) {
 const drinkSave = loadDrinkSave;
 queryClient.setMutationDefaults(NEW_DRINK, {
   mutationFn: (v: unknown) => drinkSave().then((m) => m.createDrink(v as CreateDrinkInput, queryClient)),
-  retry: retryBarWrite,
+  retry: retryWrite,
   gcTime: Infinity,
   scope: OFFLINE_SCOPE,
   onSuccess: (r: unknown, v: unknown) => drinkSave().then((m) => m.newDrinkSaved(queryClient, r as CreateDrinkResult, v as CreateDrinkInput)),

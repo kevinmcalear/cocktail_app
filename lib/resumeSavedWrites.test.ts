@@ -9,6 +9,7 @@ import { persistOptions, queryClient, resumeSavedWrites } from '@/lib/react-quer
 let sent = 0;
 let mockFailures: Error[] = [];
 let mockOrder: string[] = [];
+let mockLayoutsSent: unknown[] = [];
 const mockSend = (v?: { id?: string }) => {
   sent++;
   if (v?.id) mockOrder.push(v.id);
@@ -17,12 +18,22 @@ const mockSend = (v?: { id?: string }) => {
 };
 
 jest.mock('@react-native-community/netinfo', () => jest.requireActual('@react-native-community/netinfo/jest/netinfo-mock'));
+// Placing a drink in a waiting layout never reaches the database; its client's timers would keep the run open.
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 jest.mock('@/hooks/useCocktails', () => ({ updateCocktailFn: () => mockSend(), deleteCocktailFn: () => mockSend() }));
 const mockSaved = jest.fn(() => Promise.resolve());
 jest.mock('@/hooks/barWrites', () => ({
   BAR_WRITES: {
     zoneCount: { key: ['bar-write', 'zone-count'], send: () => mockSend(), refresh: () => [] },
-    menuLayout: { key: ['bar-write', 'menu-layout'], send: (v: { id: string }) => mockSend(v), refresh: () => [], scope: { id: 'offline-writes' } },
+    menuLayout: {
+      key: ['bar-write', 'menu-layout'],
+      send: (v: { id: string; args?: unknown }) => {
+        mockLayoutsSent.push(JSON.parse(JSON.stringify(v.args ?? null)));
+        return mockSend(v);
+      },
+      refresh: () => [],
+      scope: { id: 'offline-writes' },
+    },
     bottle: { key: ['bar-write', 'bottle'], send: () => mockSend().then(() => 'drink'), refresh: () => [], saved: (...a: unknown[]) => mockSaved(...(a as [])) },
   },
 }));
@@ -34,6 +45,7 @@ jest.mock('@/lib/drinkSaveLoader', () => ({
   newDrinkSaved: (...a: unknown[]) => mockDrinkSaved(...a),
   newDrinkFailed: () => undefined,
   }),
+  loadMadeForSection: async () => jest.requireActual('@/hooks/madeForSection'),
 }));
 
 /** The persisted cache blob, as the app's persister would save it. */
@@ -66,6 +78,7 @@ beforeEach(() => {
   sent = 0;
   mockOrder = [];
   mockFailures = [];
+  mockLayoutsSent = [];
   queryClient.getMutationCache().clear();
 });
 afterEach(() => onlineManager.setOnline(true));
@@ -190,4 +203,27 @@ test('a menu edited again offline sends only its newest layout; another menu kee
   await queryClient.resumePausedMutations();
   await tick();
   expect(mockOrder).toEqual(['other', 'second']);
+});
+
+// A bartender adds a drink to a section with no signal, then edits that menu: once back, the drink is in that section,
+// sent with the menu's waiting layout (which would otherwise leave it off), once.
+test('a drink made offline from a menu section ends up in that section when it sends, then the menu edit keeps it', async () => {
+  const persister = memoryPersister();
+  onlineManager.setOnline(false);
+  const section = { key: 's1', id: 's1', name: 'Sours', minItems: 1, maxItems: null, allowedTypes: ['cocktail'], drinks: [] };
+  const layout = { name: 'Autumn', coverUrl: null, coverPosition: 50, sections: [section] };
+  const drink = { id: 'drink', draft: { name: 'Pine Fizz' }, menuSectionId: 's1', queued: true };
+  const menu = { id: 'menu', menuId: 'm1', name: 'Autumn', layout, args: { p_menu_id: 'm1', p_sections: [{ id: 's1', item_ids: [] }] }, prices: {}, queued: true };
+  void new MutationObserver<unknown, Error, unknown>(queryClient, { mutationKey: ['bar-write', 'new-drink'] }).mutate(drink).catch(() => {});
+  void new MutationObserver<unknown, Error, unknown>(queryClient, { mutationKey: ['bar-write', 'menu-layout'] }).mutate(menu).catch(() => {});
+  // Closed and opened again before the signal comes back.
+  await persistQueryClientSave({ queryClient, persister, dehydrateOptions: persistOptions.dehydrateOptions });
+  queryClient.getMutationCache().clear();
+  await persistQueryClientRestore({ queryClient, persister });
+  onlineManager.setOnline(true);
+  await resumeSavedWrites();
+  await tick();
+  expect(mockOrder).toEqual(['drink', 'menu']);
+  expect(mockLayoutsSent).toHaveLength(1);
+  expect((mockLayoutsSent[0] as { p_sections: { item_ids: string[] }[] }).p_sections[0].item_ids).toEqual(['drink']);
 });

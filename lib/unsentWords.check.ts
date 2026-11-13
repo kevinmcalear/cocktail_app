@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
-import { didntSendWords, unsentDetail, unsentTitle, waitingWords } from './unsentWords';
+import { unsentDetail, unsentTitle } from './unsentRows';
+import { didntSendWords, waitingWords } from './unsentWords';
 
 assert.equal(waitingWords(1), '1 change waiting to send');
 assert.equal(waitingWords(3), '3 changes waiting to send');

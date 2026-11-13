@@ -1,5 +1,4 @@
 import { useEffect, useState, useSyncExternalStore, type ComponentProps } from 'react';
-import { useNetInfo } from '@react-native-community/netinfo';
 import { Alert, Platform } from 'react-native';
 
 import { Caption, useBreakpoint, useDs, useToast } from '@/components/ds';
@@ -33,6 +32,7 @@ import { DrinkDesk } from './DrinkDesk';
 import { useLineStock } from './StockToggle';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { RoundStrip } from '@/components/screens/firstRound/RoundElsewhere';
+import { useOnline } from '@/hooks/useOnline';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
@@ -86,7 +86,8 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const create = useCreateDrink();
   const ds = useDs();
   const toast = useToast();
-  const offline = useNetInfo().isConnected === false;
+  // As the queue sees it: no connection, or wifi with no internet (lib/react-query.ts).
+  const offline = !useOnline();
   // This draft's save kept on the phone: waiting for signal (Save waits too, so it isn't sent twice), or refused (Save tries again).
   const unsent = useUnsentWrites<CreateDrinkInput>(NEW_DRINK).find((w) => !!draft.id && w.variables.draft.id === draft.id);
   const waiting = !!unsent && !unsent.failed;
