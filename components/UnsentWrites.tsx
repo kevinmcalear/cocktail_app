@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -9,11 +10,32 @@ import { space } from '@/constants/tokens';
 import { useOnline } from '@/hooks/useOnline';
 import { useUnsentWrites, type UnsentWrite } from '@/hooks/useUnsentWrites';
 import { confirmAsync } from '@/lib/dialogs';
+import type { CreateDrinkInput } from '@/hooks/useCreateDrink';
 import { discardWrite, resendWrite } from '@/lib/keptWrites';
-import { unsentDetail, unsentTitle } from '@/lib/unsentRows';
+import { HOME_BAR } from '@/lib/itemRoutes';
+import { isNetworkError } from '@/lib/offlineWrites';
+import { slotStart } from '@/lib/wizardSlots';
+import { useDrinkWizardStore } from '@/store/useDrinkWizardStore';
+import { STILL_IN_ADD, unsentAction, unsentDetail, unsentTitle } from '@/lib/unsentRows';
 import { didntSendWords, waitingWords } from '@/lib/unsentWords';
 
 const timeOf = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+const actionOf = (w: UnsentWrite) => unsentAction(w.write.options.mutationKey, w.failed, isNetworkError(w.write.state.error));
+
+/** A refused drink's draft, still in Add: opened where it was kept (as New's drafts open it, components/nav/NewDrafts.tsx). */
+function openInAdd(v: CreateDrinkInput) {
+  const slot = Object.entries(useDrinkWizardStore.getState().kept).find(([, k]) => !!v.draft.id && k.draft.id === v.draft.id)?.[0];
+  const start = slot ? slotStart(slot) : undefined;
+  router.push({
+    pathname: '/add-cocktail',
+    params: {
+      barId: v.barId ?? HOME_BAR,
+      ...(start?.menuSectionId ? { menuSectionId: start.menuSectionId } : {}),
+      ...(start?.name ? { name: start.name } : {}),
+      ...(start?.from ? { from: start.from } : {}),
+    },
+  });
+}
 
 /**
  * What's saved on this phone and not in yet (Sta-errors, Didn't send and
@@ -29,7 +51,7 @@ export function UnsentWrites() {
   if (!unsent.length) return null;
   const failed = unsent.filter((w) => w.failed).length;
   const names = unsent.map((w) => unsentTitle(w.write.options.mutationKey, w.variables));
-  const sendAll = () => unsent.forEach((w) => resendWrite(client, w.write));
+  const sendAll = () => unsent.forEach((w) => actionOf(w) === 'send' && resendWrite(client, w.write));
   return (
     <>
       <Prompt
@@ -77,17 +99,30 @@ function UnsentSheet({ visible, unsent, offline, onClose }: { visible: boolean; 
       <SheetScrollView>
         <View style={styles.body}>
           <ListGroup>
-            {unsent.map((w, i) => (
-              <ListRow
-                key={w.write.mutationId}
-                first={i === 0}
-                icon={w.failed ? 'exclamationmark.triangle' : 'clock'}
-                warn={!!w.failed}
-                title={unsentTitle(w.write.options.mutationKey, w.variables)}
-                detail={unsentDetail(w.failed, w.at, timeOf)}
-                end={<Button label="Send" size="sm" variant="secondary" disabled={offline} onPress={() => resendWrite(client, w.write)} />}
-              />
-            ))}
+            {unsent.map((w, i) => {
+              const action = actionOf(w);
+              const open = () => {
+                onClose();
+                openInAdd(w.variables as CreateDrinkInput);
+              };
+              return (
+                <ListRow
+                  key={w.write.mutationId}
+                  first={i === 0}
+                  icon={w.failed ? 'exclamationmark.triangle' : 'clock'}
+                  warn={!!w.failed}
+                  title={unsentTitle(w.write.options.mutationKey, w.variables)}
+                  detail={`${unsentDetail(w.failed, w.at, timeOf)}${action === 'add' ? ` ${STILL_IN_ADD}` : ''}`}
+                  end={
+                    action === 'send' ? (
+                      <Button label="Send" size="sm" variant="secondary" disabled={offline} onPress={() => resendWrite(client, w.write)} />
+                    ) : action === 'add' ? (
+                      <Button label="Open" size="sm" variant="secondary" onPress={open} />
+                    ) : undefined
+                  }
+                />
+              );
+            })}
           </ListGroup>
           <Button label={unsent.length === 1 ? 'Discard it' : 'Discard all'} variant="plain" onPress={() => void discardAll()} />
         </View>

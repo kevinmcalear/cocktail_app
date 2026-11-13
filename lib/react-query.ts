@@ -31,8 +31,10 @@ import {
   FILE_KEYS,
   guardStorage,
   PERSISTED_KEYS,
+  dropSetAside,
   pruneQueryFiles,
   restoreRowSafely,
+  SET_ASIDE_WRITE,
   shouldPersistQuery,
 } from '@/lib/queryCachePersist';
 import { reportError } from '@/lib/monitoring';
@@ -248,7 +250,7 @@ export const persistOptions = {
     restoreClient: async () => {
       // A row that can't be read, or a write in it that's broken, never stops the app opening (lib/queryCachePersist.ts).
       const canSend = (key: readonly unknown[]) => !!queryClient.getMutationDefaults(key as QueryKey).mutationFn;
-      const [row] = await Promise.all([restoreRowSafely(rowStorage, asyncStoragePersister, canSend, reportError), loadSavedSpecBooks(queryClient).catch(() => undefined)]);
+      const [row] = await Promise.all([restoreRowSafely(rowStorage, asyncStoragePersister, canSend, reportError, SAVED.buster), loadSavedSpecBooks(queryClient).catch(() => undefined)]);
       // Old query files go once the first screens have settled.
       setTimeout(() => void pruneQueryFiles(savedQueryFiles, SAVED).catch(() => undefined), 30_000);
       return row;
@@ -331,6 +333,8 @@ async function ownWrite(v: unknown): Promise<void> {
 
 // Discarded (Tonight's Waiting to send): what it touches is fetched again, so the screen shows what's really there.
 setDiscardRefetch((client, write) => {
+  // A batch set aside at launch: discarded, it leaves the phone.
+  if (write.options.mutationKey?.[1] === SET_ASIDE_WRITE[1]) return void dropSetAside(rowStorage, (write.state.variables as { at: number }).at);
   const entry = Object.values(BAR_WRITES).find((w) => w.key[1] === write.options.mutationKey?.[1]);
   if (!entry) return;
   for (const queryKey of (entry.refresh as (v: unknown) => QueryKey[])(write.state.variables)) void client.invalidateQueries({ queryKey });
@@ -352,6 +356,13 @@ for (const write of Object.values(BAR_WRITES)) {
     },
   });
 }
+
+// Writes set aside at launch (lib/queryCachePersist.ts restoreRowSafely): listed as didn't send, never sent.
+queryClient.setMutationDefaults([...SET_ASIDE_WRITE], {
+  mutationFn: () => Promise.reject(new Error('It couldn’t be read back, so it can’t be sent.')),
+  retry: false,
+  gcTime: Infinity,
+});
 
 // A new drink (hooks/useCreateDrink.ts): its save is loaded when it sends, not in every page's first load.
 const drinkSave = loadDrinkSave;

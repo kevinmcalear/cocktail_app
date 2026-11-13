@@ -35,6 +35,10 @@ export function unsentTitle(key: readonly unknown[] | undefined, v: unknown): st
       return 'Rota changes';
     case 'handover':
       return 'A handover note';
+    case 'set-aside': {
+      const n = (v as { count?: unknown } | null)?.count;
+      return typeof n === 'number' && n > 0 ? `${n === 1 ? '1 change' : `${n} changes`} this phone couldn’t read back` : 'Changes this phone couldn’t read back';
+    }
     default:
       return 'A change';
   }
@@ -44,4 +48,17 @@ export function unsentTitle(key: readonly unknown[] | undefined, v: unknown): st
 export function unsentDetail(failed: string | null, at: number, timeOf: (ms: number) => string): string {
   const when = at ? `Made ${timeOf(at)}` : 'Made on this phone';
   return failed ? `${when} · didn’t send: ${failed}` : `${when} · waiting for a connection`;
+}
+
+/** Said of a drink that was refused: Send would refuse it again, it's saved again from Add (and its alert, hooks/useCreateDrink.ts). */
+export const STILL_IN_ADD = 'It’s still in Add, under Pick up where you left off.';
+
+/**
+ * What a row's button does: Send. A new drink refused (not a dropped connection) opens its draft in Add instead,
+ * since Send would send the same save; a batch set aside at launch can't be sent, only discarded.
+ */
+export function unsentAction(key: readonly unknown[] | undefined, failed: string | null, dropped: boolean): 'send' | 'add' | null {
+  if (key?.[1] === 'set-aside') return null;
+  if (key?.[1] === 'new-drink' && failed && !dropped) return 'add';
+  return 'send';
 }

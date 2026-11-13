@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MutationObserver, onlineManager, QueryClient } from '@tanstack/react-query';
 import { persistQueryClientRestore, persistQueryClientSave, type PersistedClient, type Persister } from '@tanstack/react-query-persist-client';
 
@@ -118,4 +119,21 @@ test("a venue's held glasses outlast sign-out; its setup progress doesn't", asyn
   await clearUserData();
   expect(useVenueSetup.getState().runs).toEqual({});
   expect(useVenueSetup.getState().glasses).toEqual({ bar: [glass] });
+});
+
+// Third look T1: writes set aside at launch (a row that couldn't be read) are forgotten at sign-out with the rest.
+test('writes set aside at launch are forgotten at sign-out: storage holds none', async () => {
+  await AsyncStorage.clear();
+  await AsyncStorage.setItem('REACT_QUERY_OFFLINE_CACHE', '{"clientState":');
+  await persistQueryClientRestore({ queryClient, ...persistOptions });
+  expect(await AsyncStorage.getItem('REACT_QUERY_SET_ASIDE')).not.toBeNull();
+  expect(queryClient.getMutationCache().getAll()).toHaveLength(1);
+
+  await clearUserData();
+  await new Promise((done) => setTimeout(done, 20));
+
+  expect(await AsyncStorage.getItem('REACT_QUERY_SET_ASIDE')).toBeNull();
+  expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
+  const row = JSON.parse((await AsyncStorage.getItem('REACT_QUERY_OFFLINE_CACHE')) ?? '{"clientState":{"mutations":[]}}');
+  expect(row.clientState.mutations).toEqual([]);
 });

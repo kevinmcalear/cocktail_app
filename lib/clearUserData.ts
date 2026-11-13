@@ -5,6 +5,7 @@ import { STUDY_PILE_KEY } from '@/hooks/useStudyPile';
 import { AI_CONSENT_KEY } from '@/lib/aiConsent';
 import { dropUnsentWrites, isUserQuery } from '@/lib/authCache';
 import { deviceStore } from '@/lib/deviceStore';
+import { SET_ASIDE_KEY } from '@/lib/queryCachePersist';
 import { asyncStoragePersister, queryClient, savedQueryFiles } from '@/lib/react-query';
 import { clearSavedSpecBooks } from '@/lib/specBookFile';
 import { useAppMode } from '@/store/useAppMode';
@@ -73,5 +74,7 @@ export async function clearUserData(): Promise<void> {
     deviceStore.removeItem(ACCOUNT_ALLERGIES_KEY),
     // The old step-by-step ingredient wizard's kept draft (gone since A bottle you buy).
     AsyncStorage.removeItem('ingredient-wizard'),
+    // Writes set aside at launch, unreadable: never sent, and never left for the next person.
+    AsyncStorage.removeItem(SET_ASIDE_KEY),
   ]);
 }

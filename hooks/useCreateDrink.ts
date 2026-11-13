@@ -14,6 +14,7 @@ import { track } from '@/lib/analytics';
 import { saveWritesNow } from '@/lib/keptWrites';
 import { NEW_DRINK, specFingerprint } from '@/lib/offlineWrites';
 import { saveErrorWords } from '@/lib/saveErrorWords';
+import { STILL_IN_ADD } from '@/lib/unsentRows';
 import { toastDone } from '@/lib/toast';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';
@@ -416,7 +417,7 @@ export function newDrinkFailed(e: unknown, input: CreateDrinkInput) {
     const on = linesOnKeptHouseMades(e, kept.draft);
     if (on) store.patch(place, on);
   }
-  if (input.queued) Alert.alert(`Couldn’t save ${input.draft.name.trim() || 'the drink'}`, `${saveErrorWords(e)} It’s still in Add, under Pick up where you left off.`);
+  if (input.queued) Alert.alert(`Couldn’t save ${input.draft.name.trim() || 'the drink'}`, `${saveErrorWords(e)} ${STILL_IN_ADD}`);
 }
 
 export function useCreateDrink() {

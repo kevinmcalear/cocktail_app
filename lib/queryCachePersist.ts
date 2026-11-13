@@ -273,32 +273,86 @@ export function checkSavedWrites(row: PersistedClient, canSend: (key: readonly u
   return { row: { ...row, clientState: { mutations, queries: whole } as PersistedClient['clientState'] }, setAside };
 }
 
+/** The row "Waiting to send" lists for a batch set aside (lib/unsentRows.ts): didn't send, Discard drops the batch. */
+export const SET_ASIDE_WRITE = ['bar-write', 'set-aside'] as const;
+const SET_ASIDE_WHY = 'This phone couldn’t read them back after the app closed, so they can’t be sent. Make them again, then discard this.';
+type Batch = { at: number; items: unknown };
+
+/** Every batch set aside so far: each is kept until it's discarded or the person signs out (lib/clearUserData.ts). */
+async function readBatches(storage: AsyncStorage<string>): Promise<Batch[]> {
+  const raw = await Promise.resolve(storage.getItem(SET_ASIDE_KEY)).catch(() => null);
+  if (!raw) return [];
+  try {
+    const kept: unknown = JSON.parse(raw);
+    // One from the first build of this kept a single batch.
+    return Array.isArray(kept) ? (kept as Batch[]) : [kept as Batch];
+  } catch {
+    return [{ at: 0, items: raw }];
+  }
+}
+
+/** Drops one batch, discarded from "Waiting to send". */
+export async function dropSetAside(storage: AsyncStorage<string>, at: number): Promise<void> {
+  const left = (await readBatches(storage)).filter((b) => b.at !== at);
+  await Promise.resolve(left.length ? storage.setItem(SET_ASIDE_KEY, JSON.stringify(left)) : storage.removeItem(SET_ASIDE_KEY)).catch(() => undefined);
+}
+
+/** The row for a batch: refused, stamped with whoever made the writes in it when that's one person. */
+function setAsideRow(at: number, items: unknown) {
+  const owners = new Set((Array.isArray(items) ? items : []).map((m: Saved | null) => m?.state?.owner).filter((o) => o !== undefined));
+  const count = Array.isArray(items) ? items.length : 0;
+  return {
+    mutationKey: [...SET_ASIDE_WRITE],
+    state: {
+      context: undefined,
+      data: undefined,
+      error: { message: SET_ASIDE_WHY },
+      failureCount: 0,
+      failureReason: null,
+      isPaused: false,
+      status: 'error',
+      variables: { at, count },
+      submittedAt: at,
+      ...(owners.size === 1 ? { owner: [...owners][0] } : {}),
+    },
+  };
+}
+
 /**
  * Reads the row back without ever stopping the app opening: what can't be read (corrupt, or too big to read) is
  * set aside as it was, reported, and the app opens without it; broken writes are sorted by checkSavedWrites.
- * ponytail: only the latest set-aside is kept, and nothing in the app reads it yet (support can, from the device).
+ * Each batch set aside is added to the others, and listed in "Waiting to send" as didn't send, so it's seen and
+ * can be discarded. ponytail: a row too big to read can't be read to set aside either: reported only.
  */
 export async function restoreRowSafely(
   storage: AsyncStorage<string>,
   persister: Persister,
   canSend: (key: readonly unknown[]) => boolean,
   report: (e: unknown, about: Record<string, unknown>) => void,
+  buster: string,
 ): Promise<PersistedClient | undefined> {
-  const setAside = (items: unknown) => Promise.resolve(storage.setItem(SET_ASIDE_KEY, JSON.stringify({ at: Date.now(), items }))).catch(() => undefined);
+  const setAside = async (items: unknown) => {
+    const at = Date.now();
+    const batches = [...(await readBatches(storage)), { at, items }];
+    await Promise.resolve(storage.setItem(SET_ASIDE_KEY, JSON.stringify(batches))).catch(() => undefined);
+    return setAsideRow(at, items);
+  };
   try {
     const row = await persister.restoreClient();
     if (!row) return row;
     const checked = checkSavedWrites(row, canSend);
     if (checked.setAside.length) {
-      await setAside(checked.setAside);
+      checked.row.clientState.mutations.push((await setAside(checked.setAside)) as unknown as PersistedClient['clientState']['mutations'][number]);
       report(new Error('Saved writes set aside: unreadable'), { count: checked.setAside.length });
     }
     return checked.row;
   } catch (e) {
     const raw = await Promise.resolve(storage.getItem(ROW_KEY)).catch(() => null);
-    if (raw) await setAside(raw);
     await Promise.resolve(storage.removeItem(ROW_KEY)).catch(() => undefined);
     report(e, { where: 'restore', setAside: !!raw });
-    return undefined;
+    if (!raw) return undefined;
+    // The app opens with nothing from the row but the line saying what was set aside.
+    const mutations = [await setAside(raw)] as unknown as PersistedClient['clientState']['mutations'];
+    return { timestamp: Date.now(), buster, clientState: { mutations, queries: [] } };
   }
 }

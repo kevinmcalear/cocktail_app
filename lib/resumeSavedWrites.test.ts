@@ -381,10 +381,10 @@ test.each([
   expect(queryClient.getMutationCache().getAll().filter((w) => w.state.status === 'pending')).toHaveLength(0);
 });
 
-// Second review S2: the first screen never waits on a send.
-test('the app opens with a send that never answers and no owner known yet', async () => {
+// Second review S2 (third look: the case that blocked): writes made before auth settled carry no stamp, so the
+// restore went straight on to sending them; the one behind a send that never answers held the first screen.
+test('the app opens with an unstamped write behind a send that never answers', async () => {
   const persister = memoryPersister();
-  setWriteOwner('a');
   onlineManager.setOnline(false);
   void write(['bar-write', 'new-drink'], 'drink').catch(() => {});
   void write(['bar-write', 'menu-layout'], 'menu').catch(() => {});
@@ -394,8 +394,8 @@ test('the app opens with a send that never answers and no owner known yet', asyn
   void queryClient.resumePausedMutations();
   await tick();
   await persistQueryClientSave({ queryClient, persister, dehydrateOptions: persistOptions.dehydrateOptions });
+  expect(persister.saved()?.clientState.mutations.map((m) => (m.state as { owner?: string }).owner)).toEqual([undefined, undefined]);
   queryClient.getMutationCache().clear();
-  setWriteOwner(undefined);
   // As PersistQueryClientProvider runs it: restore, then onSuccess, then the app renders.
   const opened = persistQueryClientRestore({ queryClient, persister }).then(() => resumeSavedWrites()).then(() => 'opened');
   expect(await Promise.race([opened, tick().then(() => 'stuck')])).toBe('opened');
@@ -411,33 +411,72 @@ test('the app opens with no signal, the writes waiting', async () => {
   expect(queryClient.getMutationCache().getAll()[0].state.isPaused).toBe(true);
 });
 
-test('a stored row that can’t be read is set aside, and the app opens without it', async () => {
+const setAside = async () => JSON.parse((await AsyncStorage.getItem('REACT_QUERY_SET_ASIDE')) ?? '[]') as { at: number; items: unknown }[];
+
+// Third look T1: each batch set aside is kept with the others, listed as didn't send, and goes when discarded.
+test('a stored row that can’t be read is set aside, listed as didn’t send, and the app opens', async () => {
   await AsyncStorage.clear();
-  await AsyncStorage.setItem('REACT_QUERY_OFFLINE_CACHE', '{"clientState":{"mutations":[{"mutationKey"');
-  await expect(persistQueryClientRestore({ queryClient, ...persistOptions })).resolves.toBeUndefined();
-  const aside = JSON.parse((await AsyncStorage.getItem('REACT_QUERY_SET_ASIDE')) ?? 'null');
-  expect(aside.items).toBe('{"clientState":{"mutations":[{"mutationKey"');
-  expect(mockReported).toHaveBeenCalledTimes(1);
+  for (const raw of ['{"broken":1', '{"broken":2']) {
+    queryClient.getMutationCache().clear();
+    await AsyncStorage.setItem('REACT_QUERY_OFFLINE_CACHE', raw);
+    await persistQueryClientRestore({ queryClient, ...persistOptions });
+    await tick();
+  }
+  expect((await setAside()).map((b) => b.items)).toEqual(['{"broken":1', '{"broken":2']);
+  expect(mockReported).toHaveBeenCalledTimes(2);
+  const [listed] = queryClient.getMutationCache().getAll().filter(isKeptWrite);
+  expect(listed.options.mutationKey).toEqual(['bar-write', 'set-aside']);
+  expect(listed.state.status).toBe('error');
+  discardWrite(queryClient, listed);
+  await tick();
+  expect((await setAside()).map((b) => b.items)).toEqual(['{"broken":1']);
 });
 
-test('a broken write comes back as didn’t send; one that can’t be sent is set aside; the rest restore', async () => {
+test('a broken write comes back as didn’t send; one that can’t be sent is set aside and listed; the rest restore', async () => {
   await AsyncStorage.clear();
   onlineManager.setOnline(false);
   void write(['bar-write', 'zone-count'], 'whole').catch(() => {});
   await tick();
   const row = JSON.parse((await AsyncStorage.getItem('REACT_QUERY_OFFLINE_CACHE')) ?? '{}');
-  row.clientState.mutations.push({ mutationKey: ['bar-write', 'zone-count'], state: { variables: { id: 'broken' }, status: 'sending?' } }, { mutationKey: 'no key' }, 42);
+  row.clientState.mutations.push(
+    { mutationKey: ['bar-write', 'zone-count'], state: { variables: { id: 'broken' }, status: 'sending?' } },
+    { mutationKey: 'no key', state: { owner: 'a' } },
+    { mutationKey: ['gone'], state: { owner: 'a' } },
+  );
   row.clientState.queries.push(null, { queryKey: 'x' });
   await AsyncStorage.setItem('REACT_QUERY_OFFLINE_CACHE', JSON.stringify(row));
   queryClient.getMutationCache().clear();
   await persistQueryClientRestore({ queryClient, ...persistOptions });
   const writes = queryClient.getMutationCache().getAll();
-  expect(writes.map((w) => [(w.state.variables as { id: string }).id, w.state.status, isKeptWrite(w)])).toEqual([
-    ['whole', 'pending', true],
-    ['broken', 'error', true],
+  expect(writes.map((w) => [w.options.mutationKey?.[1], (w.state.variables as { id?: string; count?: number }).id ?? (w.state.variables as { count: number }).count, w.state.status, isKeptWrite(w)])).toEqual([
+    ['zone-count', 'whole', 'pending', true],
+    ['zone-count', 'broken', 'error', true],
+    ['set-aside', 2, 'error', true],
   ]);
-  const aside = JSON.parse((await AsyncStorage.getItem('REACT_QUERY_SET_ASIDE')) ?? 'null');
-  expect(aside.items).toEqual([{ mutationKey: 'no key' }, 42]);
+  // Stamped with who made the writes in it, like the rest.
+  expect((writes[2].state as { owner?: string }).owner).toBe('a');
+  expect((await setAside())[0].items).toEqual([{ mutationKey: 'no key', state: { owner: 'a' } }, { mutationKey: ['gone'], state: { owner: 'a' } }]);
+});
+
+// Third look T3: Send pressed twice, or while it's already going again, sends it once.
+test('Send pressed twice on a write that didn’t send sends it once', async () => {
+  onlineManager.setOnline(false);
+  const refused = write(['bar-write', 'menu-layout'], 'menu').catch(() => 'refused');
+  await tick();
+  mockFailures = [Object.assign(new Error('Name taken'), { code: '23505' })];
+  onlineManager.setOnline(true);
+  void queryClient.resumePausedMutations();
+  await refused;
+  await tick();
+  const [kept] = queryClient.getMutationCache().getAll().filter(isKeptWrite);
+  sent = 0;
+  resendWrite(queryClient, kept);
+  resendWrite(queryClient, kept);
+  const [again] = queryClient.getMutationCache().getAll();
+  resendWrite(queryClient, again);
+  await tick();
+  await tick();
+  expect(sent).toBe(1);
 });
 
 // Review M2: Discard takes the change off the screen too, from the copy saved with the write.

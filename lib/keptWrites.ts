@@ -65,6 +65,8 @@ export function dropOthersWrite(client: QueryClient, write: AnyWrite, where: 're
 
 /** A write that didn't send, sent again as it was (from what's waiting to send). It waits for signal like the first try. */
 export function resendWrite(client: QueryClient, write: AnyWrite): void {
+  // One send per write at a time: a second tap (or Send while it's already going again) finds it sending or gone.
+  if (!client.getMutationCache().getAll().includes(write) || !isKeptWrite(write)) return;
   if (madeBySomeoneElse(write)) {
     dropOthersWrite(client, write, 'resend');
     return;
