@@ -257,7 +257,8 @@ function useRunSheetBarWrite<W extends { menuId: string }>(
       if (before) queryClient.setQueryData<RunSheetData>(key, patch(before, w));
       // The sheet's file holds the change too, so a relaunch before it sends shows it.
       if (before) void saveQueryNow(key);
-      return { before };
+      // Saved with the write: Discard puts the sheet back from it, after a relaunch too (lib/keptWrites.ts).
+      return { key, before };
     },
     onError: (_e, _w, ctx) => {
       if (!ctx?.before) return;

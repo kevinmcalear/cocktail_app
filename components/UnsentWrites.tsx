@@ -59,7 +59,8 @@ function UnsentSheet({ visible, unsent, offline, onClose }: { visible: boolean; 
       destructive: true,
     });
     if (!ok) return;
-    unsent.forEach((w) => discardWrite(client, w.write));
+    // Newest first: each puts back what was there before it, so the oldest's copy is what's left.
+    [...unsent].reverse().forEach((w) => discardWrite(client, w.write));
     onClose();
   };
   return (

@@ -3,16 +3,20 @@ import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 import { MutationObserver, onlineManager } from '@tanstack/react-query';
 import { persistQueryClientRestore, persistQueryClientSave, type PersistedClient, type Persister } from '@tanstack/react-query-persist-client';
 
-import { isKeptWrite, resendWrite } from '@/lib/keptWrites';
+import { dropUnsentWrites } from '@/lib/authCache';
+import { discardWrite, isKeptWrite, resendWrite, setWriteOwner } from '@/lib/keptWrites';
 import { persistOptions, queryClient, resumeSavedWrites } from '@/lib/react-query';
 
 let sent = 0;
 let mockFailures: Error[] = [];
 let mockOrder: string[] = [];
 let mockLayoutsSent: unknown[] = [];
+let mockPricesSent: unknown[] = [];
+let mockHang = false;
 const mockSend = (v?: { id?: string }) => {
   sent++;
   if (v?.id) mockOrder.push(v.id);
+  if (mockHang) return new Promise(() => {});
   const failure = mockFailures.shift();
   return failure ? Promise.reject(failure) : Promise.resolve();
 };
@@ -29,6 +33,7 @@ jest.mock('@/hooks/barWrites', () => ({
       key: ['bar-write', 'menu-layout'],
       send: (v: { id: string; args?: unknown }) => {
         mockLayoutsSent.push(JSON.parse(JSON.stringify(v.args ?? null)));
+        mockPricesSent.push((v as { prices?: unknown }).prices);
         return mockSend(v);
       },
       refresh: () => [],
@@ -79,6 +84,9 @@ beforeEach(() => {
   mockOrder = [];
   mockFailures = [];
   mockLayoutsSent = [];
+  mockPricesSent = [];
+  mockHang = false;
+  setWriteOwner(undefined);
   queryClient.getMutationCache().clear();
 });
 afterEach(() => onlineManager.setOnline(true));
@@ -177,6 +185,8 @@ test('a write refused after it waited is kept, saved, and sends again from Send'
   expect(kept?.state.status).toBe('error');
   await persistQueryClientSave({ queryClient, persister, dehydrateOptions: persistOptions.dehydrateOptions });
   expect(persister.saved()?.clientState.mutations).toHaveLength(1);
+  // Its reason is saved with it, so after a relaunch it still says why.
+  expect(JSON.parse(JSON.stringify(persister.saved()?.clientState.mutations[0].state.error)).message).toBe('You can’t change this menu.');
 
   resendWrite(queryClient, kept);
   await tick();
@@ -226,4 +236,120 @@ test('a drink made offline from a menu section ends up in that section when it s
   expect(mockOrder).toEqual(['drink', 'menu']);
   expect(mockLayoutsSent).toHaveLength(1);
   expect((mockLayoutsSent[0] as { p_sections: { item_ids: string[] }[] }).p_sections[0].item_ids).toEqual(['drink']);
+});
+
+// Review H1: a price changed offline, then another edit to the same menu: the newer layout carries the price.
+test('a menu edited again offline still sends the price the older edit held', async () => {
+  onlineManager.setOnline(false);
+  const layout = (id: string, prices: Record<string, string>) =>
+    new MutationObserver<unknown, Error, unknown>(queryClient, { mutationKey: ['bar-write', 'menu-layout'] }).mutate({ menuId: 'm1', id, prices });
+  void layout('price', { A: '19' }).catch(() => {});
+  void layout('rename', {}).catch(() => {});
+  await tick();
+  onlineManager.setOnline(true);
+  await queryClient.resumePausedMutations();
+  await tick();
+  expect(mockOrder).toEqual(['rename']);
+  expect(mockPricesSent).toEqual([{ A: '19' }]);
+});
+
+// Review H2: sign-out drops every write the last person left, refused ones too, and storage keeps none.
+test('signing out drops a refused write too, and the saved row holds no writes', async () => {
+  await AsyncStorage.clear();
+  onlineManager.setOnline(false);
+  const refused = write(['bar-write', 'menu-layout'], 'menu').catch(() => 'refused');
+  await tick();
+  mockFailures = [Object.assign(new Error('Name taken'), { code: '23505' })];
+  onlineManager.setOnline(true);
+  void queryClient.resumePausedMutations();
+  expect(await refused).toBe('refused');
+  await tick();
+  expect(queryClient.getMutationCache().getAll().filter(isKeptWrite)).toHaveLength(1);
+  dropUnsentWrites(queryClient);
+  await tick();
+  expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
+  const row = JSON.parse((await AsyncStorage.getItem('REACT_QUERY_OFFLINE_CACHE')) ?? '{"clientState":{"mutations":[]}}');
+  expect(row.clientState.mutations).toEqual([]);
+});
+
+// Review H2: a write is only ever sent as the person who made it.
+test('a saved write made by someone else is dropped, not sent: after a relaunch, and from Send', async () => {
+  setWriteOwner('a');
+  const persister = memoryPersister();
+  onlineManager.setOnline(false);
+  void write(['bar-write', 'zone-count'], 'count').catch(() => {});
+  await tick();
+  await persistQueryClientSave({ queryClient, persister, dehydrateOptions: persistOptions.dehydrateOptions });
+  expect(persister.saved()?.clientState.mutations[0].state).toMatchObject({ owner: 'a' });
+  queryClient.getMutationCache().clear();
+  onlineManager.setOnline(true);
+  setWriteOwner('b');
+  await persistQueryClientRestore({ queryClient, persister });
+  await resumeSavedWrites();
+  await tick();
+  expect(sent).toBe(0);
+  expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
+
+  // Kept and refused as a, then Send pressed with b signed in.
+  setWriteOwner('a');
+  onlineManager.setOnline(false);
+  const refused = write(['bar-write', 'menu-layout'], 'menu').catch(() => 'refused');
+  await tick();
+  mockFailures = [Object.assign(new Error('nope'), { code: '42501' })];
+  onlineManager.setOnline(true);
+  void queryClient.resumePausedMutations();
+  await refused;
+  await tick();
+  const [kept] = queryClient.getMutationCache().getAll().filter(isKeptWrite);
+  setWriteOwner('b');
+  sent = 0;
+  resendWrite(queryClient, kept);
+  await tick();
+  expect(sent).toBe(0);
+  expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
+});
+
+// Review M1: killed while a waiting write is sending: it's still saved, and goes again after the relaunch.
+test('a waiting write that is sending stays saved until the database answers', async () => {
+  const persister = memoryPersister();
+  onlineManager.setOnline(false);
+  void write(['bar-write', 'menu-layout'], 'menu').catch(() => {});
+  await tick();
+  mockHang = true;
+  onlineManager.setOnline(true);
+  void queryClient.resumePausedMutations();
+  await tick();
+  expect(sent).toBe(1);
+  await persistQueryClientSave({ queryClient, persister, dehydrateOptions: persistOptions.dehydrateOptions });
+  expect(persister.saved()?.clientState.mutations).toHaveLength(1);
+  // The app is killed; it opens again with signal.
+  queryClient.getMutationCache().clear();
+  mockHang = false;
+  await persistQueryClientRestore({ queryClient, persister });
+  await resumeSavedWrites();
+  await tick();
+  expect(sent).toBe(2);
+  expect(mockOrder).toEqual(['menu', 'menu']);
+});
+
+// Review M2: Discard takes the change off the screen too, from the copy saved with the write.
+test('discarding a waiting run sheet change puts the sheet back as it was', async () => {
+  const key = ['run-sheet', 'm1', 'u'];
+  queryClient.setQueryData(key, 'before');
+  onlineManager.setOnline(false);
+  void new MutationObserver<unknown, Error, { id: string }, { key: string[]; before: string }>(queryClient, {
+    mutationKey: ['bar-write', 'zone-count'],
+    onMutate: () => {
+      queryClient.setQueryData(key, 'swapped');
+      return { key, before: 'before' };
+    },
+  })
+    .mutate({ id: 'swap' })
+    .catch(() => {});
+  await tick();
+  expect(queryClient.getQueryData(key)).toBe('swapped');
+  const [waiting] = queryClient.getMutationCache().getAll().filter(isKeptWrite);
+  discardWrite(queryClient, waiting);
+  expect(queryClient.getQueryData(key)).toBe('before');
+  expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
 });

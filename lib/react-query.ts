@@ -8,7 +8,19 @@ import { AppState, Platform } from 'react-native';
 
 import { coalesceTimer } from '@/lib/coalesceTimer';
 import { loadDrinkSave, loadMadeForSection } from '@/lib/drinkSaveLoader';
-import { hasWaited, isKeptWrite, markWaited, setQuerySaver, type AnyWrite } from '@/lib/keptWrites';
+import {
+  hasWaited,
+  isKeptWrite,
+  isStoredWrite,
+  madeBySomeoneElse,
+  markWaited,
+  ownerKnown,
+  ownerOf,
+  setDiscardRefetch,
+  setQuerySaver,
+  stampOwner,
+  type AnyWrite,
+} from '@/lib/keptWrites';
 import { fileStore } from '@/lib/fileStore';
 import {
   createCachePersister,
@@ -130,12 +142,18 @@ const mutationCache = new MutationCache({
   // A menu's layout is sent whole: a newer one replaces any of that menu's still kept (waiting or refused), so
   // ten edits offline are one send, and an older one sent again later can't undo a newer one.
   onMutate: (v, write) => {
+    if (isBarWrite(write as AnyWrite)) stampOwner(write as AnyWrite);
     if (!isMenuLayout(write as AnyWrite)) return;
-    const menuId = (v as MenuLayoutWrite | undefined)?.menuId;
-    if (!menuId) return;
-    for (const old of mutationCache.findAll({ mutationKey: MENU_LAYOUT })) {
-      if (old !== write && isKeptWrite(old as AnyWrite) && (old.state.variables as MenuLayoutWrite | undefined)?.menuId === menuId) mutationCache.remove(old);
-    }
+    const next = v as MenuLayoutWrite | undefined;
+    if (!next?.menuId) return;
+    // The layout is whole each time, but prices are only the ones changed: the older ones' go with the newer, which wins.
+    const older = mutationCache
+      .findAll({ mutationKey: MENU_LAYOUT })
+      .filter((old) => old !== write && isKeptWrite(old as AnyWrite) && (old.state.variables as MenuLayoutWrite | undefined)?.menuId === next.menuId)
+      .sort((a, b) => a.state.submittedAt - b.state.submittedAt);
+    if (!older.length) return;
+    next.prices = Object.assign({}, ...older.map((old) => (old.state.variables as MenuLayoutWrite).prices), next.prices);
+    for (const old of older) mutationCache.remove(old);
   },
   onSuccess: async (data, v, _ctx, write) => {
     refreshSpecBooksSoon();
@@ -151,6 +169,8 @@ const mutationCache = new MutationCache({
     if (isBarWrite(write as AnyWrite)) later(() => mutationCache.remove(write));
   },
   onError: (e, _v, _ctx, write) => {
+    // Its reason is saved with it, so after a relaunch it still says why (an Error's message isn't in its JSON).
+    if (e instanceof Error) Object.defineProperty(e, 'message', { value: e.message, enumerable: true, writable: true, configurable: true });
     // Out of tries on a dropped connection: kept like one that waited, never lost.
     if (isBarWrite(write as AnyWrite) && isNetworkError(e)) markWaited(write as AnyWrite);
     if (isBarWrite(write as AnyWrite) && !hasWaited(write as AnyWrite)) later(() => mutationCache.remove(write));
@@ -237,7 +257,7 @@ export const persistOptions = {
  */
 export function canResendAfterRelaunch(write: Mutation<unknown, Error, unknown, unknown>): boolean {
   const key = write.options.mutationKey;
-  return isKeptWrite(write) && !!key && !!queryClient.getMutationDefaults(key).mutationFn;
+  return isStoredWrite(write) && !!key && !!queryClient.getMutationDefaults(key).mutationFn;
 }
 
 /**
@@ -246,12 +266,18 @@ export function canResendAfterRelaunch(write: Mutation<unknown, Error, unknown, 
  * already dropped any that weren't this user's (lib/clearUserData.ts).
  */
 export async function resumeSavedWrites(): Promise<void> {
-  if (!queryClient.getMutationCache().getAll().some((write) => write.state.isPaused)) return;
+  const restored = queryClient.getMutationCache().getAll().filter((write) => write.state.status === 'pending');
+  if (!restored.length) return;
+  // Stamped with who made them: checked against who's signed in once that's known, and anyone else's dropped.
+  if (restored.some((write) => ownerOf(write as AnyWrite) !== undefined)) await ownerKnown();
+  for (const write of restored) if (madeBySomeoneElse(write as AnyWrite)) queryClient.getMutationCache().remove(write);
   // onlineManager says online until NetInfo's first event, which can land
   // after the restore: ask first, or a write sent with no signal fails and is lost.
   const { isConnected } = await NetInfo.fetch();
   onlineManager.setOnline(!!isConnected);
   await queryClient.resumePausedMutations();
+  // One killed while it was sending comes back neither paused nor running: it goes again (sends are whole or keyed, so twice is once).
+  for (const write of queryClient.getMutationCache().getAll()) if (write.state.status === 'pending' && !write.state.isPaused) void write.continue().catch(() => undefined);
 }
 
 // Freshness by kind of data (static, catalog, public, yours, live), and a
@@ -270,11 +296,31 @@ queryClient.setMutationDefaults(['deleteCocktail'], { mutationFn: deleteCocktail
 
 // Behind-the-bar writes (hooks/barWrites.ts): they wait for signal, try again
 // on a dropped connection, and survive the app closing.
+/**
+ * A saved write goes only as the person who made it: one stamped with someone else is dropped, not sent
+ * (the Supabase client sends as whoever is signed in at send time). Checked once auth has settled.
+ */
+async function ownWrite(v: unknown): Promise<void> {
+  const write = mutationCache.find({ predicate: (m) => m.state.variables === v }) as AnyWrite | undefined;
+  if (!write || ownerOf(write) === undefined) return;
+  await ownerKnown();
+  if (!madeBySomeoneElse(write)) return;
+  mutationCache.remove(write);
+  throw Object.assign(new Error('Made by someone else on this phone, so it wasn’t sent.'), { code: 'not-theirs' });
+}
+
+// Discarded (Tonight's Waiting to send): what it touches is fetched again, so the screen shows what's really there.
+setDiscardRefetch((client, write) => {
+  const entry = Object.values(BAR_WRITES).find((w) => w.key[1] === write.options.mutationKey?.[1]);
+  if (!entry) return;
+  for (const queryKey of (entry.refresh as (v: unknown) => QueryKey[])(write.state.variables)) void client.invalidateQueries({ queryKey });
+});
+
 for (const write of Object.values(BAR_WRITES)) {
   // What a write does once it's in, or refused (a bottle's label photo, its toast): from its variables, so a restored one does it too.
   const after = write as { saved?: (qc: QueryClient, data: unknown, v: unknown) => Promise<void>; failed?: (e: Error, v: unknown) => Promise<void>; scope?: { id: string } };
   queryClient.setMutationDefaults(write.key, {
-    mutationFn: write.send as (v: unknown) => Promise<unknown>,
+    mutationFn: (v: unknown) => ownWrite(v).then(() => (write.send as (v: unknown) => Promise<unknown>)(v)),
     retry: retryWrite,
     // Kept until it's in, even refused (mutationCache above).
     gcTime: Infinity,
@@ -290,7 +336,7 @@ for (const write of Object.values(BAR_WRITES)) {
 // A new drink (hooks/useCreateDrink.ts): its save is loaded when it sends, not in every page's first load.
 const drinkSave = loadDrinkSave;
 queryClient.setMutationDefaults(NEW_DRINK, {
-  mutationFn: (v: unknown) => drinkSave().then((m) => m.createDrink(v as CreateDrinkInput, queryClient)),
+  mutationFn: (v: unknown) => ownWrite(v).then(() => drinkSave()).then((m) => m.createDrink(v as CreateDrinkInput, queryClient)),
   retry: retryWrite,
   gcTime: Infinity,
   scope: OFFLINE_SCOPE,
@@ -307,8 +353,8 @@ queryClient.getMutationCache().subscribe((event) => {
   if (event.type === 'removed' && hasWaited(write)) return saveSoon();
   if (event.type !== 'added' && event.type !== 'updated') return;
   // One restored from a relaunch (waiting or refused) or one waiting now: a refusal keeps it.
-  if (write.state.isPaused || (event.type === 'added' && write.state.status === 'error')) markWaited(write);
-  if (isKeptWrite(write)) saveSoon();
+  if (write.state.isPaused || (event.type === 'added' && (write.state.status === 'error' || write.state.status === 'pending'))) markWaited(write);
+  if (isStoredWrite(write)) saveSoon();
 });
 function saveSoon() {
   if (saving) return;

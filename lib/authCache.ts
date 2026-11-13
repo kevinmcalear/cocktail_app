@@ -51,14 +51,14 @@ export function cacheActionOnAuth(
 }
 
 /**
- * Drops writes still waiting for a connection (offline edits). The Supabase
+ * Drops every write the last person made: waiting for a connection, refused
+ * and kept, or sending (one sending still finishes, as them). The Supabase
  * client attaches whoever is signed in when a write is sent, not when it was
- * made, so one queued by the previous user would go out as the next. Writes
- * already sent are left to finish.
+ * made, so one kept from the previous user would go out as the next.
  */
 export function dropUnsentWrites(client: QueryClient): void {
   const writes = client.getMutationCache();
-  for (const write of writes.getAll()) if (write.state.isPaused) writes.remove(write);
+  for (const write of writes.getAll()) writes.remove(write);
 }
 
 /**
