@@ -284,7 +284,9 @@ async function restoreRow(): Promise<PersistedClient | undefined> {
   const writes: unknown = row?.clientState?.mutations;
   if (!row || (Array.isArray(writes) && !writes.length)) return row;
   const check = await loadSavedWritesCheck().catch(() => null);
-  return check ? check.checkRow(row, rowStorage, canSend, reportError) : row;
+  if (!check) return row;
+  // A row the checks choke on is set aside like one that can't be read: thrown, the restore would delete it, writes and all.
+  return check.checkRow(row, rowStorage, canSend, reportError).catch((e: unknown) => check.setAsideUnreadable(e, rowStorage, reportError, SAVED.buster));
 }
 
 /**
