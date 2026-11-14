@@ -10,7 +10,7 @@ export interface UnsentWrite<V = unknown> {
   at: number;
   /** Refused (or out of tries) after waiting: why, as the error had it. Null while it waits for signal. */
   failed: string | null;
-  /** The write itself, for Send and Discard (lib/react-query.ts resendWrite, discardWrite). */
+  /** The write itself, for Send and Discard (lib/unsentActions.ts). */
   write: Mutation<unknown, Error, unknown, unknown>;
 }
 

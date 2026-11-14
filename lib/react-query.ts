@@ -4,10 +4,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import Constants from 'expo-constants';
 import { dehydrate, focusManager, type Mutation, MutationCache, type QueryKey, notifyManager, onlineManager, QueryCache, QueryClient } from '@tanstack/react-query';
+import type { PersistedClient } from '@tanstack/query-persist-client-core';
 import { AppState, Platform } from 'react-native';
 
 import { coalesceTimer } from '@/lib/coalesceTimer';
-import { loadDrinkSave, loadMadeForSection } from '@/lib/drinkSaveLoader';
+import { loadDrinkSave, loadMadeForSection, loadSavedWritesCheck, loadSendRestored } from '@/lib/drinkSaveLoader';
 import {
   hasWaited,
   isKeptWrite,
@@ -21,7 +22,6 @@ import {
   setWritesSaver,
   setQuerySaver,
   stampOwner,
-  writeOwner,
   type AnyWrite,
 } from '@/lib/keptWrites';
 import { fileStore } from '@/lib/fileStore';
@@ -31,9 +31,7 @@ import {
   FILE_KEYS,
   guardStorage,
   PERSISTED_KEYS,
-  dropSetAside,
   pruneQueryFiles,
-  restoreRowSafely,
   SET_ASIDE_WRITE,
   shouldPersistQuery,
 } from '@/lib/queryCachePersist';
@@ -248,9 +246,7 @@ export const persistOptions = {
   persister: {
     ...asyncStoragePersister,
     restoreClient: async () => {
-      // A row that can't be read, or a write in it that's broken, never stops the app opening (lib/queryCachePersist.ts).
-      const canSend = (key: readonly unknown[]) => !!queryClient.getMutationDefaults(key as QueryKey).mutationFn;
-      const [row] = await Promise.all([restoreRowSafely(rowStorage, asyncStoragePersister, canSend, reportError, SAVED.buster), loadSavedSpecBooks(queryClient).catch(() => undefined)]);
+      const [row] = await Promise.all([restoreRow(), loadSavedSpecBooks(queryClient).catch(() => undefined)]);
       // Old query files go once the first screens have settled.
       setTimeout(() => void pruneQueryFiles(savedQueryFiles, SAVED).catch(() => undefined), 30_000);
       return row;
@@ -271,6 +267,27 @@ export function canResendAfterRelaunch(write: Mutation<unknown, Error, unknown, 
 }
 
 /**
+ * The saved row, read back without ever stopping the app opening. A row with writes in it is checked (whole ones
+ * kept, broken ones listed as didn't send, the rest set aside); one that can't be read is set aside. The checks
+ * load only then (lib/savedWritesCheck.ts), and if they can't load the row is used as it is, as before them.
+ */
+async function restoreRow(): Promise<PersistedClient | undefined> {
+  const canSend = (key: readonly unknown[]) => !!queryClient.getMutationDefaults(key as QueryKey).mutationFn;
+  let row: PersistedClient | undefined;
+  try {
+    row = await asyncStoragePersister.restoreClient();
+  } catch (e) {
+    const check = await loadSavedWritesCheck().catch(() => null);
+    if (!check) throw e;
+    return check.setAsideUnreadable(e, rowStorage, reportError, SAVED.buster);
+  }
+  const writes: unknown = row?.clientState?.mutations;
+  if (!row || (Array.isArray(writes) && !writes.length)) return row;
+  const check = await loadSavedWritesCheck().catch(() => null);
+  return check ? check.checkRow(row, rowStorage, canSend, reportError) : row;
+}
+
+/**
  * Sends writes saved offline before the app closed as soon as the cache is
  * restored, rather than at the next reconnect or return to the app. Never
  * awaited: the first screen doesn't wait on a send (no signal, wifi with no
@@ -280,24 +297,11 @@ export function canResendAfterRelaunch(write: Mutation<unknown, Error, unknown, 
 export function resumeSavedWrites(): void {
   const restored = queryClient.getMutationCache().getAll().filter((write) => write.state.status === 'pending');
   if (!restored.length) return;
-  void (async () => {
-    // Stamped with who made them: sent once who's signed in is known, anyone else's dropped.
-    if (writeOwner() === undefined && restored.some((write) => ownerOf(write as AnyWrite) !== undefined)) await ownerKnown();
-    await sendRestored(restored);
-  })().catch(() => undefined);
-}
-
-async function sendRestored(restored: Mutation<unknown, Error, unknown, unknown>[]): Promise<void> {
-  for (const write of restored) if (madeBySomeoneElse(write as AnyWrite)) dropOthersWrite(queryClient, write as AnyWrite, 'relaunch');
-  // onlineManager says online until NetInfo's first event, which can land
-  // after the restore: ask first, or a write sent with no signal fails and is lost.
-  const { isConnected } = await NetInfo.fetch();
-  onlineManager.setOnline(!!isConnected);
-  const cache = queryClient.getMutationCache();
-  // One killed while it was sending comes back neither paused nor running, and it's first in its line: it goes
-  // again first (a drink resends what it froze, hooks/useCreateDrink.ts), and the ones paused behind it follow in order.
-  for (const write of restored) if (cache.getAll().includes(write) && write.state.status === 'pending' && !write.state.isPaused) void write.continue().catch(() => undefined);
-  void queryClient.resumePausedMutations();
+  // Loaded only when there are any (lib/sendRestored.ts). ponytail: on the web, offline with that chunk never
+  // fetched, it can't load: waiting ones still go at the next reconnect; one killed mid-send waits for a relaunch.
+  void loadSendRestored()
+    .then((m) => m.sendRestored(queryClient, restored))
+    .catch(() => undefined);
 }
 
 // Freshness by kind of data (static, catalog, public, yours, live), and a
@@ -334,7 +338,10 @@ async function ownWrite(v: unknown): Promise<void> {
 // Discarded (Tonight's Waiting to send): what it touches is fetched again, so the screen shows what's really there.
 setDiscardRefetch((client, write) => {
   // A batch set aside at launch: discarded, it leaves the phone.
-  if (write.options.mutationKey?.[1] === SET_ASIDE_WRITE[1]) return void dropSetAside(rowStorage, (write.state.variables as { at: number }).at);
+  if (write.options.mutationKey?.[1] === SET_ASIDE_WRITE[1]) {
+    const at = (write.state.variables as { at: number }).at;
+    return void loadSavedWritesCheck().then((check) => check.dropSetAside(rowStorage, at), () => undefined);
+  }
   const entry = Object.values(BAR_WRITES).find((w) => w.key[1] === write.options.mutationKey?.[1]);
   if (!entry) return;
   for (const queryKey of (entry.refresh as (v: unknown) => QueryKey[])(write.state.variables)) void client.invalidateQueries({ queryKey });
@@ -357,7 +364,7 @@ for (const write of Object.values(BAR_WRITES)) {
   });
 }
 
-// Writes set aside at launch (lib/queryCachePersist.ts restoreRowSafely): listed as didn't send, never sent.
+// Writes set aside at launch (lib/savedWritesCheck.ts): listed as didn't send, never sent.
 queryClient.setMutationDefaults([...SET_ASIDE_WRITE], {
   mutationFn: () => Promise.reject(new Error('It couldn’t be read back, so it can’t be sent.')),
   retry: false,

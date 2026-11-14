@@ -4,7 +4,8 @@ import { MutationObserver, onlineManager } from '@tanstack/react-query';
 import { persistQueryClientRestore, persistQueryClientSave, type PersistedClient, type Persister } from '@tanstack/react-query-persist-client';
 
 import { dropUnsentWrites } from '@/lib/authCache';
-import { discardWrite, isKeptWrite, resendWrite, setWriteOwner } from '@/lib/keptWrites';
+import { isKeptWrite, setWriteOwner } from '@/lib/keptWrites';
+import { discardWrite, resendWrite } from '@/lib/unsentActions';
 import { persistOptions, queryClient, resumeSavedWrites, savedQueryFiles } from '@/lib/react-query';
 
 let sent = 0;
@@ -53,6 +54,8 @@ jest.mock('@/lib/drinkSaveLoader', () => ({
   newDrinkFailed: () => undefined,
   }),
   loadMadeForSection: async () => jest.requireActual('@/hooks/madeForSection'),
+  loadSavedWritesCheck: async () => jest.requireActual('@/lib/savedWritesCheck'),
+  loadSendRestored: async () => jest.requireActual('@/lib/sendRestored'),
 }));
 
 /** The persisted cache blob, as the app's persister would save it. */

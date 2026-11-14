@@ -50,9 +50,6 @@ export function unsentDetail(failed: string | null, at: number, timeOf: (ms: num
   return failed ? `${when} · didn’t send: ${failed}` : `${when} · waiting for a connection`;
 }
 
-/** Said of a drink that was refused: Send would refuse it again, it's saved again from Add (and its alert, hooks/useCreateDrink.ts). */
-export const STILL_IN_ADD = 'It’s still in Add, under Pick up where you left off.';
-
 /**
  * What a row's button does: Send. A new drink refused (not a dropped connection) opens its draft in Add instead,
  * since Send would send the same save; a batch set aside at launch can't be sent, only discarded.

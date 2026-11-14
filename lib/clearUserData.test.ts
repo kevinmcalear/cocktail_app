@@ -19,6 +19,8 @@ jest.mock('@react-native-community/netinfo', () => jest.requireActual('@react-na
 jest.mock('@/hooks/useCocktails', () => ({ updateCocktailFn: () => mockSend(), deleteCocktailFn: () => mockSend() }));
 jest.mock('@/hooks/useIngredients', () => ({ updateIngredientFn: () => mockSend(), addIngredientFn: () => mockSend() }));
 jest.mock('@/lib/aiConsent', () => ({ AI_CONSENT_KEY: 'ai-consent' }));
+// Loaded with import() in the app, which Jest can't run.
+jest.mock('@/lib/drinkSaveLoader', () => ({ loadSavedWritesCheck: async () => jest.requireActual('@/lib/savedWritesCheck') }));
 
 /** The persisted cache blob, as the app's persister would save it. */
 function memoryPersister(): Persister & { saved: () => PersistedClient | undefined } {

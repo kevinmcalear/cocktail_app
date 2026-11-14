@@ -14,7 +14,7 @@ import { track } from '@/lib/analytics';
 import { saveWritesNow } from '@/lib/keptWrites';
 import { NEW_DRINK, specFingerprint } from '@/lib/offlineWrites';
 import { saveErrorWords } from '@/lib/saveErrorWords';
-import { STILL_IN_ADD } from '@/lib/unsentRows';
+import { STILL_IN_ADD } from '@/lib/unsentWords';
 import { toastDone } from '@/lib/toast';
 import { plainDbMessage } from '@/lib/dbError';
 import { orderedMethodIds } from '@/lib/drinkMethods';

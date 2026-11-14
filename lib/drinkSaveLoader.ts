@@ -6,3 +6,7 @@
 export const loadDrinkSave = () => import('@/hooks/useCreateDrink');
 /** Putting a drink made offline in its menu section (hooks/madeForSection.ts): loaded the same way, for the same reason. */
 export const loadMadeForSection = () => import('@/hooks/madeForSection');
+/** The checks on writes read back at launch (lib/savedWritesCheck.ts): only when there are any. */
+export const loadSavedWritesCheck = () => import('@/lib/savedWritesCheck');
+/** Sending the writes a relaunch brought back (lib/sendRestored.ts): only when there are any. */
+export const loadSendRestored = () => import('@/lib/sendRestored');
