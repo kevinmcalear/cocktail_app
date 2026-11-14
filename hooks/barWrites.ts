@@ -7,10 +7,12 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { Alert } from 'react-native';
 
 import { existingIngredientId } from '@/lib/ingredientNames';
-import { BAR_WRITE } from '@/lib/offlineWrites';
+import type { MenuLayout } from '@/lib/menuLayout';
+import { BAR_WRITE, MENU_LAYOUT, OFFLINE_SCOPE } from '@/lib/offlineWrites';
 import { DROPDOWNS_QUERY_KEY } from '@/lib/queryDefaults';
 import type { RotaChange } from '@/lib/rota';
 import { supabase } from '@/lib/supabase';
+import type { Database } from '@/types/db';
 
 const check = <T extends { error: { message: string } | null }>(res: T) => {
   if (res.error) throw res.error;
@@ -173,7 +175,62 @@ async function sendBottle(w: BottleWrite) {
   return id;
 }
 
+export interface MenuLayoutWrite {
+  menuId: string;
+  /** The menu's name as saved, to list it while it waits. */
+  name: string;
+  /** save_menu()'s arguments: the whole layout, so sending twice is the same. */
+  args: Database['public']['Functions']['save_menu']['Args'];
+  /** The drinks' own prices changed in the builder (items.price), written after the menu. */
+  prices: Record<string, string | null>;
+  /** The layout as the editor had it: reopened while this waits, the editor starts from it, not the older menu. */
+  layout: MenuLayout;
+  /** Saved with no signal: a refusal is said wherever you are by then (the editor says its own). */
+  queued: boolean;
+}
+
+/**
+ * Writes drinks' prices, as typed ("19.50", "MP"; blank clears). A drink the
+ * caller can't edit comes back with no row (RLS), which is an error here, so
+ * a price never looks saved when it wasn't. Here so the menu's waiting save
+ * uses it too (hooks/useDrinkCost.ts for one drink's).
+ */
+export async function writePrices(prices: Record<string, string | null>) {
+  const results = await Promise.all(
+    Object.entries(prices).map(([id, price]) => supabase.from('items').update({ price: price?.trim() || null }).eq('id', id).select('id'))
+  );
+  for (const { data, error } of results) {
+    if (error) throw error;
+    if (!data?.length) throw new Error('Couldn’t change that price: only people who can edit the drink can.');
+  }
+}
+
+/** A menu's layout (save_menu, one transaction), then the prices typed in it. */
+async function sendMenuLayout({ args, prices }: MenuLayoutWrite) {
+  const { error } = await supabase.rpc('save_menu', args);
+  if (error) throw error.code === '42501' ? new Error('You can’t change this menu. Ask someone who builds menus at this venue.') : error;
+  await writePrices(prices);
+}
+
 export const BAR_WRITES = {
+  menuLayout: {
+    key: MENU_LAYOUT,
+    send: sendMenuLayout,
+    // After a drink made offline that it may put on the menu.
+    scope: OFFLINE_SCOPE,
+    failed: async (e: Error, w: MenuLayoutWrite) => {
+      if (w.queued) Alert.alert(`${w.name || 'The menu'} didn’t save`, `${await import('@/lib/saveErrorWords').then((m) => m.saveErrorWords(e), () => 'Something went wrong saving it.')} Your changes are kept on this phone: find them on Tonight, under what didn’t send.`);
+    },
+    // Menus (hooks/useMenus menuKeys), Tonight's and the run sheet's reads of them, and the priced drinks' pages.
+    refresh: (w: MenuLayoutWrite): QueryKey[] => [
+      ['menus-v2'],
+      [...DROPDOWNS_QUERY_KEY, 'menus'],
+      [...DROPDOWNS_QUERY_KEY, 'current_menu_drinks'],
+      ['run-sheet'],
+      ['menu-costing'],
+      ...Object.keys(w.prices).map((id) => ['cocktail', id]),
+    ],
+  },
   offTonight: {
     key: [BAR_WRITE, 'off-tonight'],
     send: sendOffTonight,

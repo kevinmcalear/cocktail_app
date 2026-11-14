@@ -1,0 +1,92 @@
+import type { Mutation, QueryClient, QueryKey } from '@tanstack/react-query';
+
+import { reportError } from '@/lib/monitoring';
+
+/**
+ * Writes kept on the phone until they're in (lib/react-query.ts keeps them,
+ * hooks/useUnsentWrites lists them): apart from the client's own file so
+ * screens and hooks can use them without loading the client's setup.
+ */
+export type AnyWrite = Mutation<unknown, Error, unknown, unknown>;
+
+/**
+ * Writes that waited on the phone at some point, or came back from a
+ * relaunch: one the database refuses stays, listed as didn't send, instead of
+ * being dropped. One refused while its screen is open is the screen's to say.
+ */
+const waited = new WeakSet<AnyWrite>();
+export const markWaited = (write: AnyWrite) => void waited.add(write);
+export const hasWaited = (write: AnyWrite) => waited.has(write);
+
+/** Not in yet and kept on the phone: waiting for signal, or refused after it waited. */
+export function isKeptWrite(write: AnyWrite): boolean {
+  return write.state.isPaused || (write.state.status === 'error' && waited.has(write));
+}
+
+/** Kept, or one that waited and is being sent now: stored until the database has answered, so a kill mid-send loses nothing. */
+export const isStoredWrite = (write: AnyWrite) => isKeptWrite(write) || (write.state.status === 'pending' && waited.has(write));
+
+// --- whose write it is ---
+// A write is stamped with who was signed in when it was made (in its state, which is saved with it), and is
+// never sent as anyone else: the Supabase client sends as whoever is signed in at send time.
+let signedIn: string | null | undefined;
+let settled: () => void = () => undefined;
+const known = new Promise<void>((done) => {
+  settled = done;
+});
+/** Who's signed in now, as auth settles (hooks/useUserCacheSync.ts). Undefined until it has. */
+export const setWriteOwner = (userId: string | null | undefined) => {
+  signedIn = userId;
+  if (userId !== undefined) settled();
+};
+/** Resolves once auth has settled, so a stamped write is only checked against a known person. */
+export const ownerKnown = () => known;
+export const writeOwner = () => signedIn;
+type Stamped = { owner?: string | null };
+export const ownerOf = (write: AnyWrite): string | null | undefined => (write.state as Stamped).owner;
+/** Stamps a new write with who's signed in (lib/react-query.ts, as it starts). */
+export function stampOwner(write: AnyWrite): void {
+  if (signedIn !== undefined) (write.state as Stamped).owner ??= signedIn;
+}
+/** Made by someone other than who's signed in now (both known). */
+export const madeBySomeoneElse = (write: AnyWrite) => {
+  const owner = ownerOf(write);
+  return owner !== undefined && signedIn !== undefined && owner !== signedIn;
+};
+
+/**
+ * Drops a write made by someone else on this phone (never sent as the person signed in now). Quiet for them,
+ * but reported (its kind and where, no ids) so it shows in monitoring.
+ */
+export function dropOthersWrite(client: QueryClient, write: AnyWrite, where: 'relaunch' | 'send' | 'resend'): void {
+  client.getMutationCache().remove(write);
+  reportError(new Error('A saved write made by someone else on this phone was dropped'), { kind: String(write.options.mutationKey?.[1] ?? 'unknown'), where });
+}
+
+let refetchAfterDiscard: (client: QueryClient, write: AnyWrite) => void = () => undefined;
+/** lib/react-query.ts says what a write touches (its BAR_WRITES refresh keys). */
+export const setDiscardRefetch = (fn: typeof refetchAfterDiscard) => {
+  refetchAfterDiscard = fn;
+};
+/** Fetches again what a discarded write touched (lib/unsentActions.ts). */
+export const refetchDiscarded = (client: QueryClient, write: AnyWrite) => refetchAfterDiscard(client, write);
+
+let writesSaver: (variables: unknown) => Promise<void> = async () => undefined;
+/**
+ * Saves the stored writes now, when the one with these variables is stored (else nothing to do). A write that
+ * changes its own variables while it sends (a new drink freezing what it sent, hooks/useCreateDrink.ts) awaits
+ * this, so a kill straight after can't lose the change.
+ */
+export const saveWritesNow = (variables: unknown) => writesSaver(variables);
+/** lib/react-query.ts says how (its row persister). */
+export const setWritesSaver = (save: typeof writesSaver) => {
+  writesSaver = save;
+};
+
+let saver: (queryKey: QueryKey) => Promise<void> = async () => undefined;
+/** Saves a query kept in a file now, not at its next fetch: a change made on the phone (a run sheet's serves) is there after a relaunch. */
+export const saveQueryNow = (queryKey: QueryKey) => saver(queryKey);
+/** lib/react-query.ts says how (its file persister). */
+export const setQuerySaver = (save: typeof saver) => {
+  saver = save;
+};

@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useIsRestoring } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
@@ -5,6 +6,8 @@ import { useAuth } from '@/ctx/AuthContext';
 import { useDraftSync } from '@/hooks/useDraftSync';
 import { cacheActionOnAuth, resetUserQueries } from '@/lib/authCache';
 import { clearUserData } from '@/lib/clearUserData';
+import { setWriteOwner } from '@/lib/keptWrites';
+import { SET_ASIDE_KEY } from '@/lib/queryCachePersist';
 import { queryClient, savedQueryFiles } from '@/lib/react-query';
 import { clearSavedSpecBooks } from '@/lib/specBookFile';
 
@@ -42,12 +45,15 @@ export function useUserCacheSync() {
     if (restoring) return;
     const action = cacheActionOnAuth(shownUserId.current, userId);
     shownUserId.current = userId;
+    // Writes made from now on are this person's, and saved ones are only sent as their maker (lib/keptWrites.ts).
+    setWriteOwner(userId);
     if (action === 'clear') {
       clearUserData().catch((e) => console.warn('Clearing signed-out data failed', e));
     } else if (action === 'reset') {
       // The saved files first: a query reset reads its file back as it refetches.
       (async () => {
-        await Promise.all([savedQueryFiles.clear(), clearSavedSpecBooks()]);
+        // Writes set aside at launch go with the rest of the last person's writes (resetUserQueries).
+        await Promise.all([savedQueryFiles.clear(), clearSavedSpecBooks(), AsyncStorage.removeItem(SET_ASIDE_KEY)]);
         await resetUserQueries(queryClient);
       })().catch((e) => console.warn('Refetching after sign-in failed', e));
     }

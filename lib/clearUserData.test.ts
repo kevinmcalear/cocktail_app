@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MutationObserver, onlineManager, QueryClient } from '@tanstack/react-query';
 import { persistQueryClientRestore, persistQueryClientSave, type PersistedClient, type Persister } from '@tanstack/react-query-persist-client';
 
@@ -18,6 +19,8 @@ jest.mock('@react-native-community/netinfo', () => jest.requireActual('@react-na
 jest.mock('@/hooks/useCocktails', () => ({ updateCocktailFn: () => mockSend(), deleteCocktailFn: () => mockSend() }));
 jest.mock('@/hooks/useIngredients', () => ({ updateIngredientFn: () => mockSend(), addIngredientFn: () => mockSend() }));
 jest.mock('@/lib/aiConsent', () => ({ AI_CONSENT_KEY: 'ai-consent' }));
+// Loaded with import() in the app, which Jest can't run.
+jest.mock('@/lib/drinkSaveLoader', () => ({ loadSavedWritesCheck: async () => jest.requireActual('@/lib/savedWritesCheck') }));
 
 /** The persisted cache blob, as the app's persister would save it. */
 function memoryPersister(): Persister & { saved: () => PersistedClient | undefined } {
@@ -118,4 +121,21 @@ test("a venue's held glasses outlast sign-out; its setup progress doesn't", asyn
   await clearUserData();
   expect(useVenueSetup.getState().runs).toEqual({});
   expect(useVenueSetup.getState().glasses).toEqual({ bar: [glass] });
+});
+
+// Third look T1: writes set aside at launch (a row that couldn't be read) are forgotten at sign-out with the rest.
+test('writes set aside at launch are forgotten at sign-out: storage holds none', async () => {
+  await AsyncStorage.clear();
+  await AsyncStorage.setItem('REACT_QUERY_OFFLINE_CACHE', '{"clientState":');
+  await persistQueryClientRestore({ queryClient, ...persistOptions });
+  expect(await AsyncStorage.getItem('REACT_QUERY_SET_ASIDE')).not.toBeNull();
+  expect(queryClient.getMutationCache().getAll()).toHaveLength(1);
+
+  await clearUserData();
+  await new Promise((done) => setTimeout(done, 20));
+
+  expect(await AsyncStorage.getItem('REACT_QUERY_SET_ASIDE')).toBeNull();
+  expect(queryClient.getMutationCache().getAll()).toHaveLength(0);
+  const row = JSON.parse((await AsyncStorage.getItem('REACT_QUERY_OFFLINE_CACHE')) ?? '{"clientState":{"mutations":[]}}');
+  expect(row.clientState.mutations).toEqual([]);
 });

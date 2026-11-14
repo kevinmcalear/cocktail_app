@@ -21,6 +21,9 @@ export function saveProblem(editor: LayoutEditor): string | null {
 export function saveStatus(editor: LayoutEditor): { text: string; ok: boolean } {
   if (editor.saving || (editor.changed && !editor.error)) return { text: 'Saving…', ok: true };
   if (editor.changed) return { text: 'Not saved', ok: false };
+  if (editor.unsentFailed) return { text: 'Didn’t send. It’s kept: send it again from Tonight.', ok: false };
+  // Sta-menu offline: the edits are kept and go up later.
+  if (editor.waiting) return { text: 'Saved on this phone. Goes up when you’re back.', ok: true };
   return { text: editor.savedAt ? 'Saved just now' : 'Saved', ok: true };
 }
 

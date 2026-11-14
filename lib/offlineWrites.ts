@@ -8,6 +8,18 @@
 /** Every bar write's key starts with this, so the pending state can find them all. */
 export const BAR_WRITE = 'bar-write';
 
+/** A new drink's save (hooks/useCreateDrink.ts): one kept on the phone sends after a relaunch too. */
+export const NEW_DRINK = [BAR_WRITE, 'new-drink'] as const;
+
+/** A menu's layout and prices, as the editor saves them (hooks/barWrites.ts menuLayout). */
+export const MENU_LAYOUT = [BAR_WRITE, 'menu-layout'] as const;
+
+/**
+ * Waiting writes send one after another, in the order they were made: a drink
+ * made offline is in before the menu edit that puts it on a menu.
+ */
+export const OFFLINE_SCOPE = { id: 'offline-writes' };
+
 /**
  * A write that failed for want of signal, not because the database said no:
  * it waits and tries again rather than being lost. supabase-js reports a

@@ -157,6 +157,7 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
                       {draft.photos?.hero ? <DrawingChoice kept={!!draft.keepDrawing} onChange={(keepDrawing) => set({ keepDrawing })} /> : null}
                       {venue.cost}
                       {waitNote ? <Caption tone="muted">{waitNote}</Caption> : null}
+                      {p.notice}
                     </>
                   )}
                 </View>
@@ -166,7 +167,7 @@ export function DraftPage({ lead, ...p }: DrinkDeskProps & { lead?: ReactNode })
                   <GlassButton icon="chevron.left" accessibilityLabel={`Back to ${menu ?? 'where you were'}. Your draft is kept`} onPress={p.onClose} />
                   <PressableScale
                     role="button"
-                    accessibilityLabel={p.saving ? 'Saving' : menu ? `Save and add to ${menu}` : 'Save drink'}
+                    accessibilityLabel={p.saveLabel ?? (p.saving ? 'Saving' : menu ? `Save and add to ${menu}` : 'Save drink')}
                     disabled={!p.canSave || p.saving}
                     onPress={p.onSave}
                     style={[styles.save, { backgroundColor: ds.accentFill.fill, opacity: !p.canSave || p.saving ? 0.45 : 1 }]}

@@ -1,10 +1,14 @@
 import { useEffect, useState, useSyncExternalStore, type ComponentProps } from 'react';
 import { Alert, Platform } from 'react-native';
 
-import { useBreakpoint } from '@/components/ds';
+import { Caption, useBreakpoint, useDs, useToast } from '@/components/ds';
+import { STATUS } from '@/constants/tokens';
 import { useBarGlassware } from '@/hooks/useBarGlassware';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
-import { useCreateDrink } from '@/hooks/useCreateDrink';
+import { useCreateDrink, type CreateDrinkInput } from '@/hooks/useCreateDrink';
+import { useUnsentWrites } from '@/hooks/useUnsentWrites';
+import { readableAccent } from '@/lib/color';
+import { NEW_DRINK, specFingerprint } from '@/lib/offlineWrites';
 import { useDropdowns } from '@/hooks/useDropdowns';
 import { useDrinkLists } from '@/hooks/useDiscover';
 import { useShelf } from '@/hooks/useHomeBar';
@@ -28,6 +32,7 @@ import { DrinkDesk } from './DrinkDesk';
 import { useLineStock } from './StockToggle';
 import { useClassicPreview, useStartFromClassic } from '@/hooks/useStartFromClassic';
 import { RoundStrip } from '@/components/screens/firstRound/RoundElsewhere';
+import { useOnline } from '@/hooks/useOnline';
 import { useFirstRound } from '@/hooks/useFirstRound';
 import { TechniquesGate } from '@/components/techniques/TechniquesGate';
 
@@ -79,6 +84,13 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   const dropdowns = useDropdowns({ ingredients: true }).data;
   const me = useMyProfile().data ?? null;
   const create = useCreateDrink();
+  const ds = useDs();
+  const toast = useToast();
+  // As the queue sees it: no connection, or wifi with no internet (lib/react-query.ts).
+  const offline = !useOnline();
+  // This draft's save kept on the phone: waiting for signal (Save waits too, so it isn't sent twice), or refused (Save tries again).
+  const unsent = useUnsentWrites<CreateDrinkInput>(NEW_DRINK).find((w) => !!draft.id && w.variables.draft.id === draft.id);
+  const waiting = !!unsent && !unsent.failed;
   const roundDone = useFirstRound().done;
   const barGlasses = useBarGlassware(barId).data;
   const barIceKinds = venueIceKinds(venueIce);
@@ -111,9 +123,12 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
 
   const save = () => {
     // As it is now, not as this render had it: a house-made's check finishes its line just before it saves the drink (Add-inside).
-    const now: WizardDraft = withMethodIce({ ...EMPTY_DRAFT, ...useDrinkWizardStore.getState().kept[place]?.draft }, barIce);
+    const keptDraft = useDrinkWizardStore.getState().kept[place]?.draft;
+    const now: WizardDraft = withMethodIce({ ...EMPTY_DRAFT, ...keptDraft }, barIce);
+    // Offline it waits on the phone, through a relaunch, and the draft stays in Add until it's in (hooks/useCreateDrink.ts).
+    const queued = offline;
     create.mutate(
-      { draft: now, barId, myProfileId: me?.id ?? null, menuSectionId, sketch: draftSketchInputs(sketchLook(now, barVariants)) },
+      { draft: now, barId, myProfileId: me?.id ?? null, menuSectionId, sketch: draftSketchInputs(sketchLook(now, barVariants)), queued, keptPrint: specFingerprint(keptDraft ?? null) },
       {
         onSuccess: ({ id, warnings, later = [] }) => {
           useDrinkWizardStore.getState().clear(place);
@@ -124,6 +139,7 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
           onSaved(id);
         },
         onError: (e) => {
+          if (queued) return;
           // House-mades the save left saved (a dropped connection): the lines use them now, so trying again isn't refused by their names.
           const on = linesOnKeptHouseMades(e, now);
           if (on) patch(place, on);
@@ -131,6 +147,10 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
         },
       }
     );
+    if (queued) {
+      toast.show({ title: 'Kept on this phone', detail: `${now.name.trim() || 'Your drink'} saves when you’re back.` });
+      onClose();
+    }
   };
   const startOver = () => {
     useDrinkWizardStore.getState().restart(place);
@@ -159,6 +179,14 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
   // Still asking about the name as typed (a failed or offline ask doesn't hold anything up).
   const checking = !!onBar.checking || !!onPlace.checking;
   const waits = stepWaits('name', draft, atBar, null, checking) || stepWaits('credits', draft, null, atPlace);
+  // Add-entry Offline: the board's words; then what became of a save already made.
+  const notice = waiting
+    ? 'Saved on this phone. It sends when you’re back.'
+    : unsent?.failed
+      ? `This didn’t send: ${unsent.failed} It’s kept here; save to try again.`
+      : offline
+        ? 'You’re offline. Your draft is kept on this phone and saves when you’re back.'
+        : null;
   const page = {
     ...{ draft, drawn, set, barId, venueName, menuSectionId, ingredients, coreIds, methods, glasses, ices, guess, barGlasses, barVariants, barIce, barIceKinds, venueIce, classic, resumed, atBar, atPlace },
     loading: !dropdowns?.ingredients,
@@ -167,7 +195,10 @@ function Wizard({ barId = null, menuSectionId, initialName, startFrom, firstRoun
     backBar: barId ? stock.backBar : undefined,
     stock,
     onStartOver: startOver,
-    saving: create.isPending,
+    // One waiting for signal isn't saving here; one of this draft's that waits holds Save.
+    saving: (create.isPending && !create.isPaused) || waiting,
+    saveLabel: waiting ? 'Saves when you’re back' : offline ? 'Save on this phone' : undefined,
+    notice: notice ? <Caption color={readableAccent(STATUS.warning, ds.c.ground)}>{notice}</Caption> : null,
     canSave: canSave(draft) && !waits,
     onSave: save,
     onClose,

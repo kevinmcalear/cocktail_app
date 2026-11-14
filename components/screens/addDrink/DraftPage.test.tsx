@@ -7,6 +7,7 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { AddDrinkWizard } from './AddDrinkWizard';
 
 const mockSaved = jest.fn();
+jest.mock('@/hooks/useUnsentWrites', () => ({ useUnsentWrites: () => [] }));
 jest.mock('@/components/ViewAsBanner', () => ({ ViewAsPill: () => null }));
 jest.mock('@/hooks/useNearIngredients', () => ({ useNearIngredients: () => [], useNearIngredientsChecked: () => ({ near: [], checking: false }) }));
 jest.mock('./NearNameCard', () => ({ NearNameCard: () => null }));

@@ -34,11 +34,14 @@ export function MenuEditScreen({ menuId }: { menuId: string }) {
   const router = useRouter();
   const userId = useUserId();
   // Edits start from the server's copy, never a cached one: saving writes the
-  // whole layout, so a stale start would undo someone else's changes.
-  const { data: menu, isLoading, isFetchedAfterMount } = useMenu(menuId, { fresh: true });
+  // whole layout, so a stale start would undo someone else's changes. With no
+  // signal the phone's copy is all there is: it opens on that (and on any edits
+  // still waiting to send), and the edits go up in order once it's back.
+  const { data: menu, isLoading, isFetchedAfterMount, fetchStatus } = useMenu(menuId, { fresh: true });
   const caps = useCapabilities(menu?.barId);
   const canEdit = menu ? (menu.barId ? Array.isArray(caps.data) && caps.data.includes('menus') : menu.createdBy === userId) : false;
-  const checking = isLoading || !isFetchedAfterMount || (!!menu?.barId && caps.isLoading);
+  const offlineCopy = !!menu && fetchStatus === 'paused';
+  const checking = isLoading || (!isFetchedAfterMount && !offlineCopy) || (!!menu?.barId && caps.isLoading);
 
   if (!menu || !canEdit || checking) {
     return (

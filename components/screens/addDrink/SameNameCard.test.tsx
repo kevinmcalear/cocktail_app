@@ -12,6 +12,8 @@ import { AddDrinkWizard } from './AddDrinkWizard';
 import { CreditsStep } from './CreditsStep';
 
 const mockPush = jest.fn();
+jest.mock('@/hooks/useUnsentWrites', () => ({ useUnsentWrites: () => [] }));
+jest.mock('@react-native-community/netinfo', () => ({ useNetInfo: () => ({ isConnected: true }) }));
 jest.mock('expo-router', () => ({ ...jest.requireActual('expo-router'), useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/components/ds/DrinkImage', () => ({ DrinkImage: () => null }));
 jest.mock('@/hooks/useNearNameDrink', () => ({ useNearNameDrink: () => null }));

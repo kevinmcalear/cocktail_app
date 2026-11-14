@@ -170,7 +170,7 @@ export function createCachePersister(storage: AsyncStorage<string>, throttleTime
 }
 
 /** The row's storage key (the library's default). */
-const ROW_KEY = 'REACT_QUERY_OFFLINE_CACHE';
+export const ROW_KEY = 'REACT_QUERY_OFFLINE_CACHE';
 
 /** A short, file-safe name for a query hash (53-bit cyrb53, in base 36). */
 export function fileNameFor(queryHash: string): string {
@@ -224,3 +224,11 @@ export async function pruneQueryFiles(files: FileStore, { maxAge, buster }: { ma
     if (!query || query.buster !== buster || age > maxAge) await files.remove(name);
   }
 }
+
+// --- reading the row back (the checks themselves: lib/savedWritesCheck.ts, loaded only when there are writes) ---
+
+/** Where writes that couldn't be read back are set aside: kept on the phone as they were, never sent, never in the way. */
+export const SET_ASIDE_KEY = 'REACT_QUERY_SET_ASIDE';
+
+/** The row "Waiting to send" lists for a batch set aside (lib/unsentRows.ts): didn't send, Discard drops the batch. */
+export const SET_ASIDE_WRITE = ['bar-write', 'set-aside'] as const;

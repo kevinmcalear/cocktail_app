@@ -1,4 +1,3 @@
-import { useNetInfo } from '@react-native-community/netinfo';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -6,16 +5,20 @@ import { Caption, GlassSurface, useDs } from '@/components/ds';
 import { Appear } from '@/components/ds/Appear';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { font, space, STATUS } from '@/constants/tokens';
+import { useOnline } from '@/hooks/useOnline';
+import { useUnsentWrites } from '@/hooks/useUnsentWrites';
 import { readableAccent } from '@/lib/color';
+import { waitingWords } from '@/lib/unsentWords';
 
-/** A glass pill at the top while the device is offline: what's on screen is the saved copy. */
+/** A glass pill at the top while the device is offline: what's on screen is the saved copy, and how many changes wait to send. */
 export function OfflineBanner() {
-  const netInfo = useNetInfo();
+  // The query client's answer: no connection, or wifi with no internet (lib/react-query.ts).
+  const online = useOnline();
   const insets = useSafeAreaInsets();
   const ds = useDs();
 
-  // Default to connected so it doesn't flash when app starts
-  const isOffline = netInfo.isConnected === false;
+  const isOffline = !online;
+  const waiting = useUnsentWrites().filter((w) => !w.failed).length;
 
   if (!isOffline) return null;
 
@@ -29,7 +32,7 @@ export function OfflineBanner() {
       <GlassSurface>
         <View role="alert" aria-live="polite" style={styles.row}>
           <IconSymbol name="wifi.slash" size={16} color={readableAccent(STATUS.warning, ds.c.ground)} />
-          <Caption style={styles.label}>Offline · showing saved data</Caption>
+          <Caption style={styles.label}>{waiting ? `Offline · ${waitingWords(waiting)}` : 'Offline · showing saved data'}</Caption>
         </View>
       </GlassSurface>
     </Appear>
