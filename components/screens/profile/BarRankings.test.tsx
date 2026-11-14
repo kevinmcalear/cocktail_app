@@ -100,7 +100,7 @@ test('Rank a drink picks one of the bar’s drinks and ranks it here; signed out
   mockUser = null;
   await renderWithProviders(<BarRankings bar={bar} />);
   await fireEvent.press(screen.getByLabelText('Sign in to rank'));
-  expect(mockPush).toHaveBeenCalledWith('/auth/login');
+  expect(mockPush).toHaveBeenCalledWith('/auth/login?step=email');
 });
 
 test('Best here (a phone bar page, Q30 A): the top three scored drinks, nothing until one has a score', async () => {

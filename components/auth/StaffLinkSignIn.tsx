@@ -18,7 +18,7 @@ export function StaffLinkSignIn({ slug, brand }: { slug: string; brand: AuthBran
     <EmailLinkGate
       cleanPath={`/v/${slug}`}
       ready={false}
-      retryHref="/auth/login"
+      retryHref="/auth/login?step=email"
       retryLabel="Sign in"
       waitingTitle={`Join ${brand.name}`}
       waitingSubtitle="Tap continue to sign in and see your invite."

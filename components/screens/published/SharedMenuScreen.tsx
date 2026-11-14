@@ -112,7 +112,7 @@ export function SharedMenuScreen({ id }: { id: string }) {
         after={`${owner.name}’s own recipes stay private: you see what is in each drink, not the amounts. Open in Cocktail to keep this menu.`}
         footer={
           // Signed out, Report asks you to sign in first: a report needs an account.
-          <PressableScale role="link" accessibilityLabel="Report this menu" onPress={() => (signedIn ? setReporting(true) : router.push('/auth/login'))} style={styles.start}>
+          <PressableScale role="link" accessibilityLabel="Report this menu" onPress={() => (signedIn ? setReporting(true) : router.push('/auth/login?step=email'))} style={styles.start}>
             <Caption tone="muted" style={styles.underline}>
               Report this menu
             </Caption>

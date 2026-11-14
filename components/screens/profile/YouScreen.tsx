@@ -184,7 +184,7 @@ function You() {
             <SectionLabel title="Your taste" />
             <ListGroup>
               <ListRow first icon="chart.bar" title={headline ?? 'Not set yet'} detail={!headline ? 'Tell us what you like' : ranked ? `From your ${plural(ranked, 'rank')}` : 'From your answers'} onPress={push('/taste')} />
-              <ListRow icon="star" title="Credits" detail={madeCount ? `${plural(madeCount, 'drink')} ${madeCount === 1 ? 'names' : 'name'} you as their maker` : 'None yet'} onPress={push('/your-drinks?tab=originals')} />
+              <ListRow icon="star" title="Credits" detail={madeCount ? madeCount === 1 ? '1 drink names you as its maker' : `${plural(madeCount, 'drink')} name you as their maker` : 'None yet'} onPress={push('/your-drinks?tab=originals')} />
               <ListRow icon="calendar" title="Drinks you’ve had" value={String(ranked)} onPress={push('/your-drinks')} />
             </ListGroup>
           </View>

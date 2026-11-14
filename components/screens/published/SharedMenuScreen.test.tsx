@@ -64,7 +64,7 @@ describe('SharedMenuScreen', () => {
     expect(screen.getByText(/SAM.S MENU · SAT 31 OCT/)).toBeTruthy();
     expect(screen.getByText(/you see what is in each drink, not the amounts/)).toBeTruthy();
     await fireEvent.press(screen.getByRole('link', { name: 'Report this menu' }));
-    expect(mockPush).toHaveBeenCalledWith('/auth/login');
+    expect(mockPush).toHaveBeenCalledWith('/auth/login?step=email');
   });
 
   test("a drink's line is its ingredients when there are names, else its description", async () => {

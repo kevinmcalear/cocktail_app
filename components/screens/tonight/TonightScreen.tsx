@@ -7,6 +7,7 @@ import { usePageColumn } from '@/components/nav/Page';
 import { useTabBarInset } from '@/components/nav/WebTabBar';
 import { space } from '@/constants/tokens';
 import { useActiveVenue } from '@/hooks/useActiveVenue';
+import { useBars } from '@/hooks/useBars';
 import { useBarDrinks } from '@/hooks/useHomeBar';
 import { useIsWideWeb } from '@/hooks/useIsWideWeb';
 import { useMode } from '@/hooks/useMode';
@@ -23,6 +24,8 @@ import { useStaffTonight } from './useStaffTonight';
 
 // Only when something is waiting: it isn't in Tonight's first load.
 const UnsentWrites = lazy(() => import('@/components/UnsentWrites').then((m) => ({ default: m.UnsentWrites })));
+// Only someone on one of the bar's own roles can be a takeover's guest, so the check and the guest's page aren't in Tonight's first load.
+const GuestGate = lazy(() => import('./GuestTonight').then((m) => ({ default: m.GuestGate })));
 
 /** The column beside the lists on wide web (Prod-desk-today). */
 const SIDE = 340;
@@ -41,16 +44,35 @@ export function TonightScreen() {
   const home = useMode().mode === 'home';
   const { active, isLoading } = useActiveVenue();
   // While the bars load, a staff member's page waits rather than saying they have no bar.
-  if (!home && !active && isLoading)
-    return (
-      <Frame sky={[]} eyebrow="">
-        <PencilState kind="loading" title="Loading tonight" compact />
-      </Frame>
-    );
-  return home || !active ? <HomePage venueless={!home} /> : <StaffPage barId={active.id} />;
+  if (!home && !active && isLoading) return WAIT;
+  return home || !active ? <HomePage venueless={!home} /> : <BarPage barId={active.id} barName={active.name} />;
 }
 
-function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: string; children: React.ReactNode }) {
+/** A guest bartender on a takeover gets their own Tonight (Keep-phone guestview); the bar's team gets theirs. */
+function BarPage({ barId, barName }: { barId: string; barName: string }) {
+  // The rest of the team never waits.
+  const roleId = useBars().data?.find((b) => b.bar_id === barId)?.venue_role_id;
+  if (!roleId) return <StaffPage barId={barId} />;
+  // Until we know, neither page: a guest never sees the host's staff page first.
+  return (
+    <Suspense fallback={WAIT}>
+      <GuestGate barId={barId} barName={barName} roleId={roleId} wait={WAIT} frame={(page) => <Frame sky={NONE} eyebrow={null}>{page}</Frame>}>
+        <StaffPage barId={barId} />
+      </GuestGate>
+    </Suspense>
+  );
+}
+
+const NONE: readonly string[] = [];
+/** Tonight while it can't yet tell which page is yours. */
+const WAIT = (
+  <Frame sky={NONE} eyebrow="">
+    <PencilState kind="loading" title="Loading tonight" compact />
+  </Frame>
+);
+
+/** `eyebrow` null: the page draws its own head. */
+function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: string | null; children: React.ReactNode }) {
   const ds = useDs();
   const bottom = useTabBarInset();
   const wide = useIsWideWeb();
@@ -61,7 +83,7 @@ function Frame({ sky, eyebrow, children }: { sky: readonly string[]; eyebrow: st
       <TonightScroll sky={<TonightSky ids={sky} />} cap={<TonightSky ids={sky} cap />} contentContainerStyle={{ paddingBottom: bottom }}>
         <ScreenHeader />
         <View style={[column, styles.body]}>
-          <TonightHead eyebrow={eyebrow} />
+          {eyebrow === null ? null : <TonightHead eyebrow={eyebrow} />}
           {/* Under the title (Sta-errors, Didn't send): what's saved on this phone and not in yet. */}
           {unsent ? (
             <Suspense fallback={null}>

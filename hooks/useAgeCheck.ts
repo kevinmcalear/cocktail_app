@@ -4,6 +4,7 @@ import { useUserId } from '@/ctx/AuthContext';
 import { track } from '@/lib/analytics';
 import type { AgeCheck } from '@/lib/safety';
 import { supabase } from '@/lib/supabase';
+import { settlePendingWants } from '@/lib/swipes';
 
 const key = (userId: string | null) => ['age-check', userId];
 
@@ -12,6 +13,7 @@ const key = (userId: string | null) => ['age-check', userId];
  * 'under_age' or 'unknown'. Undefined while it loads or signed out.
  */
 export function useAgeCheck() {
+  const qc = useQueryClient();
   const userId = useUserId();
   return useQuery({
     queryKey: key(userId),
@@ -19,9 +21,17 @@ export function useAgeCheck() {
     queryFn: async (): Promise<AgeCheck> => {
       const { data, error } = await supabase.rpc('get_my_age_check');
       if (error) throw error;
-      return data === 'confirmed' || data === 'under_age' ? data : 'unknown';
+      const age = data === 'confirmed' || data === 'under_age' ? data : 'unknown';
+      // First run's Wants held for this answer (confirmed elsewhere, or a save that failed before).
+      void settled(qc, age);
+      return age;
     },
   });
+}
+
+/** Settles first run's held Wants by the age answer (lib/swipes settlePendingWants), and shows any it saved. */
+async function settled(qc: ReturnType<typeof useQueryClient>, age: AgeCheck) {
+  if (await settlePendingWants(age)) void qc.invalidateQueries({ queryKey: ['collection'] });
 }
 
 /**
@@ -41,9 +51,11 @@ export function useConfirmAge() {
       }
       return data == null ? 'under_age' : 'confirmed';
     },
-    onSuccess: (outcome) => {
+    onSuccess: async (outcome) => {
       qc.setQueryData(key(userId), outcome);
       if (outcome === 'confirmed') track('age_check_passed');
+      // First run's Wants held for this answer: saved once it's yes, dropped if it's no.
+      await settled(qc, outcome);
     },
     // Shown inline by the form.
     onError: () => {},

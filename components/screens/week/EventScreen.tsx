@@ -6,6 +6,7 @@ import { Body, BrandProvider, Button, Caption, DsText, PressableScale, TextLink,
 import { PageHeader, usePageColumn } from '@/components/nav/Page';
 import { ItemMoreMenu } from '@/components/screens/drink/ItemMoreMenu';
 import { font, radius, space } from '@/constants/tokens';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useCapabilities } from '@/hooks/useCapabilities';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { useBarPlace, useDeleteEvent, useEventDraft, useWeekEvent, useWeekEventBrand } from '@/hooks/useWeek';
@@ -50,12 +51,12 @@ function EventPage({ id }: { id: string }) {
   const caps = useCapabilities(event?.barId);
   const canEdit = Array.isArray(caps.data) && caps.data.includes('menus');
   const draft = useEventDraft(canEdit ? id : null);
-  const { data: menus = [] } = useVenueMenus(canEdit ? (event?.barId ?? undefined) : undefined);
+  const { data: menus = [], dataUpdatedAt: menusAt } = useVenueMenus(canEdit ? (event?.barId ?? undefined) : undefined);
   const remove = useDeleteEvent();
   const [editing, setEditing] = useState(false);
   const barPlace = useBarPlace(event?.barProfileId);
   const directions = directionsUrl(barPlace.data, Platform.OS === 'ios' || (Platform.OS === 'web' && isApplePlatform()));
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow(menusAt);
   const color = useDotColor();
   const back = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -77,6 +78,7 @@ function EventPage({ id }: { id: string }) {
     .filter(Boolean)
     .join(' · ');
   const link = `${siteOrigin()}/e/${event.id}`;
+  const takeoverNight = event.eventKind === 'takeover';
   const confirmDelete = () => {
     const go = () => remove.mutate(event.id, { onSuccess: back });
     if (Platform.OS === 'web') {
@@ -125,6 +127,7 @@ function EventPage({ id }: { id: string }) {
           {directions ? <Button label="Directions" variant="secondary" onPress={() => Linking.openURL(directions)} style={styles.flex} /> : null}
         </View>
         <EventDrinks event={event} />
+        {canEdit && event.menuId && takeoverNight ? <TextLink label="Open the takeover page" onPress={() => router.push(`/takeover/${event.menuId}` as Href)} /> : null}
         {canEdit && event.menuId ? <TextLink label="Open the menu" onPress={() => router.push(`/menus/${event.menuId}` as Href)} /> : null}
         <EventStaff event={event} canEdit={canEdit} />
         {canEdit ? <Button label="Delete event" variant="danger" onPress={confirmDelete} disabled={remove.isPending} style={styles.delete} /> : null}

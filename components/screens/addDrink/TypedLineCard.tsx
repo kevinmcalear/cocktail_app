@@ -7,7 +7,7 @@ import { typedUnit, type WizardPick } from '@/lib/drinkWizard';
 import type { HouseReading } from '@/lib/makeItHouse';
 import type { TypedPour } from '@/lib/paste';
 import { nameFor } from '@/lib/techniques/template';
-import { getPreferredUnit } from '@/store/useSettingsStore';
+import { getLineUnit } from '@/store/useSettingsStore';
 
 import type { CatalogIngredient } from './IngredientSearch';
 import { WizardChip } from './WizardChrome';
@@ -33,7 +33,7 @@ export function TypedLineCard({ reading, pour, onAdd }: TypedLineCardProps) {
   const pick = { id: bottle.id, name: bottle.name ?? base };
   const made = nameFor(technique, { base: pick.name, adjunct });
   // The unit the line will get, as add does it: from the bottle picked.
-  const amount = pour ? `${pour.amount} ${typedUnit(pick.name, pour.unit, getPreferredUnit())}` : null;
+  const amount = pour ? `${pour.amount} ${typedUnit(pick.name, pour.unit, getLineUnit())}` : null;
   const parts: [string, string][] = [...(amount ? [['Amount', amount] as [string, string]] : []), ['Way', technique.name], ['With', adjunct ?? 'You pick it next']];
   return (
     <View role="group" aria-label="What it read" style={[styles.card, { backgroundColor: ds.c.surface, borderColor: ds.accentText }]}>

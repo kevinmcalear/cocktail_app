@@ -36,7 +36,7 @@ export function MenuDrinkPane({ drink, menuId, barName, place, onPick }: { drink
   const ageGate = useAgeGate();
   const [ranking, setRanking] = useState(false);
   // As the drink page's Rank it: a confirmed age, and signed out it asks you to sign in.
-  const rank = () => (signedIn ? ageGate.gate(() => setRanking(true)) : router.push('/auth/login'));
+  const rank = () => (signedIn ? ageGate.gate(() => setRanking(true)) : router.push('/auth/login?step=email'));
   const prev = place?.prev ?? null;
   const next = place?.next ?? null;
 

@@ -33,7 +33,7 @@ export function BarClaimCard({ profile }: { profile: Profile }) {
   const [notMine, setNotMine] = useState(false);
   if (!isUnclaimed(profile) || notMine) return null;
   const name = profile.display_name;
-  const claim = () => (user ? claimBar(router, profile.id, needsOnboarding(user.user_metadata)) : router.push('/auth/login' as Href));
+  const claim = () => (user ? claimBar(router, profile.id, needsOnboarding(user.user_metadata)) : router.push('/auth/login?step=email' as Href));
 
   if (claims?.[0]?.status === 'pending') {
     return (
@@ -85,7 +85,7 @@ export function ClaimLine({ profile, onFind }: { profile: Profile; onFind?: () =
   if (!canClaim && !canFind) return null;
   const name = profile.display_name;
   const ask = canClaim && canFind ? `Run ${name} or work there?` : canClaim ? `Run ${name}?` : `Worked at ${name}?`;
-  const claim = () => (user ? claimBar(router, profile.id, needsOnboarding(user.user_metadata)) : router.push('/auth/login' as Href));
+  const claim = () => (user ? claimBar(router, profile.id, needsOnboarding(user.user_metadata)) : router.push('/auth/login?step=email' as Href));
   return (
     <View style={styles.line}>
       <Caption tone="muted">{ask}</Caption>

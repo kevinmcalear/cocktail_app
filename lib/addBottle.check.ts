@@ -17,6 +17,51 @@ assert.deepEqual(bottleMatches('laphroaig', rows, 'bar').map((r) => r.id), ['l10
 assert.deepEqual(bottleMatches('house', rows, 'bar').map((r) => r.id), ['mine']);
 assert.deepEqual(bottleMatches('house', rows, null), []);
 assert.deepEqual(bottleMatches('l', rows, null), []);
+// "Tanq": the bottle called plain "Tanqueray" comes first, not the two shortest names (walk 12 Nov).
+{
+  const tanq = [
+    { id: 'zero', name: 'Tanqueray 0.0%', ingredient_role: 'product' },
+    { id: 'ten', name: 'Tanqueray No. Ten', ingredient_role: 'product' },
+    { id: 'ldg', name: 'Tanqueray London Dry Gin', ingredient_role: 'product' },
+    { id: 'rangpur', name: 'Tanqueray Rangpur Lime', ingredient_role: 'product' },
+  ];
+  const aliases = [
+    { key: 'tanqueray', item_id: 'ldg' },
+    { key: 'tanqueray gin', item_id: 'ldg' },
+    { key: 'tanqueray 10', item_id: 'ten' },
+    { key: 'tanqueray rangpur', item_id: 'rangpur' },
+  ];
+  assert.deepEqual(bottleMatches('Tanq', tanq, 'bar', { aliases }).map((r) => r.id), ['ldg', 'zero']); // "tanqueray 10" isn't Ten's own name, so no lift
+  assert.deepEqual(bottleMatches('Tanq', tanq, 'bar').map((r) => r.id), ['zero', 'ten']); // no aliases: shortest names, as before
+}
+// Only an alias that starts the row's own name makes it shorter: "Chart" keeps Yellow Chartreuse, "Havan" plain Havana Club (review of #1211).
+{
+  const chart = [
+    { id: 'plain', name: 'Chartreuse', ingredient_role: 'product' },
+    { id: 'yellow', name: 'Yellow Chartreuse', ingredient_role: 'product' },
+    { id: '1605', name: "Chartreuse Liqueur d'Élixir 1605", ingredient_role: 'product' },
+    { id: 'elixir', name: 'Élixir Végétal de la Grande-Chartreuse', ingredient_role: 'product' },
+  ];
+  const aliases = [
+    { key: 'chartreuse 1605', item_id: '1605' },
+    { key: 'chartreuse jaune', item_id: 'yellow' },
+    { key: 'chartreuse elixir', item_id: 'elixir' },
+  ];
+  assert.deepEqual(bottleMatches('Chart', chart, 'bar', { aliases }).map((r) => r.id), ['plain', 'yellow']);
+}
+{
+  const havana = [
+    { id: 'a7', name: 'Havana Club Añejo 7 Años', ingredient_role: 'product' },
+    { id: 'a3', name: 'Havana Club Añejo 3 Años', ingredient_role: 'product' },
+    { id: 'club', name: 'Havana Club', ingredient_role: 'product' },
+  ];
+  const aliases = [
+    { key: 'havana 7', item_id: 'a7' },
+    { key: 'havana 3yr', item_id: 'a3' },
+    { key: 'havana club 3', item_id: 'a3' },
+  ];
+  assert.deepEqual(bottleMatches('Havan', havana, 'bar', { aliases }).map((r) => r.id)[0], 'club');
+}
 
 // A venue's own bottle by name, which the shared check can't see.
 assert.equal(ownBottle('house gin', rows, 'bar')?.id, 'mine');
@@ -37,8 +82,12 @@ assert.equal(takenWords('Campari', false, { since: null, drinks: 0 }).title, 'Ca
 assert.equal(kindHelp('Islay Scotch', 'label'), 'Drinks that call for Islay Scotch can use it. Picked from the label; change it here.');
 assert.equal(kindHelp('Gin', 'name'), 'Drinks that call for gin can use it. Picked from the name; change it here.');
 assert.equal(kindHelp('Gin', 'catalog'), 'Drinks that call for gin can use it.');
-assert.equal(savedDetail(true, 'Gin'), 'It’s on Bottles, and any drink that calls for gin can use it.');
-assert.equal(savedDetail(false, null), 'It’s on your shelf.');
+assert.equal(savedDetail('bottles', 'Gin'), 'It’s on Bottles, and any drink that calls for gin can use it.');
+assert.equal(savedDetail('shelf', null), 'It’s on your shelf.');
+// A bar without its Bottles list (More drink filters off) isn't told it's on Bottles.
+assert.equal(savedDetail('bar', 'Gin'), 'Any drink that calls for gin can use it.');
+assert.equal(savedDetail('bar', null), 'Drinks here can use it now.');
+assert.ok(!savedDetail('bar', 'Gin').includes('Bottles'));
 
 assert.equal(abvNumber('40,5'), 40.5);
 assert.equal(abvNumber(''), null);

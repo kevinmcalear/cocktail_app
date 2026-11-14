@@ -1,3 +1,4 @@
+import { getLocales } from 'expo-localization';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/ctx/AuthContext';
@@ -5,8 +6,7 @@ import { pickerResult, usePickerTerm } from '@/hooks/useDiscover';
 import { CLAIM_COLUMNS, changedProfiles, type ProfileClaim } from '@/hooks/useProfiles';
 import { withNear, type MaybeNear } from '@/hooks/useSearchNear';
 import { supabase } from '@/lib/supabase';
-import { DEFAULT_UNIT } from '@/lib/units';
-import { getPreferredUnit } from '@/store/useSettingsStore';
+import { DEFAULT_UNIT, startingBarUnit } from '@/lib/units';
 import type { HeldSetup } from '@/store/useVenueSetup';
 
 /** A bar page on the Find your bar step, with what the card shows. */
@@ -121,7 +121,7 @@ export function useVenuePage(barId: string | null) {
 export function useCreateSetupVenue() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (name: string): Promise<string> => {
+    mutationFn: async ({ name, country }: { name: string; country?: string | null }): Promise<string> => {
       const { data, error } = await supabase.rpc('create_new_bar', {
         p_name: name.trim(),
         p_visibility: 10,
@@ -132,12 +132,17 @@ export function useCreateSetupVenue() {
       });
       if (error) throw error;
       const id = (data as { id: string }).id;
-      // A new venue starts on its owner's unit. It's made by now, so a miss here leaves ml, which they can change in its settings.
-      const unit = getPreferredUnit();
+      // A new venue starts on its bar page's country's unit, else this phone's region's (a United States bar on
+      // oz); the owner's own Units are not a pick for the bar. Only here, as it's made: a bar that has a unit
+      // keeps it, whatever setup does after.
+      // It's made by now, so a miss here leaves ml, which its Admins change in its settings.
+      const unit = startingBarUnit(country ?? getLocales()[0]?.regionCode);
       if (unit !== DEFAULT_UNIT) await supabase.from('bars').update({ spec_unit: unit }).eq('id', id);
       return id;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['bars'] }),
+    // After the unit is written, so the venue the app keeps (useBars, the bar, its spec unit) reads it.
+    onSuccess: (id) =>
+      Promise.all([['bars'], ['bar', id], ['venue-spec-unit', id]].map((queryKey) => qc.invalidateQueries({ queryKey }))),
     onError: () => {},
   });
 }

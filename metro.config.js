@@ -49,4 +49,11 @@ config.resolver.blockList = [
   /[\\/]smoke[\\/]node_modules[\\/].*/,
 ];
 
+// Vercel's standard build machine has 8 GB. With Metro's default worker count
+// there (three on four cores) the web export peaks near 7 GB and was killed
+// (exit 137) on every deploy from 13 Nov. One worker peaks near 4 GB and takes
+// about a minute longer (measured locally, 13 Nov). CI and local builds are
+// unchanged.
+if (process.env.VERCEL) config.maxWorkers = 1;
+
 module.exports = config;

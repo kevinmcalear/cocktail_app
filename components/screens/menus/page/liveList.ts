@@ -4,7 +4,8 @@
 // changes), each drink's "since", a drink taken off today struck through
 // with Undo, one off for tonight faded, and drinks planned for later under
 // Coming up. Kept pure: the screen wires the taps.
-import type { ListAsk, OffTonight } from '@/hooks/useListAsks';
+import type { ListAsk } from '@/hooks/useListAsks';
+import type { OffTonight } from '@/hooks/useOffTonight';
 import type { EndedRun, ListRow } from '@/hooks/useLivingList';
 import type { MenuDrink } from '@/types/menus';
 

@@ -11,7 +11,7 @@ import type { GlassFillResult } from '@/hooks/useGlassFill';
 import { usePricingSettings } from '@/hooks/usePricing';
 import { useStockOnHand } from '@/hooks/useStockCounts';
 import { useLatestVersion } from '@/hooks/useVersions';
-import { formatPct, margin } from '@/lib/costing';
+import { costKnown, formatPct, margin } from '@/lib/costing';
 import { fillWords } from '@/lib/glassFill';
 import { formatMoney, priceMinor } from '@/lib/money';
 import type { SpecLine } from '@/lib/spec';
@@ -71,8 +71,10 @@ export function BarRows({ item, barId, barName, lines, fill, onGlass, creator, c
     ...(latest ? [{ key: 'changes', label: 'Spec changes', value: `Version ${latest.version} · ${versionLine(latest.created_at, latest.created_by_name)}`, onPress: () => setOpen('history') }] : []),
   ];
 
-  const money = cost && pricing?.currency ? formatMoney(cost.total_minor, pricing.currency) : null;
-  const m = cost && pricing?.currency ? margin(cost.total_minor, priceMinor(onMenu?.price ?? item.price, pricing.currency), { taxRate: pricing.tax_rate, pricesIncludeTax: pricing.prices_include_tax }) : null;
+  // Every line unpriced: no cost, so no margin (CostSection's rule).
+  const known = !!cost && costKnown(cost);
+  const money = cost && pricing?.currency ? (known ? formatMoney(cost.total_minor, pricing.currency) : 'No cost yet') : null;
+  const m = cost && known && pricing?.currency ? margin(cost.total_minor, priceMinor(onMenu?.price ?? item.price, pricing.currency), { taxRate: pricing.tax_rate, pricesIncludeTax: pricing.prices_include_tax }) : null;
   const atBar: GroupRow[] = creator
     ? [
         ...(costs ? [{ key: 'cost', label: 'Cost', value: money ? [money, m ? `${formatPct(m.gp)} GP` : null].filter(Boolean).join(' · ') : null, onPress: () => setOpen('cost') }] : []),

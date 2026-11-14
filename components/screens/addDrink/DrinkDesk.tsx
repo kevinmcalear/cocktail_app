@@ -20,7 +20,7 @@ import { creditWaits, nameWaits, theirs } from '@/lib/sameName';
 import { draftPreviewItem } from '@/lib/editPreview';
 import { draftSketchInputs } from '@/lib/sketch/draft';
 import { suggestAmount } from '@/lib/specDefaults';
-import { getPreferredUnit } from '@/store/useSettingsStore';
+import { getLineUnit } from '@/store/useSettingsStore';
 
 import { CreditsStep } from './CreditsStep';
 import { DeskColour, DeskCost, deskSketch, DeskMenuNote, DeskTaste, DeskToFinish } from './DrinkDeskRail';
@@ -128,7 +128,7 @@ export function DrinkDesk(p: DrinkDeskProps) {
   // A one-tap fix from the taste card: a likely pour, as a line added from the search would get.
   const addByName = (name: string) => {
     const pick = pickByName(name, p.ingredients);
-    const unit = guessUnit(pick.name, getPreferredUnit());
+    const unit = guessUnit(pick.name, getLineUnit());
     const generic = (id: string | null) => p.ingredients.find((i) => i.id === p.ingredients.find((x) => x.id === id)?.generic_id)?.name ?? null;
     const amount = suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
     set({ lines: [...draft.lines, newLine(pick, unit, amount)] });

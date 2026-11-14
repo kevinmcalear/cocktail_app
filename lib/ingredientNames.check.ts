@@ -118,3 +118,20 @@ const after = [...before, { id: 'b', name: 'Feijoa cordial' }];
 assert.equal(sameIngredient('Feijoa cordial', after)?.id, 'b');
 assert.deepEqual(searchIngredients('feijoa', after).map((r) => r.id), ['a', 'b']);
 assert.equal(sameIngredient('Feijoa cordial', before), null, 'the old list is unchanged');
+
+// An alias that isn't the start of the row's name finds it but doesn't lift it: "ver" is Vermouth before
+// Lemon verbena ("verbena"), "lim" Lime juice before Makrut lime leaf ("lime leaf").
+{
+  const rows = [
+    { id: 'verbena', name: 'Lemon verbena' },
+    { id: 'vermouth', name: 'Vermouth' },
+    { id: 'leaf', name: 'Makrut lime leaf' },
+    { id: 'juice', name: 'Lime juice' },
+  ];
+  const aliases = [
+    { key: 'verbena', item_id: 'verbena' },
+    { key: 'lime leaf', item_id: 'leaf' },
+  ];
+  assert.deepEqual(searchIngredients('ver', rows, { aliases }).map((r) => r.id), ['vermouth', 'verbena']);
+  assert.deepEqual(searchIngredients('lim', rows, { aliases }).map((r) => r.id), ['juice', 'leaf']);
+}

@@ -43,7 +43,7 @@ export function BarRankings({ bar }: BarRankingsProps) {
   const startRanking = () => {
     if (signedIn) return ageGate.gate(() => setPicking(true));
     noteRankedSignedOut();
-    router.push('/auth/login');
+    router.push('/auth/login?step=email');
   };
   const pick = (d: BarTopDrink) => {
     setPicking(false);

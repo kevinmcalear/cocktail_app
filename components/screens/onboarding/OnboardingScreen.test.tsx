@@ -52,6 +52,20 @@ jest.mock('@/components/screens/profile/PastJobs', () => {
   return { CLAIM_PAST_JOBS: 'Past jobs stay hidden', PastJobs: ({ personId }: { personId: string }) => <Text>{`Jobs of ${personId}`}</Text> };
 });
 jest.mock('@/components/screens/home/BarMark', () => ({ BarMark: () => null }));
+// Five drinks, the pairs and Your taste are tested in FirstRunPicks.test.tsx: here a stand-in that ends them.
+jest.mock('./FirstRunPicks', () => {
+  const { Pressable, Text } = jest.requireActual('react-native');
+  return {
+    FirstRunTaste: ({ onBack, onDone }: { onBack?: () => void; onDone: (to?: string) => void }) => (
+      <>
+        <Text>Pick five drinks you like</Text>
+        {onBack ? <Pressable role="button" accessibilityLabel="Back" onPress={onBack} /> : null}
+        <Pressable role="button" accessibilityLabel="Start" onPress={() => onDone()} />
+        <Pressable role="button" accessibilityLabel="Open a bar" onPress={() => onDone('/p/attaboy')} />
+      </>
+    ),
+  };
+});
 jest.mock('@/hooks/useRankings', () => ({
   usePublicBars: (term: string) => ({ data: term.trim().length >= 2 ? mockBars : [] }),
 }));
@@ -86,7 +100,7 @@ async function newCareer() {
 }
 
 describe('OnboardingScreen', () => {
-  test('a name is required, then home bartenders skip the workplace, say what they like and set a unit', async () => {
+  test('a name is required, then home bartenders skip the workplace and pick the drinks they like', async () => {
     await renderWithProviders(<OnboardingScreen />);
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByText('Add the name people will see.')).toBeTruthy();
@@ -99,60 +113,38 @@ describe('OnboardingScreen', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'I love drinks' }));
     expect(mockSaveName).toHaveBeenCalledWith({ name: 'Jo Juniper', handle: 'jo.juniper', profileId: null }, expect.anything());
     expect(screen.queryByText('Where do you work?')).toBeNull();
-    expect(screen.getByText('What do you like to drink?')).toBeTruthy();
+    expect(screen.getByText('Pick five drinks you like')).toBeTruthy();
 
-    // Continue needs an answer; tapping one again clears it.
-    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
-    const loveBitter = screen.getAllByRole('radio', { name: 'Love it' })[0];
-    await fireEvent.press(loveBitter);
-    await fireEvent.press(screen.getAllByRole('radio', { name: 'Not for me' })[4]);
-    await fireEvent.press(screen.getAllByRole('radio', { name: 'Sometimes' })[1]);
-    await fireEvent.press(screen.getAllByRole('radio', { name: 'Sometimes' })[1]);
-    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    expect(mockSaveTaste).toHaveBeenCalledWith({ bitter: 0.8, smoky: 0.1 }, expect.anything());
-    expect(screen.getByText('How do you measure?')).toBeTruthy();
-
-    await fireEvent.press(screen.getByRole('radio', { name: 'oz' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    expect(useSettingsStore.getState().units).toBe('oz');
-
-    // Last, the chance to bring something in; home cooks are asked about their shelf.
-    expect(screen.getByText('What’s on your shelf?')).toBeTruthy();
-    expect(screen.getByLabelText('Setup')).toBeTruthy();
+    // Your taste's Start ends setup: no units or Bring in steps after it (Prod-first).
     expect(mockFinish).not.toHaveBeenCalled();
-    await fireEvent.press(screen.getByLabelText('Later'));
+    await fireEvent.press(screen.getByRole('button', { name: 'Start' }));
     expect(mockFinish).toHaveBeenCalled();
-    expect(mockReplace).not.toHaveBeenCalledWith('/bring-in');
+    expect(screen.queryByText('How do you measure?')).toBeNull();
   });
 
   test('every step after the first has Back to the one before, and the bar counts the main path', async () => {
     await renderWithProviders(<OnboardingScreen />);
-    expect(screen.getByText('Step 1 of 5')).toBeTruthy();
+    expect(screen.getByText('Step 1 of 3')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
     expect(screen.getByText('Your handle is @jo.juniper. You can change it on You.')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByText('What brings you here?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at a bar' }));
-    expect(screen.getByText('Step 3 of 10')).toBeTruthy();
+    expect(screen.getByText('Step 3 of 8')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByText('What brings you here?')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByLabelText('Name').props.value).toBe('Jo Juniper');
   });
 
-  test('bringing something in finishes setup and lands on Bring in', async () => {
+  test('a bar on Your taste finishes setup and lands on its page', async () => {
     mockFinish.mockImplementation(() => (mockMeta = { onboarded: true }));
-    await renderWithProviders(<OnboardingScreen />);
-    await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
-    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
+    await named();
     await fireEvent.press(screen.getByRole('button', { name: 'I love drinks' }));
-    for (const [i, name] of ['Love it', 'Love it', 'Love it', 'Love it', 'Love it'].entries()) await fireEvent.press(screen.getAllByRole('radio', { name })[i]);
-    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
-    await fireEvent.press(screen.getByRole('button', { name: /^Paste:/ }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Open a bar' }));
     expect(mockFinish).toHaveBeenCalled();
-    expect(mockReplace).toHaveBeenCalledWith('/bring-in');
+    expect(mockReplace).toHaveBeenCalledWith('/p/attaboy');
   });
 
   test('hospitality claims an existing profile instead of making one', async () => {
@@ -160,13 +152,10 @@ describe('OnboardingScreen', () => {
     mockPersonClaim = { id: 'c1', status: 'pending', profile: { id: 'existing', handle: 'jo.juniper', display_name: 'Jo Juniper' } };
     await named();
     await fireEvent.press(screen.getByRole('button', { name: 'I make drinks at a bar' }));
-    expect(screen.getByText('Claim sent') && screen.getByText('Step 3 of 6')).toBeTruthy(); // the claim skips the career steps
+    expect(screen.getByText('Claim sent') && screen.getByText('Step 3 of 4')).toBeTruthy(); // the claim skips the career steps
     await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
     expect(mockSaveName).not.toHaveBeenCalled();
-    expect(screen.getByText('What do you like to drink?') && screen.getByText('Step 4 of 6')).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Not now' }));
-    expect(mockSaveTaste).not.toHaveBeenCalled();
-    expect(screen.getByText('How do you measure?')).toBeTruthy();
+    expect(screen.getByText('Pick five drinks you like')).toBeTruthy();
   });
 
   test('hospitality can pick a bar, including a closed one, or add one', async () => {
@@ -200,7 +189,7 @@ describe('OnboardingScreen', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByText('Menus you worked on')).toBeTruthy();
-    expect(screen.getByText('Step 6 of 10')).toBeTruthy();
+    expect(screen.getByText('Step 6 of 8')).toBeTruthy();
     await fireEvent.changeText(screen.getByLabelText('Bar'), 'Mi');
     await fireEvent.press(screen.getByRole('radio', { name: 'Milk & Honey, New York, closed' }));
     await fireEvent.changeText(screen.getByLabelText('Menu name'), 'Opening list');
@@ -284,7 +273,7 @@ describe('OnboardingScreen', () => {
     expect(screen.getByText(/^Caretakers added you\./)).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Not me? Decline' }));
     expect(mockDecline).toHaveBeenCalledWith('i1', expect.anything());
-    expect(screen.queryByText(/Step \d of 3/)).toBeNull();
+    expect(screen.queryByText('Caretakers')).toBeNull();
     expect(screen.queryByLabelText('Password')).toBeNull();
     await fireEvent.changeText(screen.getByLabelText('Name'), 'Jo Juniper');
     await fireEvent.press(screen.getByRole('button', { name: 'Continue' }));

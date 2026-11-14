@@ -2,7 +2,7 @@
 // The example is the Ethyl study's: £12.00 on the menu, £1.90 to make, 20% VAT.
 import assert from 'node:assert/strict';
 
-import { exTax, formatPct, lineCostMinor, margin, menuSummary, priceForProfit, priceForTarget, targetsLine, targetStatus, underLabel } from './costing';
+import { costKnown, exTax, formatPct, lineCostMinor, margin, menuSummary, priceForProfit, priceForTarget, targetsLine, targetStatus, underLabel } from './costing';
 
 const uk = { taxRate: 20, pricesIncludeTax: true };
 const us = { taxRate: 8.875, pricesIncludeTax: false };
@@ -77,6 +77,11 @@ assert.equal(targetsLine({ gp: null, minProfitMinor: null }, usd), null);
 assert.equal(underLabel('gp', { gp: 78, minProfitMinor: 1100 }, usd), 'Under 78% GP');
 assert.equal(underLabel('profit', { gp: 78, minProfitMinor: 1100 }, usd), 'Makes under $11.00');
 assert.equal(underLabel('both', { gp: 78, minProfitMinor: 1100 }, usd), 'Under both targets');
+
+// A new drink with no prices: $0.00 is no cost, so no "100.0% GP" (walk 12 Nov).
+assert.equal(costKnown({ total_minor: 0, missing: 4 }), false);
+assert.equal(costKnown({ total_minor: 120, missing: 1 }), true);
+assert.equal(costKnown({ total_minor: 0, missing: 0 }), true);
 
 console.log('costing: ok');
 

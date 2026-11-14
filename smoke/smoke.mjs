@@ -199,11 +199,18 @@ async function signIn(page) {
   } catch {
     return `opening / did not end on /auth/login (still at ${page.url()} after ${WAIT / 1000}s), so the app's JavaScript did not start or the signed-out redirect broke`;
   }
+  // A first open shows Welcome (components/auth/Welcome.tsx); its Continue with email opens the email step.
   try {
+    await page.getByRole('button', { name: 'Continue with email' }).click({ timeout: WAIT });
+  } catch {
+    return 'reached /auth/login but Welcome\'s "Continue with email" did not show';
+  }
+  try {
+    await page.waitForURL(/\/auth\/login\?step=email/, { timeout: WAIT });
     await page.getByRole('heading', { name: 'Sign in', exact: true }).waitFor({ timeout: WAIT });
     await page.getByRole('textbox', { name: 'Email' }).waitFor({ timeout: WAIT });
   } catch {
-    return 'reached /auth/login but the "Sign in" heading and the Email field did not show';
+    return 'Continue with email did not reach /auth/login?step=email with the "Sign in" heading and the Email field';
   }
   return null;
 }
@@ -223,7 +230,7 @@ async function drink(page) {
 }
 
 const PAGES = [
-  { name: 'start', path: '/', check: signIn, ok: 'signed out, / ended on the sign-in page' },
+  { name: 'start', path: '/', check: signIn, ok: 'signed out, / ended on Welcome, and Continue with email on the email step' },
   { name: 'drink', path: DRINK.path, check: drink, ok: `the public drink page shows "${DRINK.name}"` },
 ];
 

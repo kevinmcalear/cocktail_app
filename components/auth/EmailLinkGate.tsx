@@ -20,7 +20,7 @@ type Props = {
   ready: boolean;
   children: ReactNode;
   /** Where to send people who need a fresh email */
-  retryHref: '/auth/login';
+  retryHref: '/auth/login?step=email';
   retryLabel: string;
   waitingTitle?: string;
   waitingSubtitle?: string;
@@ -81,7 +81,7 @@ export function EmailLinkGate({
       <AuthShell
         title="Link required"
         subtitle="Open the link from your email to continue."
-        footer={<AuthLink label="Back to sign in" href="/auth/login" />}
+        footer={<AuthLink label="Back to sign in" href="/auth/login?step=email" />}
       >
         <Button label={retryLabel} size="lg" onPress={() => router.push(retryHref)} />
       </AuthShell>

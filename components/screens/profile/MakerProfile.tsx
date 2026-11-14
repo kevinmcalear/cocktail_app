@@ -74,7 +74,7 @@ export function MakerProfile({ profile, columns }: { profile: Profile; columns: 
       {!signedIn ? (
         <View style={styles.section}>
           <Caption tone="muted">{signInLine}</Caption>
-          <TextLink label="Sign in" onPress={() => router.push('/auth/login' as Href)} />
+          <TextLink label="Sign in" onPress={() => router.push('/auth/login?step=email' as Href)} />
         </View>
       ) : null}
 

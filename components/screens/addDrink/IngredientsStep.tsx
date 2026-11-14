@@ -20,7 +20,7 @@ import type { Technique } from '@/lib/techniques';
 import { looksMadeInHouse } from '@/lib/techniques/makeIt';
 import { nameFor } from '@/lib/techniques/template';
 import { rememberLineUnit } from '@/store/rememberLineUnit';
-import { getPreferredUnit } from '@/store/useSettingsStore';
+import { getLineUnit } from '@/store/useSettingsStore';
 
 import type { TrailItem } from './Trail';
 import type { DraftLineParts } from './DraftLine';
@@ -122,9 +122,9 @@ export function IngredientsStep({ draft, set, ingredients, loading, aliases = []
   // A pour typed with the name ("30 pommeau") is the line's, else it starts at a likely one; "1 oz lemon" makes oz yours, as a unit picked on a line does.
   const lineFor = (pick: WizardPick, pour?: TypedPour): WizardLine => {
     if (forDrink) rememberLineUnit(pour?.unit);
-    const guess = pour ? typedUnit(pick.name, pour.unit, getPreferredUnit()) : guessUnit(pick.name, getPreferredUnit());
+    const guess = pour ? typedUnit(pick.name, pour.unit, getLineUnit()) : guessUnit(pick.name, getLineUnit());
     // A house recipe is never topped (lib/unitGuess.ts prepUnit).
-    const unit = !forDrink && guess === 'top' ? getPreferredUnit() : guess;
+    const unit = !forDrink && guess === 'top' ? getLineUnit() : guess;
     const amount = pour ? tidyAmount(pour.amount) : !forDrink ? '' : suggestAmount({ name: pick.name, genericName: generic(pick.id) }, unit, draft.lines.map((l) => ({ name: l.name, genericName: generic(l.id) })));
     return newLine(pick, unit, amount);
   };

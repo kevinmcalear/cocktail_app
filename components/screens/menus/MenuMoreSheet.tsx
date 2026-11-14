@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 
 import { Body, Button } from '@/components/ds';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useCreateMenu, useDeleteMenu, useEndMenu, useSetMenuKind } from '@/hooks/useMenuMutations';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { confirmAsync } from '@/lib/dialogs';
@@ -35,12 +36,12 @@ export function MenuMoreSheet({ menu, status, visible, onClose, onNight, extras 
   const remove = useDeleteMenu();
   const setKind = useSetMenuKind();
   const rnd = menu.kind === 'rnd';
-  const { data: venueMenus = [] } = useVenueMenus(menu.barId);
+  const { data: venueMenus = [], dataUpdatedAt: menusAt } = useVenueMenus(menu.barId);
   const [goLive, setGoLive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // The web confirm dialog renders under a modal, so the sheet steps aside while it asks.
   const [asking, setAsking] = useState(false);
-  const [now] = useState(() => Date.now());
+  const now = useMenuNow(menusAt);
   const groups = groupMenus(venueMenus.filter((m) => m.barId === menu.barId && m.id !== menu.id), now);
   const busy = create.isPending || end.isPending || remove.isPending || setKind.isPending;
 

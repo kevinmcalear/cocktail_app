@@ -139,6 +139,8 @@ test('from 1200, Drinks opens on the list\'s first row rather than a blank page,
   expect(screen.queryByText('Pick a drink to see it here.')).toBeNull();
   await act(async () => useDrinksFirstRow.setState({ item: { id: 'b', name: 'Bolo Tie', category: 'Cocktail' } as never, ready: true }));
   expect(screen.getByText('pane b')).toBeTruthy();
+  // Add sits over the drink, at the end of its top row, not in a header row of its own above it.
+  expect(screen.getAllByRole('button', { name: /^Add: name a drink/ })).toHaveLength(1);
   await act(async () => useDrinksFirstRow.setState({ item: { id: 'g', name: 'Gin', category: 'Ingredient' } as never, ready: true }));
   expect(screen.getByText('other Gin')).toBeTruthy();
 });

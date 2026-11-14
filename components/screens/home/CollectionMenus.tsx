@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Body, Button, Caption, Headline } from '@/components/ds';
@@ -7,6 +6,7 @@ import { MenuGroupList } from '@/components/screens/menus/MenuGroupList';
 import { NewMenuSheet } from '@/components/screens/menus/NewMenuSheet';
 import { space } from '@/constants/tokens';
 import { useUserId } from '@/ctx/AuthContext';
+import { useMenuNow } from '@/hooks/useMenuNow';
 import { useVenueMenus } from '@/hooks/useMenus';
 import { shelfReady } from '@/lib/collectionMenus';
 import type { AwayGroup } from '@/lib/toMake';
@@ -35,8 +35,8 @@ function shelfNote(menu: MenuSummary, shelf: Shelf): string | undefined {
 export function CollectionMenus({ shelf, wide, creating, setCreating }: { shelf: Shelf; wide: boolean; creating: boolean; setCreating: (on: boolean) => void }) {
   const router = useRouter();
   const userId = useUserId();
-  const { data = [], isLoading } = useVenueMenus(null);
-  const [now] = useState(() => Date.now());
+  const { data = [], isLoading, dataUpdatedAt } = useVenueMenus(null);
+  const now = useMenuNow(dataUpdatedAt);
   const mine = data.filter((m) => m.barId === null && m.createdBy === userId);
   return (
     <View style={styles.wrap}>
